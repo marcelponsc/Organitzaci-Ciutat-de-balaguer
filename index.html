@@ -162,6 +162,7 @@ table.t td.co{color:var(--pri);font-weight:600}
 .fbox.act{border-color:#cdeadb;background:var(--ok2)}
 .fbox.abs{background:#f6f6f8;color:var(--mut);text-decoration:line-through}
 .fbox.none{opacity:.5}
+.fbox.perm{border-color:#f1dfb3;background:var(--warn2)}
 
 /* Assignació */
 .fchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px}
@@ -387,7 +388,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.11-d';
+const VERSIO = '2026.11.11-e';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -558,7 +559,8 @@ function actLabel(a){
   if(a.t==='C') return 'Classe · '+a.txt;
   return a.txt||'Altres';
 }
-function actShort(a){ if(!a) return 'sense classe'; if(a.t==='GU') return 'guàrdia'; if(a.t==='G'){ const g=grupById(a.grup); return g?'tenia '+g.nom:'classe'; } if(a.t==='C') return 'tenia '+a.txt; return a.txt||'altres'; }
+const isPerm = a => !!a && a.t==='AL';
+function actShort(a){ if(!a) return 'sense classe'; if(a.t==='AL'&&jTipus()==='vaga') return 'permanència · '+(a.txt||''); if(a.t==='GU') return 'guàrdia'; if(a.t==='G'){ const g=grupById(a.grup); return g?'tenia '+g.nom:'classe'; } if(a.t==='C') return 'tenia '+a.txt; return a.txt||'altres'; }
 const isClass = a => !!a && (a.t==='G'||a.t==='C');
 function actNivell(a){ if(!a) return null; if(a.t==='G'){ const g=grupById(a.grup); return g?g.nivell:null; } if(a.t==='C') return a.txt; return null; }
 const curt = n => { const p=parts(n); return p.cog? p.nom+' '+p.cog[0]+'.' : p.nom; };
@@ -569,7 +571,7 @@ function disponibles(fid,incFree){
   const dia=diaHorari();
   return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid))
     .map(p=>({p,a:act(p.id,dia,fid)}))
-    .filter(x=>incFree || (jTipus()==='activitat'?!!x.a:isWork(x.a)));
+    .filter(x=>incFree || !!x.a);
 }
 function nivellStats(){
   const al=(S.jornada&&S.jornada.alumnes)||{}, agr=(S.jornada&&S.jornada.agr)||{};
@@ -628,6 +630,7 @@ function autoAssign(fid,prevFid){
   // 4. professorat de guàrdia
   ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&x.a&&x.a.t==='GU'); if(c) take(ag,c.p.id); });
   // 5. altres presents (només si s'inclouen)
+  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&isPerm(x.a)); if(c) take(ag,c.p.id); });
   ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(free); if(c) take(ag,c.p.id); });
   j.assign[fid]=res;
   return {cov:Object.keys(res).length,need:ags.length};
@@ -794,13 +797,14 @@ function profList(){
   const dia=diaHorari();
   return list.map(p=>{
     const e=pEstat(p.id), hrs=jTipus()==='activitat'?actFranges().filter(fr=>!!act(p.id,dia,fr.id)).length:lectFranges().filter(fr=>isWork(act(p.id,dia,fr.id))).length;
+    const hperm=jTipus()==='vaga'?lectFranges().filter(fr=>isPerm(act(p.id,dia,fr.id))).length:0;
     const exp=S.ui.exp[p.id], abs=pAbs(p.id);
     return `<div class="card pcard ${e==='P'?'is-p':e==='V'?'is-v':e==='C'?'is-c':''}">
-      <div class="prow"><button class="pmain" data-a="prof-exp" data-id="${p.id}"><span class="av">${esc(inicials(p.nom))}</span><span style="min-width:0"><div class="pname">${esc(nomLl(p.nom))}</div><div class="pmeta">${p.dept?esc(p.dept)+' · ':''}${e==='C'?'<b style="color:var(--pri)">Coordinació</b> · ':''}${hrs} h avui${abs.length&&e==='P'?` · <b style="color:var(--warn)">${abs.length} h absent</b>`:''} ${exp?'▴':'▾'}</div></span></button>
+      <div class="prow"><button class="pmain" data-a="prof-exp" data-id="${p.id}"><span class="av">${esc(inicials(p.nom))}</span><span style="min-width:0"><div class="pname">${esc(nomLl(p.nom))}</div><div class="pmeta">${p.dept?esc(p.dept)+' · ':''}${e==='C'?'<b style="color:var(--pri)">Coordinació</b> · ':''}${hrs} h avui${hperm?` + ${hperm} perm.`:''}${abs.length&&e==='P'?` · <b style="color:var(--warn)">${abs.length} h absent</b>`:''} ${exp?'▴':'▾'}</div></span></button>
       <div class="seg"><button class="${e==='P'?'on p':''}" data-a="prof-set" data-id="${p.id}" data-e="P">Present</button>${jTipus()==='activitat'?`<button class="${e==='C'?'on c':''}" data-a="prof-set" data-id="${p.id}" data-e="C">Coordina</button>`:''}<button class="${e==='V'?'on v':''}" data-a="prof-set" data-id="${p.id}" data-e="V">${jTipus()==='activitat'?'Absent':'Vaga'}</button></div></div>
       ${exp?`<div class="pdet">${S.config.franges.map(fr=>{
         const a=act(p.id,dia,fr.id), isAbs=abs.includes(fr.id);
-        const cls=isAbs?'abs':(jTipus()==='activitat'?!!a:isWork(a))?'act':'none';
+        const cls=isAbs?'abs':(jTipus()==='activitat'?!!a:isWork(a))?'act':isPerm(a)?'perm':'none';
         const can=e==='P';
         return `<button class="fbox ${cls}" ${can?`data-a="prof-abs" data-id="${p.id}" data-f="${fr.id}" title="Marca/desmarca absència en aquesta hora"`:'disabled'}><b>${esc(fr.label)}</b><span>${isAbs?'No hi és':esc(actLabel(a))}</span></button>`;
       }).join('')}${e==='P'?'':`<span class="hint" style="align-self:center">Marca'l com a present per indicar hores d'absència.</span>`}</div>`:''}
@@ -833,12 +837,14 @@ function vAssign(){
       if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}" title="Aquest nivell no té classe en aquesta franja">—</td>`;
       const cur=asg[ag.id], ok=cur&&avIds.has(cur);
       const rank=x=>actNivell(x.a)===ag.nv?0:isClass(x.a)?1:x.a&&x.a.t==='GU'?2:3;
-      const lliures=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
+      const lliuresT=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
+      const lliures=lliuresT.filter(x=>isWork(x.a)), perm=lliuresT.filter(x=>!isWork(x.a));
       const ocupats=av.filter(x=>where[x.p.id]&&x.p.id!==cur).sort((x,y)=>profCmp(x.p,y.p));
       const opt=x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(actShort(x.a))}</option>`;
       const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(ag.id)}" aria-label="${esc(agLabel(ag))} ${esc(f.label)}">
         <option value="">${ok?'— Treure —':'Triar…'}</option>
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(opt).join('')}</optgroup>`:''}
+        ${perm.length?`<optgroup label="Permanència al centre · només si cal (${perm.length})">${perm.map(opt).join('')}</optgroup>`:''}
         ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>`<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(agLabel(agById(where[x.p.id])))}</option>`).join('')}</optgroup>`:''}
       </select>`;
       return `<td class="cell ${ok?'p':'miss'} ${ag.idx===1?'nvs':''}" title="${ok?esc(profById(cur).nom):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${sel}</td>`;
@@ -903,7 +909,7 @@ function profCell(pid,fid){
   const avail=disponibles(fid,S.ui.incFree).some(x=>x.p.id===pid);
   if(pAbs(pid).includes(fid)) return {txt:'Absent',cls:'abs'};
   if(ag&&avail) return {txt:agLabel(ag),cls:''};
-  if(avail) return {txt:'Reserva',cls:'res'};
+  if(avail) return {txt:isPerm(act(pid,diaHorari(),fid))?'Reserva (perm.)':'Reserva',cls:'res'};
   return {txt:'–',cls:'abs'};
 }
 function resumText(){
