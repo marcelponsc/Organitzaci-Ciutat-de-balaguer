@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jornades · Vaga i activitats de centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#fff;--line:#e5e5ea;--line2:#efeff3;
+  --ink:#18181b;--ink2:#4b4b55;--mut:#8a8a94;
+  --pri:#3f3cbb;--pri2:#eeeefc;
+  --ok:#14804a;--ok2:#eaf7ef;--bad:#d4322c;--bad2:#fdeeed;--acc:#d4322c;
+  --warn:#a76300;--warn2:#fff6e5;--blue:#3f3cbb;--blue2:#eeeefc;
+  --r:12px;--sh:0 1px 2px rgba(16,16,24,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45;font-feature-settings:"cv11","ss01"}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3{margin:0;letter-spacing:-.015em;font-weight:650}
+.num{font-variant-numeric:tabular-nums}
+
+/* Capçalera */
+.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:saturate(1.6) blur(10px);-webkit-backdrop-filter:saturate(1.6) blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:10px 20px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--ink);display:grid;place-items:center;flex:none;position:relative}
+.logo::after{content:"";position:absolute;top:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:var(--bad);border:2px solid #fff}
+.brand h1{font-size:15px;font-weight:700;white-space:nowrap;line-height:1.15}
+.brand .centre{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.tabs{justify-self:center;display:flex;gap:2px;background:#ececf0;border-radius:10px;padding:3px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:0;color:var(--ink2);padding:6px 12px;font-size:13px;font-weight:550;border-radius:8px;white-space:nowrap;display:flex;align-items:center;gap:6px;line-height:1.2}
+.tab:hover{color:var(--ink)}
+.tab .step{font-size:11px;color:var(--mut);font-weight:600}
+.tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 .5px rgba(0,0,0,.04)}
+.tab .sh{display:none}
+.tab .n{font-size:10.5px;font-weight:700;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--bad);color:#fff;display:inline-grid;place-items:center}
+.tab .n.okn{background:transparent;color:var(--ok);min-width:auto;padding:0}
+.right{display:flex;align-items:center;gap:8px}
+.jbtn{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:4px 10px 4px 5px;background:#fff;font-size:13px;max-width:330px;height:34px}
+.jbtn:hover{border-color:#cfcfd6}
+.jbtn .jt{font-size:11px;font-weight:650;padding:2px 7px;border-radius:6px;flex:none}
+.jbtn .jt.vag{background:var(--bad2);color:var(--bad)}.jbtn .jt.act{background:var(--pri2);color:var(--pri)}
+.jbtn .jn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:4px}
+.jbtn .jd{font-size:12px;color:var(--mut);white-space:nowrap}
+.jbtn .jc{font-size:10px;color:var(--mut)}
+.jsel{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:2px 8px 2px 2px;background:#fff}
+.jsel input{border:0;background:transparent;padding:5px 6px;font-weight:600;font-size:13px}
+.jsel .dia{font-size:12px;color:var(--mut);font-weight:500}
+.jsel label{display:none}
+.pill{font-size:12px;padding:5px 9px;border-radius:99px;color:var(--ink2);display:flex;align-items:center;gap:6px;white-space:nowrap;background:#f1f1f4}
+.pill i{width:7px;height:7px;border-radius:50%;background:#a1a1aa;display:inline-block}
+.pill.ok i{background:#22a35a}.pill.saving i{background:#e5a400}.pill.err i{background:var(--bad)}.pill.local i{background:var(--pri)}
+@media (max-width:1020px){ .top:not(.measuring) .top-in{grid-template-columns:1fr auto;row-gap:8px} .top:not(.measuring) .tabs{grid-column:1/-1;grid-row:2;justify-self:stretch} .top:not(.measuring) .tab{flex:1;justify-content:center} }
+.top.stack .top-in{grid-template-columns:1fr auto;row-gap:8px}
+.top.stack .tabs{grid-column:1/-1;grid-row:2;justify-self:stretch}
+.top.stack .tab{flex:1;justify-content:center}
+
+main{max-width:1240px;margin:0 auto;padding:22px 20px 90px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:28px 0 10px;flex-wrap:wrap}
+.sec-h h2{font-size:16px}
+.sec-h p{margin:2px 0 0;color:var(--mut);font-size:12.5px}
+.card-t{font-size:14px;margin-bottom:12px}
+.hint{color:var(--mut);font-size:12.5px}
+.banner{border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;border:1px solid transparent}
+.banner.info{background:var(--pri2);color:#2e2b8f;border-color:#dddcf8}
+.banner.warn{background:var(--warn2);color:#7a4a00;border-color:#f6e2b9}
+.banner.err{background:var(--bad2);color:#9d1f1a;border-color:#f6d0cd}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.kpi{padding:13px 16px;position:relative}
+.kpi .k{font-size:12px;font-weight:550;color:var(--mut)}
+.kpi .v{font-weight:650;font-size:26px;line-height:1.15;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .v small{font-size:14px;color:var(--mut);font-weight:500;margin-left:3px;letter-spacing:0}
+.kpi .s{font-size:12px;color:var(--ink2);margin-top:1px}
+.kpi::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:transparent}
+.kpi.warn::before{background:#e5a400}.kpi.bad::before{background:var(--bad)}.kpi.ok::before{background:#22a35a}
+
+/* Botons */
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:0 12px;height:32px;font-size:13px;font-weight:550;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:var(--sh)}
+.btn:hover{background:#fafafb;border-color:#d6d6dd}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.pri:hover{background:#2c2c33}
+.btn.acc{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn.acc:hover{background:#3532a3}
+.btn.sm{height:28px;padding:0 10px;font-size:12.5px;border-radius:7px}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:default}
+.ghost{background:none;border:1px solid var(--line);border-radius:7px;padding:3px 8px;font-size:12px;font-weight:550;color:var(--ink2);height:26px}
+.ghost:hover{background:#f5f5f7}
+.ghost:disabled{opacity:.4}
+.linkb{background:none;border:0;color:var(--pri);font-weight:600;padding:0;font-size:inherit}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* Alumnes */
+.lvl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.lvl{overflow:hidden}
+.lvl-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line2)}
+.lvl-h h3{font-size:15px}
+.lvl-h .sub{font-size:12px;color:var(--mut);margin-top:1px}
+.lvl-h .sub b{color:var(--ink)}
+.agr-box{text-align:right}
+.agr-box .lbl{font-size:11px;font-weight:550;color:var(--mut);margin-bottom:3px}
+.agr-box .tiny{font-size:11.5px;color:var(--mut);margin-top:3px;line-height:1.35}
+.grow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid var(--line2);transition:background .15s}
+.grow:last-child{border-bottom:0}
+.grow .gname b{display:flex;align-items:center;gap:6px;font-weight:550;font-size:13.5px}
+.grow .gname span{font-size:11.5px;color:var(--mut)}
+.grow .gname b::before{content:"";width:6px;height:6px;border-radius:50%;background:#d4d4da;flex:none}
+.grow.done .gname b::before{background:#22a35a}
+.qk{display:flex;gap:3px}
+.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;height:34px}
+.stepper button{width:32px;height:100%;border:0;background:#f7f7f9;font-size:16px;font-weight:500;color:var(--ink2)}
+.stepper button:hover{background:#efeff3}
+.stepper input{width:48px;height:100%;border:0;border-left:1px solid var(--line2);border-right:1px solid var(--line2);text-align:center;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;-moz-appearance:textfield;background:#fff}
+.stepper input:focus{outline:2px solid var(--pri);outline-offset:-2px}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stepper b{min-width:34px;text-align:center;font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
+.stepper.sm{height:28px}
+.stepper.sm button{width:28px;font-size:15px}
+.badge{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:99px;background:#f0f0f3;color:var(--ink2)}
+.badge.man{background:var(--pri2);color:var(--pri)}
+
+/* Professorat */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0 10px}
+.search{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:0 12px;height:32px;background:#fff;font-size:13px}
+.search:focus,.field input:focus,.field select:focus,textarea:focus{outline:2px solid var(--pri2);border-color:var(--pri)}
+.chips{display:flex;gap:2px;background:#ececf0;border-radius:8px;padding:2px}
+.chip{border:0;background:none;border-radius:6px;padding:4px 10px;font-size:12.5px;font-weight:550;color:var(--ink2)}
+.chip.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:8px;align-items:start}
+.pcard{padding:0;overflow:hidden}
+.prow{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 12px}
+.pmain{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;display:flex;align-items:center;gap:10px}
+.av{width:30px;height:30px;border-radius:50%;background:#efeff3;color:var(--ink2);display:grid;place-items:center;font-size:11px;font-weight:650;flex:none}
+.pcard.is-p .av{background:var(--ok2);color:var(--ok)}
+.pcard.is-v .av{background:var(--bad2);color:var(--bad)}
+.pname{font-weight:550;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:flex;background:#f1f1f4;border-radius:8px;padding:2px;gap:2px;flex:none}
+.seg button{border:0;background:none;border-radius:6px;padding:4px 10px;font-weight:550;font-size:12px;color:var(--ink2)}
+.seg button:hover{color:var(--ink)}
+.seg button.on.p{background:var(--ok);color:#fff}
+.seg button.on.v{background:var(--bad);color:#fff}
+.seg button.on.c{background:var(--pri);color:#fff}
+.pcard.is-c .av{background:var(--pri2);color:var(--pri)}
+table.t td.co{color:var(--pri);font-weight:600}
+.cchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.cchip{display:inline-flex;align-items:center;gap:6px;background:var(--pri2);color:var(--pri);border-radius:99px;padding:4px 6px 4px 10px;font-size:12.5px;font-weight:600}
+.cchip button{border:0;background:rgba(63,60,187,.12);color:var(--pri);width:20px;height:20px;border-radius:50%;font-size:12px;line-height:1;padding:0}
+.pdet{padding:2px 12px 12px 52px;display:flex;flex-wrap:wrap;gap:5px}
+.fbox{border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11.5px;background:#fff;text-align:left;min-width:108px}
+.fbox b{display:block;font-size:11.5px;font-weight:600}
+.fbox span{color:var(--mut)}
+.fbox.act{border-color:#cdeadb;background:var(--ok2)}
+.fbox.abs{background:#f6f6f8;color:var(--mut);text-decoration:line-through}
+.fbox.none{opacity:.5}
+
+/* Assignació */
+.fchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px}
+.fchip{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 11px;text-align:left;flex:none;min-width:118px;position:relative}
+.fchip b{display:block;font-size:13px;font-weight:600}
+.fchip span{font-size:11.5px;color:var(--mut)}
+.fchip::after{content:"";position:absolute;top:9px;right:9px;width:7px;height:7px;border-radius:50%;background:#d4d4da}
+.fchip.ok::after{background:#22a35a}.fchip.warn::after{background:#e5a400}.fchip.bad::after{background:var(--bad)}
+.fchip.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.asg{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start}
+@media (max-width:880px){.asg{grid-template-columns:1fr}}
+.aglist{display:flex;flex-direction:column;gap:6px}
+.agc{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:8px 10px}
+.agc .tag{font-weight:650;font-size:12.5px;border-radius:7px;padding:5px 8px;min-width:84px;line-height:1.2;background:#f3f3f6;border-left:3px solid #d4d4da}
+.agc .tag small{display:block;font-weight:500;font-size:11px;color:var(--mut)}
+.agc.cov .tag{border-left-color:#22a35a}
+.agc.miss .tag{border-left-color:var(--bad);background:var(--bad2)}
+.agc select{width:100%;border:1px solid var(--line);border-radius:8px;padding:0 8px;height:32px;background:#fff;font-size:13px;font-weight:500;min-width:0}
+.agc .warnline{grid-column:1/-1;font-size:11.5px;color:var(--bad)}
+.avl{padding:12px 14px;position:sticky;top:80px}
+.avl h3{font-size:14px;margin-bottom:2px}
+.avi{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.avi:last-child{border-bottom:0}
+.avi small{color:var(--mut);display:block;font-size:11.5px}
+.avi .st{font-size:11px;font-weight:600;white-space:nowrap;align-self:center;padding:2px 7px;border-radius:99px}
+.st.as{color:var(--ok);background:var(--ok2)}.st.res{color:var(--pri);background:var(--pri2)}
+.check{display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--ink2)}
+.check input{accent-color:var(--pri)}
+.ag-title{display:flex;align-items:baseline;gap:10px;margin:4px 0 10px;flex-wrap:wrap}
+.ag-title h2{font-size:16px}
+
+/* Taules */
+.tblw{overflow-x:auto}
+table.t{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+table.t th,table.t td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:middle}
+table.t th{font-size:11.5px;color:var(--mut);font-weight:550;background:#fafafb;white-space:nowrap}
+table.t td.c,table.t th.c{text-align:center}
+table.t td.miss{color:var(--bad);font-weight:600}
+table.t td.res{color:var(--pri)}
+table.t td.abs{color:#b4b4bc}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr:hover td{background:#fbfbfc}
+table.t input[type=text],table.t input[type=number]{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 7px;background:transparent;font-size:13px}
+table.t input:hover,table.t input:focus{border-color:var(--line);background:#fff}
+table.t input[type=number]{width:80px}
+table.t tr.tot td{font-weight:650;background:#fafafb}
+
+/* Quadre agrupacions (cursos a dalt) */
+table.qg{font-size:12.5px;table-layout:auto}
+table.qg th,table.qg td{border-right:1px solid var(--line2);padding:6px 8px}
+table.qg thead th{text-align:center;color:var(--ink2)}
+table.qg thead tr:first-child th{font-size:12.5px;font-weight:650;color:var(--ink);background:#f4f4f7}
+table.qg thead th small{display:block;font-weight:500;color:var(--mut);font-size:10.5px}
+table.qg .hcol{position:sticky;left:0;z-index:2;background:#fafafb;font-weight:600;white-space:nowrap;text-align:left;color:var(--ink)}
+table.qg td.hcol{background:#fff}
+table.qg td{min-width:62px;line-height:1.3;white-space:nowrap}
+table.qg th,table.qg td{padding:6px 7px}
+.qa td.cell{position:relative;padding:0;min-width:74px}
+.qa td.cell .cv{display:block;padding:9px 8px;font-weight:500}
+.qa td.cell.miss .cv{color:var(--bad);font-weight:600}
+.qa td.cell.p:hover{background:var(--pri2)}
+.qa td.cell.miss:hover{background:#fbdcda}
+.qa td.cell .cellsel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+.qa td.cell:focus-within{box-shadow:inset 0 0 0 2px var(--pri)}
+.qa .hl{font-weight:600}
+.qa .hs{font-size:11px;color:var(--mut);font-weight:500;display:flex;align-items:center;gap:5px;margin-top:1px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#d4d4da}
+.dot.ok{background:#22a35a}.dot.warn{background:#e5a400}.dot.bad{background:var(--bad)}
+.pdfb{padding:10px 12px;margin-bottom:10px}
+.pdfb.off{opacity:.55}
+.pdfb-h{display:flex;gap:8px;align-items:center}
+.pdfb-h input[type=text]{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13.5px}
+table.pg{font-size:11.5px;table-layout:fixed;min-width:560px}
+table.pg th:first-child{width:52px}
+table.pg th,table.pg td{padding:3px 6px;border-right:1px solid var(--line2);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+table.pg td.g{background:var(--ok2)}table.pg td.gu{background:var(--pri2);color:var(--pri)}table.pg td.al{color:var(--mut)}
+table.pg .pgh{color:var(--mut);font-weight:600}
+.jlist{display:flex;flex-direction:column;gap:8px}
+.jcard{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;cursor:pointer}
+.jcard:hover{border-color:#cfcfd6}
+.jcard.cur{box-shadow:0 0 0 2px var(--pri2);border-color:#c9c8f3}
+.jcard-l{display:flex;align-items:center;gap:12px;min-width:0}
+.jcard .jt{font-size:11px;font-weight:650;padding:3px 8px;border-radius:6px;flex:none}
+.jt.vag{background:var(--bad2);color:var(--bad)}.jt.act{background:var(--pri2);color:var(--pri)}
+.jcard-t{font-weight:600;font-size:14px}
+.jcard-s{font-size:12px;color:var(--mut)}
+.njg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:600px){.njg{grid-template-columns:1fr}}
+.njt{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.njt b{font-size:14px}.njt span{font-size:12.5px;color:var(--ink2)}
+.njt.on{border-color:var(--pri);background:var(--pri2)}
+.frchk{display:flex;flex-wrap:wrap;gap:6px}
+.frc{border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:#fff;cursor:pointer}
+.frc.on{border-color:#c9c8f3;background:var(--pri2);color:var(--pri)}
+.qa td.cell.cont .cv{color:var(--ink2)}
+.nvchips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.nvc{border:1px solid var(--line);background:#fff;border-radius:99px;padding:2px 8px;font-size:11.5px;font-weight:550;color:var(--ink2)}
+.nvc.on{background:var(--pri2);border-color:#c9c8f3;color:var(--pri)}
+.tsel{border:1px solid transparent;border-radius:6px;padding:4px;background:transparent;font-size:12.5px;max-width:190px}
+.tsel:hover,.tsel:focus{border-color:var(--line);background:#fff}
+.resv{margin-top:10px;padding:4px 14px}
+.resv-h{font-size:12px;font-weight:600;color:var(--mut);padding:8px 0 4px}
+.resv-r{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:6px 0;border-top:1px solid var(--line2);font-size:12.5px}
+.resv-r b{font-weight:600}
+.resv-r em{font-style:normal;font-weight:650;color:var(--pri);background:var(--pri2);border-radius:99px;padding:0 7px;margin-right:4px;font-size:11.5px}
+table.qg td.p{color:var(--ink)}
+table.qg td.miss{background:var(--bad2)}
+table.qg td.na{background:repeating-linear-gradient(135deg,#f6f6f8 0 6px,#efeff3 6px 12px);color:#b4b4bc;text-align:center}
+table.qg td.res{font-size:11.5px;min-width:180px;white-space:normal}
+table.qg .nvs{border-left:2px solid var(--line)}
+table.qg tbody tr:hover td{background:inherit}
+
+/* Config */
+.cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.pad{padding:14px 16px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label{font-size:12px;font-weight:550;color:var(--mut)}
+.field input,.field select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff;font-size:13px}
+textarea{width:100%;min-height:170px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+code,.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#f1f1f4;padding:1px 5px;border-radius:5px}
+pre.ex{background:#f7f7f9;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;overflow-x:auto;margin:8px 0}
+
+/* Modal + toast */
+.ov{position:fixed;inset:0;background:rgba(18,18,24,.38);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:48px 14px;overflow-y:auto}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:600px;box-shadow:0 24px 60px rgba(0,0,0,.2);border:1px solid var(--line)}
+.modal.wide{max-width:960px}
+.modal-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line2)}
+.modal-h h2{font-size:15px}
+.modal-b{padding:14px 18px;font-size:13.5px}
+.modal-f{padding:10px 18px 16px;display:flex;justify-content:flex-end;gap:8px}
+.x{border:0;background:#f1f1f4;width:28px;height:28px;border-radius:7px;font-size:16px;color:var(--ink2)}
+.hgrid select{width:100%;border:1px solid var(--line);border-radius:6px;padding:4px;font-size:12px;background:#fff}
+.hgrid select.g{background:var(--ok2);border-color:#cdeadb}
+.hgrid select.gu{background:var(--pri2);border-color:#d9d8f7}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:10px;z-index:80;font-size:13px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90vw}
+.empty{text-align:center;padding:44px 20px}
+.empty h2{font-size:18px;margin-bottom:6px}
+.empty p{color:var(--ink2);max-width:500px;margin:0 auto 16px}
+.welcome{padding:24px;display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:center;margin-bottom:16px}
+@media (max-width:760px){.welcome{grid-template-columns:1fr}}
+.welcome h2{font-size:20px;margin-bottom:8px}
+.welcome ol{margin:0;padding-left:20px;color:var(--ink2)}
+.welcome li{margin:4px 0}
+.mt{margin-top:14px}
+@media (max-width:600px){
+  main{padding:14px 12px 80px}
+  .top-in{padding:8px 12px}
+  .brand .centre{display:none}
+  .pill span{display:none}
+  .lvl-grid,.plist,.aglist{grid-template-columns:1fr}
+  .tab .step{display:none}
+  .tab{padding:6px 7px}
+  .tab .lg{display:none}.tab .sh{display:inline}
+}
+
+#login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+#login[hidden]{display:none}
+#login .lcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.06)}
+#login .logo{margin:0 auto 14px;width:44px;height:44px;border-radius:12px}
+#login h1{font-size:22px;margin-bottom:4px}
+#login p{color:var(--ink2);font-size:13.5px;margin:6px 0 18px}
+#login .gbtn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;box-shadow:var(--sh)}
+#login .gbtn:hover{background:#fafafb}
+#login .lmsg{margin-top:14px;font-size:13px;color:var(--bad);min-height:18px}
+#login .lfoot{margin-top:16px;font-size:12px;color:var(--mut)}
+</style>
+
+</head>
+<body>
+<div id="login">
+  <div class="lcard">
+    <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></div>
+    <h1>Jornades</h1>
+    <p>Vagues i activitats de centre. Accés només per al personal del centre.</p>
+    <button class="gbtn" id="gLogin"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.5z"/></svg>Entra amb el compte del centre</button>
+    <div class="lmsg" id="lMsg"></div>
+    <div class="lfoot" id="lFoot"></div>
+  </div>
+</div>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></div>
+      <div style="min-width:0"><h1>Jornades</h1><div class="centre" id="centreName">Gestió del centre</div></div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="right">
+      <button class="jbtn" id="jbtn" data-a="tab" data-tab="inici" title="Canviar de jornada"></button>
+      <div class="pill" id="sync" title="Estat de les dades"><i></i><span>Connectant…</span></div>
+    </div>
+  </div>
+</header>
+<main id="main"></main>
+<div id="modal"></div>
+
+<script>
+/* ====== CONFIGURACIÓ DEL CENTRE ====== */
+window.JORNADES_FB = {
+  config: {
+    "apiKey": "AIzaSyCzmAuprnEYDJrkx8015IUdWRowOb5nXTw",
+    "authDomain": "organitzacio-ciutat-balaguer.firebaseapp.com",
+    "projectId": "organitzacio-ciutat-balaguer",
+    "storageBucket": "organitzacio-ciutat-balaguer.firebasestorage.app",
+    "messagingSenderId": "147435287873",
+    "appId": "1:147435287873:web:b380515c4111de62d79dc0"
+},
+  domini: "iesbalaguer.cat",       // només els correus @domini poden entrar
+  autoritzats: []                     // opcional: llista de correus concrets (si és buida, qualsevol compte del domini)
+};
+window.__fbReady = new Promise(res => { window.__fbResolve = res; });
+</script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- Utilitats ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => o == null ? o : JSON.parse(JSON.stringify(o));
+const sum = a => a.reduce((x,y)=>x+(+y||0),0);
+const uid = () => Math.random().toString(36).slice(2,9);
+const pad = n => String(n).padStart(2,'0');
+const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
+const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
+const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
+const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${+d}/${+m}/${y}`; }
+
+const DEF_FRANGES = [
+  {id:'f1',label:'8:00 – 9:00',lect:true},{id:'f2',label:'9:00 – 10:00',lect:true},
+  {id:'f3',label:'10:00 – 11:00',lect:true},{id:'f4',label:'11:00 – 11:30 · Pati',lect:false},
+  {id:'f5',label:'11:30 – 12:30',lect:true},{id:'f6',label:'12:30 – 13:30',lect:true},
+  {id:'f7',label:'13:30 – 14:30',lect:true}
+];
+const T_INICI={id:'inici',label:'Inici',short:'⌂'}, T_CFG={id:'configuracio',label:'Configuració',short:'⚙︎',step:''};
+const TABS_VAGA=[{id:'alumnes',label:'Alumnes',step:'1'},{id:'professorat',label:'Professorat',short:'Profes',step:'2'},{id:'assignacio',label:'Assignació',step:'3'},{id:'resum',label:'Resum',step:'4'}];
+const TABS_ACT=[{id:'activitat',label:'Activitat',step:'1'},{id:'professorat',label:'Professorat',short:'Profes',step:'2'},{id:'assignacio',label:'Assignació',step:'3'},{id:'resum',label:'Resum',step:'4'}];
+const ALL_TABS=['inici','alumnes','activitat','professorat','assignacio','resum','configuracio'];
+function tabsFor(){ if(!S.jornada) return [T_INICI,T_CFG]; return [T_INICI,...(jTipus()==='activitat'?TABS_ACT:TABS_VAGA),T_CFG]; }
+
+/* ---------- Estat ---------- */
+const S = {
+  config:{centre:'',ratio:25,franges:clone(DEF_FRANGES)},
+  grups:[], profs:[], horari:{}, jornades:{},
+  jornadaId:null, jornada:null,
+  mode:'loading', readonly:false, sync:'loading',
+  ui:{tab:'inici',franja:null,pf:'tots',cerca:'',exp:{},incFree:false}
+};
+let caps = {db:null,user:null,downloads:null};
+
+/* ---------- Persistència ---------- */
+const LS = 'vaga:';
+function lsGet(k){ try{ const v=localStorage.getItem(LS+k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsPut(k,v){ try{ if(v===null) localStorage.removeItem(LS+k); else localStorage.setItem(LS+k,JSON.stringify(v)); return true; }catch(e){ return false; } }
+
+const Store = {
+  pending:{}, writing:{}, timers:{},
+  save(path,data,delay=450){
+    if(S.readonly){ toast('Només lectura: no tens permís per desar canvis.'); return; }
+    this.pending[path]=clone(data);
+    clearTimeout(this.timers[path]);
+    this.timers[path]=setTimeout(()=>this.flush(path),delay);
+    setSync('saving');
+  },
+  remove(path){ this.save(path,null,0); },
+  isDirty(path){ return (path in this.pending) || !!this.writing[path]; },
+  busy(){ return Object.keys(this.pending).length>0 || Object.values(this.writing).some(Boolean); },
+  flushAll(){ Object.keys(this.pending).forEach(p=>this.flush(p)); },
+  async flush(path){
+    if(S.mode==='loading') return;
+    if(this.writing[path] || !(path in this.pending)) return;
+    const data=this.pending[path]; delete this.pending[path];
+    this.writing[path]=true;
+    try{
+      if(caps.db){ if(data===null) await caps.db.doc(path).delete(); else await caps.db.doc(path).set(data); }
+      else if(!lsPut(path,data)) toast("No s'ha pogut desar en aquest dispositiu.");
+    }catch(e){ onWriteError(e,path,data); }
+    finally{
+      this.writing[path]=false;
+      if(path in this.pending) this.flush(path);
+      else if(!this.busy() && S.sync!=='err') setSync(S.mode==='local'?'local':'ok');
+    }
+  }
+};
+function onWriteError(e,path,data){
+  const code=e&&e.code;
+  if(code==='unavailable' && !e._retried){
+    setTimeout(()=>{ if(!(path in Store.pending)){ Store.pending[path]=data; Store.flush(path);} }, 600+Math.random()*900);
+    return;
+  }
+  if(code==='invalid_argument'){ S.readonly=true; toast('No tens permís per desar canvis en aquesta app (demana accés com a col·laborador).'); render(); }
+  else if(code==='quota_exceeded'){ toast("S'ha arribat al límit d'espai de dades. Esborra jornades antigues."); }
+  else if(code==='revoked'){ toast("S'ha retirat l'accés a les dades."); }
+  else toast("Error en desar. Torna-ho a provar.");
+  setSync('err');
+}
+function setSync(s){
+  S.sync=s;
+  const el=$('#sync'); if(!el) return;
+  const txt={loading:'Connectant…',ok:'Desat · compartit',saving:'Desant…',err:'Error de connexió',local:'Mode local',slow:'Sense connexió encara…',ro:'Només lectura'}[s]||'';
+  el.className='pill '+({ok:'ok',saving:'saving',err:'err',slow:'err',local:'local'}[s]||'');
+  el.querySelector('span').textContent = S.readonly && s==='ok' ? 'Només lectura' : txt;
+}
+
+function normConfig(d){
+  return {
+    centre:(d&&d.centre)||'',
+    ratio:(d&&+d.ratio>0)?+d.ratio:25,
+    franges:(d&&Array.isArray(d.franges)&&d.franges.length)?d.franges:clone(DEF_FRANGES)
+  };
+}
+const saveConfig=()=>Store.save('app/config',S.config);
+const saveGrups=()=>Store.save('app/grups',{llista:S.grups});
+const saveProfs=()=>Store.save('app/professors',{llista:S.profs});
+const saveHorari=()=>Store.save('app/horari',{h:S.horari},700);
+function saveJ(){ if(S.jornada&&S.jornadaId){ if(!S.jornada.data) S.jornada.data=S.jornadaId.slice(0,10); S.jornades[S.jornadaId]=S.jornada; Store.save('jornades/'+S.jornadaId,S.jornada); } }
+const jTipus = () => (S.jornada&&S.jornada.tipus)||'vaga';
+const jDate = () => (S.jornada&&S.jornada.data)||(S.jornadaId?S.jornadaId.slice(0,10):todayISO());
+const jTitol = j => (j.tipus==='activitat'?(j.nom||'Activitat de centre'):(j.nom||'Dia de vaga'));
+function ensureJ(){
+  if(!S.jornada){ if(!S.jornadaId) S.jornadaId=todayISO(); S.jornada={tipus:'vaga',data:S.jornadaId.slice(0,10),alumnes:{},profs:{},agr:{},assign:{},diaHorari:null}; S.jornades[S.jornadaId]=S.jornada; }
+  const j=S.jornada; j.alumnes=j.alumnes||{}; j.profs=j.profs||{}; j.agr=j.agr||{}; j.assign=j.assign||{};
+  return j;
+}
+
+function loadLocal(){
+  S.config=normConfig(lsGet('app/config'));
+  S.grups=(lsGet('app/grups')||{}).llista||[];
+  S.profs=(lsGet('app/professors')||{}).llista||[];
+  S.horari=(lsGet('app/horari')||{}).h||{};
+  const m={};
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(LS+'jornades/')){ const id=k.slice((LS+'jornades/').length); m[id]=lsGet('jornades/'+id); } } }catch(e){}
+  S.jornades=m; S.jornada=S.jornadaId?(m[S.jornadaId]||null):null;
+}
+
+function subscribe(){
+  const db=caps.db; let first=false;
+  const timer=setTimeout(()=>{ if(!first) setSync('slow'); },10000);
+  const got=snap=>{ if(!first && !snap.metadata.fromCache){ first=true; clearTimeout(timer); if(!Store.busy()) setSync('ok'); } };
+  const docs={
+    'app/config':d=>{ S.config=normConfig(d); },
+    'app/grups':d=>{ S.grups=(d&&d.llista)||[]; },
+    'app/professors':d=>{ S.profs=(d&&d.llista)||[]; },
+    'app/horari':d=>{ S.horari=(d&&d.h)||{}; }
+  };
+  Object.entries(docs).forEach(([p,fn])=>{
+    db.doc(p).onSnapshot(snap=>{ got(snap); if(Store.isDirty(p)) return; fn(snap.exists?clone(snap.data()):null); scheduleRender(); },
+      ()=>{ clearTimeout(timer); setSync('err'); });
+  });
+  db.collection('jornades').onSnapshot(qs=>{
+    got(qs);
+    const m={};
+    qs.docs.forEach(d=>{ m[d.id]=clone(d.data()); });
+    Object.keys(S.jornades).forEach(id=>{ if(Store.isDirty('jornades/'+id)) m[id]=S.jornades[id]; });
+    S.jornades=m; S.jornada=S.jornadaId?(m[S.jornadaId]||null):null;
+    if(!S.jornada&&S.ui.tab!=='inici'&&S.ui.tab!=='configuracio') S.ui.tab='inici';
+    scheduleRender();
+  },()=>{ clearTimeout(timer); setSync('err'); });
+}
+
+let needRender=false;
+function inputFocused(){ const a=document.activeElement; return a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName); }
+function scheduleRender(){ if(inputFocused()){ needRender=true; return; } render(); }
+document.addEventListener('focusout',()=>setTimeout(()=>{ if(needRender && !inputFocused()){ needRender=false; render(); } },60));
+
+/* ---------- Model ---------- */
+const grupById = id => S.grups.find(g=>g.id===id);
+const profById = id => S.profs.find(p=>p.id===id);
+const lectFranges = () => S.config.franges.filter(f=>f.lect);
+const franjaById = id => S.config.franges.find(f=>f.id===id);
+function etapa(nv){ const n=norm(nv); return /eso/.test(n)?0:/batx|bach/.test(n)?1:/cf|cicle|ciclo|fp|pfi/.test(n)?2:3; }
+const grupCmp=(a,b)=>etapa(a.nivell||a.nom)-etapa(b.nivell||b.nom)||natCmp(a.nom,b.nom);
+function nivells(){ return [...new Set(S.grups.map(g=>g.nivell||'Sense nivell'))].sort((a,b)=>etapa(a)-etapa(b)||natCmp(a,b)); }
+function nivellDe(nom){ const s=String(nom||'').trim(); const m=s.match(/^(.*\S)\s+[A-Za-z0-9]$/); return m?m[1]:s; }
+function diaHorari(){
+  const j=S.jornada; if(j&&j.diaHorari) return +j.diaHorari;
+  return new Date(jDate()+'T12:00:00').getDay();
+}
+function act(pid,dia,fid){
+  const v=S.horari[pid]&&S.horari[pid][dia+'-'+fid]; if(!v) return null;
+  if(v==='GU') return {t:'GU'};
+  if(v.startsWith('G:')) return {t:'G',grup:v.slice(2)};
+  if(v.startsWith('AL:')) return {t:'AL',txt:v.slice(3)};
+  if(v.startsWith('C:')) return {t:'C',txt:v.slice(2)};
+  return null;
+}
+function actLabel(a){
+  if(!a) return 'Sense horari';
+  if(a.t==='GU') return 'Guàrdia';
+  if(a.t==='G'){ const g=grupById(a.grup); return g?'Classe · '+g.nom:'Classe'; }
+  if(a.t==='C') return 'Classe · '+a.txt;
+  return a.txt||'Altres';
+}
+function actShort(a){ if(!a) return 'sense classe'; if(a.t==='GU') return 'guàrdia'; if(a.t==='G'){ const g=grupById(a.grup); return g?'tenia '+g.nom:'classe'; } if(a.t==='C') return 'tenia '+a.txt; return a.txt||'altres'; }
+const isClass = a => !!a && (a.t==='G'||a.t==='C');
+function actNivell(a){ if(!a) return null; if(a.t==='G'){ const g=grupById(a.grup); return g?g.nivell:null; } if(a.t==='C') return a.txt; return null; }
+const curt = n => { const p=parts(n); return p.cog? p.nom+' '+p.cog[0]+'.' : p.nom; };
+const isWork = a => !!a && (a.t==='G'||a.t==='C'||a.t==='GU');
+const pEstat = id => { const p=S.jornada&&S.jornada.profs&&S.jornada.profs[id]; if(p&&p.e) return p.e; return S.jornada&&jTipus()==='activitat'?'P':null; };
+const pAbs = id => (S.jornada&&S.jornada.profs&&S.jornada.profs[id]&&S.jornada.profs[id].abs)||[];
+function disponibles(fid,incFree){
+  const dia=diaHorari();
+  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid))
+    .map(p=>({p,a:act(p.id,dia,fid)}))
+    .filter(x=>incFree || (jTipus()==='activitat'?!!x.a:isWork(x.a)));
+}
+function nivellStats(){
+  const al=(S.jornada&&S.jornada.alumnes)||{}, agr=(S.jornada&&S.jornada.agr)||{};
+  return nivells().map(nv=>{
+    const gs=S.grups.filter(g=>(g.nivell||'Sense nivell')===nv).sort((a,b)=>natCmp(a.nom,b.nom));
+    const mat=sum(gs.map(g=>g.alumnes));
+    const comptats=gs.filter(g=>al[g.id]!=null);
+    const pres=sum(comptats.map(g=>al[g.id]));
+    const rec=pres>0?Math.ceil(pres/(S.config.ratio||25)):0;
+    const manual=agr[nv]!=null;
+    const n=manual?+agr[nv]:rec;
+    return {nv,gs,mat,pres,pendents:gs.length-comptats.length,rec,n,manual};
+  });
+}
+function agrupacions(){
+  const out=[];
+  nivellStats().forEach(s=>{
+    for(let i=0;i<s.n;i++){
+      const base=Math.floor(s.pres/s.n), extra=i<(s.pres%s.n)?1:0;
+      out.push({id:s.nv+'#'+(i+1),nv:s.nv,idx:i+1,alumnes:base+extra});
+    }
+  });
+  return out;
+}
+function parts(n){ const s=String(n||'').trim().replace(/\s+/g,' '); if(s.includes(',')){ const i=s.indexOf(','); return {nom:s.slice(i+1).trim(),cog:s.slice(0,i).trim()}; } const w=s.split(' '); return {nom:w[0]||'',cog:w.slice(1).join(' ')}; }
+const nomLl = n => { const p=parts(n); return p.cog?p.cog+', '+p.nom:p.nom; };
+const profCmp = (a,b) => { const x=parts(a.nom), y=parts(b.nom); return natCmp(x.cog,y.cog)||natCmp(x.nom,y.nom); };
+const inicials = n => { const p=parts(n); return ((p.nom[0]||'')+(p.cog[0]||'')).toUpperCase(); };
+const agLabel = ag => `${ag.nv} · G${ag.idx}`;
+function fApplies(f,nv){ if(typeof f==='string') f=franjaById(f); return !f||!Array.isArray(f.nivells)||!f.nivells.length||f.nivells.includes(nv); }
+const agsAt = fid => agrupacions().filter(a=>fApplies(fid,a.nv));
+function agById(id){ return agrupacions().find(a=>a.id===id); }
+function coverage(fid){
+  const ags=agsAt(fid), asg=(S.jornada&&S.jornada.assign&&S.jornada.assign[fid])||{};
+  const av=disponibles(fid,S.ui.incFree), ids=new Set(av.map(x=>x.p.id));
+  const cov=ags.filter(a=>asg[a.id]&&ids.has(asg[a.id])).length;
+  return {cov,need:ags.length,av:av.length};
+}
+
+/* ---------- Assignació automàtica ---------- */
+function autoAssign(fid,prevFid){
+  const j=ensureJ(); const ags=agsAt(fid);
+  const av=disponibles(fid,S.ui.incFree);
+  const byId=Object.fromEntries(av.map(x=>[x.p.id,x]));
+  const used=new Set(), res={};
+  const take=(ag,pid)=>{ res[ag.id]=pid; used.add(pid); };
+  const free=x=>!used.has(x.p.id);
+  // 1. continuïtat amb l'hora anterior
+  if(prevFid && j.assign[prevFid]){
+    ags.forEach(ag=>{ const pid=j.assign[prevFid][ag.id]; if(pid && byId[pid] && !used.has(pid)) take(ag,pid); });
+  }
+  // 2. professor que tenia classe amb un grup del mateix nivell
+  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&actNivell(x.a)===ag.nv); if(c) take(ag,c.p.id); });
+  // 3. qualsevol professor amb classe a aquesta hora
+  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&isClass(x.a)); if(c) take(ag,c.p.id); });
+  // 4. professorat de guàrdia
+  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&x.a&&x.a.t==='GU'); if(c) take(ag,c.p.id); });
+  // 5. altres presents (només si s'inclouen)
+  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(free); if(c) take(ag,c.p.id); });
+  j.assign[fid]=res;
+  return {cov:Object.keys(res).length,need:ags.length};
+}
+
+/* ---------- Render ---------- */
+function render(){
+  renderTop();
+  const act=jTipus()==='activitat';
+  if(!S.jornada&&!['inici','configuracio'].includes(S.ui.tab)) S.ui.tab='inici';
+  if(S.jornada&&act&&S.ui.tab==='alumnes') S.ui.tab='activitat';
+  if(S.jornada&&!act&&S.ui.tab==='activitat') S.ui.tab='alumnes';
+  const views={inici:vInici,alumnes:vAlumnes,activitat:vActivitat,professorat:vProfs,assignacio:act?vAssignAct:vAssign,resum:act?vResumAct:vResum,configuracio:vConfig};
+  $('#main').innerHTML = banners() + (views[S.ui.tab]||vInici)();
+}
+function renderTop(){
+  $('#centreName').textContent = S.config.centre || "Gestió del centre";
+  const jb=$('#jbtn');
+  if(S.jornada){ const d=new Date(jDate()+'T12:00:00').getDay(); const a=jTipus()==='activitat';
+    jb.innerHTML=`<span class="jt ${a?'act':'vag'}">${a?'Activitat':'Vaga'}</span><span class="jn">${esc(a?jTitol(S.jornada):DIES_C[d]+' '+fmtDate(jDate()))}</span><span class="jd">${a?DIES_C[d]+' '+fmtDate(jDate()):''}</span><span class="jc">▾</span>`; }
+  else jb.innerHTML=`<span class="jn">Tria una jornada</span><span class="jc">▾</span>`;
+  let badge={};
+  if(S.jornada&&jTipus()==='vaga'){
+    const st=nivellStats(); const pend=sum(st.map(s=>s.pendents));
+    const pp=S.profs.filter(p=>!pEstat(p.id)).length;
+    const lf=lectFranges(); const ags=agrupacions().length;
+    const falt = ags ? lf.filter(f=>{ const c=coverage(f.id); return c.cov<c.need; }).length : 0;
+    badge={alumnes:S.grups.length?(pend?`<span class="n">${pend}</span>`:'<span class="n okn">✓</span>'):'',
+      professorat:S.profs.length?(pp?`<span class="n">${pp}</span>`:'<span class="n okn">✓</span>'):'',
+      assignacio:ags?(falt?`<span class="n">${falt}</span>`:'<span class="n okn">✓</span>'):''};
+  } else if(S.jornada){
+    const slots=actSlots(), fr=actFranges();
+    const falt=slots.length?fr.filter(f=>{ const c=actCoverage(f.id); return c.cov<c.need; }).length:0;
+    badge={activitat:slots.length&&fr.length?'<span class="n okn">✓</span>':'<span class="n">!</span>',
+      assignacio:slots.length?(falt?`<span class="n">${falt}</span>`:'<span class="n okn">✓</span>'):''};
+  }
+  $('#tabs').innerHTML = tabsFor().map(t=>`<button class="tab ${S.ui.tab===t.id?'on':''}" data-a="tab" data-tab="${t.id}">${t.step?`<span class="step">${t.step}</span>`:''}${t.short?`<span class="lg">${t.label}</span><span class="sh">${t.short}</span>`:t.label}${badge[t.id]||''}</button>`).join('');
+  setSync(S.sync);
+  fitTabs();
+}
+function fitTabs(){
+  const top=$('.top'), t=$('#tabs'); if(!top||!t) return;
+  top.classList.remove('stack');
+  if(window.innerWidth>1020 && t.scrollWidth>t.clientWidth+1) top.classList.add('stack');
+  const on=t.querySelector('.tab.on');
+  if(on && t.scrollWidth>t.clientWidth+1){ const l=on.offsetLeft-t.offsetLeft; if(l<t.scrollLeft||l+on.offsetWidth>t.scrollLeft+t.clientWidth) t.scrollLeft=l-12; }
+}
+window.addEventListener('resize',()=>fitTabs());
+function banners(){
+  let h='';
+  if(S.mode==='loading') h+=`<div class="banner info">Connectant amb les dades…</div>`;
+  if(S.mode==='local') h+=`<div class="banner info"><b>Mode local.</b>&nbsp;Les dades es desen només en aquest navegador. Fes còpies de seguretat des de Configuració.</div>`;
+  if(S.readonly) h+=`<div class="banner warn"><b>Només lectura.</b>&nbsp;Pots consultar-ho tot, però per desar canvis el propietari t'ha de donar accés com a col·laborador.</div>`;
+  if(S.sync==='slow') h+=`<div class="banner err">No es pot connectar amb les dades encara. Comprova la connexió; el que vegis pot no estar actualitzat.</div>`;
+  const d=new Date(jDate()+'T12:00:00').getDay();
+  if(S.jornada&&(d===0||d===6) && !S.jornada.diaHorari && !['configuracio','inici'].includes(S.ui.tab) && S.profs.length)
+    h+=`<div class="banner warn">La data de la jornada és ${DIES[d].toLowerCase()} i no té horari. Pots triar quin horari aplicar a <button class="linkb" data-a="tab" data-tab="configuracio">Configuració → Jornada</button>.</div>`;
+  return h;
+}
+function kpi(k,v,s,cls=''){ return `<div class="card kpi ${cls}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s||''}</div></div>`; }
+function emptyView(title,text){
+  return `<div class="card empty"><h2>${title}</h2><p>${text}</p><div class="row-actions" style="justify-content:center">
+    <button class="btn pri" data-a="tab" data-tab="configuracio">Anar a Configuració</button>
+    <button class="btn" data-a="demo">Provar amb dades d'exemple</button></div></div>`;
+}
+
+/* ----- 1. Alumnes ----- */
+function vAlumnes(){
+  if(!S.grups.length) return welcome();
+  const st=nivellStats();
+  const mat=sum(st.map(s=>s.mat)), pres=sum(st.map(s=>s.pres)), pend=sum(st.map(s=>s.pendents)), agr=sum(st.map(s=>s.n));
+  return `<div class="kpis">
+    ${kpi('Alumnes presents',`<span data-live="tot-pres">${pres}</span><small>/ ${mat}</small>`,`<span data-live="tot-pct">${pct(pres,mat)}</span> d'assistència`)}
+    ${kpi('Grups pendents',`<span data-live="tot-pend">${pend}</span><small>/ ${S.grups.length}</small>`,'grups sense recompte',pend?'warn':'ok')}
+    ${kpi('Agrupacions previstes',`<span data-live="tot-agr">${agr}</span>`,`ràtio màxima ${S.config.ratio} alumnes/grup`)}
+  </div>
+  <div class="sec-h"><div><h2>Recompte per grup</h2><p>Escriu els alumnes presents a cada classe. Les agrupacions per nivell es calculen soles; les pots ajustar amb + i −.</p></div></div>
+  <div class="lvl-grid">${st.map(lvlCard).join('')}</div>`;
+}
+function agrNote(s){
+  const avg = s.n ? `≈ ${Math.ceil(s.pres/s.n)} alumnes/grup` : (s.pres?'':'sense alumnes');
+  return s.manual ? `${avg}<br><span class="badge man">manual</span> recomanat ${s.rec} · <button class="linkb" data-a="agr-auto" data-nv="${esc(s.nv)}">auto</button>` : avg;
+}
+function lvlCard(s){
+  const nv=esc(s.nv);
+  return `<section class="card lvl">
+    <div class="lvl-h">
+      <div><h3>${nv}</h3><div class="sub"><b class="num" data-live="pres:${nv}">${s.pres}</b> / ${s.mat} presents · <span data-live="pend:${nv}">${s.pendents?s.pendents+' pendents':'tot comptat ✓'}</span></div></div>
+      <div class="agr-box"><div class="lbl">Agrupacions</div>
+        <div class="stepper sm" style="display:inline-flex"><button data-a="agr-step" data-nv="${nv}" data-d="-1" aria-label="Menys">−</button><b data-live="agr:${nv}">${s.n}</b><button data-a="agr-step" data-nv="${nv}" data-d="1" aria-label="Més">+</button></div>
+        <div class="tiny" data-live="agrnote:${nv}">${agrNote(s)}</div></div>
+    </div>
+    <div>${s.gs.map(grupRow).join('')}</div>
+  </section>`;
+}
+function grupRow(g){
+  const v=S.jornada&&S.jornada.alumnes?S.jornada.alumnes[g.id]:null; const has=v!=null;
+  return `<div class="grow ${has?'done':''}" data-row="${g.id}">
+    <div class="gname"><b>${esc(g.nom)}</b><span>${+g.alumnes||0} matriculats</span></div>
+    <div class="stepper"><button data-a="al-step" data-g="${g.id}" data-d="-1" aria-label="Menys">−</button><input type="number" inputmode="numeric" min="0" data-in="al-count" data-g="${g.id}" value="${has?v:''}" placeholder="–" aria-label="Presents ${esc(g.nom)}"><button data-a="al-step" data-g="${g.id}" data-d="1" aria-label="Més">+</button></div>
+    <div class="qk"><button class="ghost" data-a="al-set" data-g="${g.id}" data-v="0">0</button><button class="ghost" data-a="al-set" data-g="${g.id}" data-v="${+g.alumnes||0}">Tots</button>${has?`<button class="ghost" data-a="al-set" data-g="${g.id}" data-v="">✕</button>`:''}</div>
+  </div>`;
+}
+function updateLive(){
+  const st=nivellStats();
+  const set=(k,html)=>document.querySelectorAll(`[data-live="${CSS.escape(k)}"]`).forEach(el=>{ el.innerHTML=html; });
+  const mat=sum(st.map(s=>s.mat)), pres=sum(st.map(s=>s.pres));
+  set('tot-pres',pres); set('tot-pct',pct(pres,mat)); set('tot-pend',sum(st.map(s=>s.pendents))); set('tot-agr',sum(st.map(s=>s.n)));
+  st.forEach(s=>{ set('pres:'+s.nv,s.pres); set('pend:'+s.nv,s.pendents?s.pendents+' pendents':'tot comptat ✓'); set('agr:'+s.nv,s.n); set('agrnote:'+s.nv,agrNote(s)); });
+  S.grups.forEach(g=>{ const r=document.querySelector(`[data-row="${g.id}"]`); if(r) r.classList.toggle('done',S.jornada&&S.jornada.alumnes[g.id]!=null); });
+  renderTop();
+}
+function welcome(){
+  return `<div class="card welcome"><div>
+      <h2>Organitza vagues i activitats de centre</h2>
+      <ol><li><b>Configura</b> una sola vegada per curs: grups, professorat i horaris (els pots importar d'iEduca en PDF).</li>
+      <li><b>Crea una jornada</b>: un dia de vaga (recompte d'alumnes i professorat present) o una activitat de centre (tot el claustre participa).</li>
+      <li><b>Assigna</b> el professorat hora a hora segons el seu horari, amb proposta automàtica.</li>
+      <li><b>Comparteix</b> el resum amb el claustre.</li></ol>
+    </div><div class="row-actions" style="flex-direction:column;align-items:stretch">
+      <button class="btn pri" data-a="tab" data-tab="configuracio">Configurar el centre</button>
+      <button class="btn" data-a="demo">Provar amb dades d'exemple</button>
+    </div></div>`;
+}
+
+/* ----- 2. Professorat ----- */
+function vProfs(){
+  if(!S.profs.length) return emptyView('Encara no hi ha professorat','Afegeix el professorat i el seu horari a Configuració (manualment o important un CSV).');
+  const P=S.profs.filter(p=>pEstat(p.id)==='P').length, V=S.profs.filter(p=>pEstat(p.id)==='V').length, N=S.profs.length-P-V;
+  const f=S.ui.pf; const A=jTipus()==='activitat';
+  const C=S.profs.filter(p=>pEstat(p.id)==='C').length;
+  if(A) return `<div class="kpis">
+    ${kpi('Participen',`${P+C}<small>/ ${S.profs.length}</small>`,'per defecte, tot el claustre','ok')}
+    ${kpi('Coordinen l\'activitat',`${C}`,C?'sense grup ni lloc assignat':'cap coordinador/a')}
+    ${kpi('Absents',`${V}`,V?'no se\'ls assignarà res':'ningú',V?'bad':'')}
+  </div>
+  <div class="toolbar">
+    <input class="search" type="search" placeholder="Cerca per nom o departament…" data-in="pcerca" value="${esc(S.ui.cerca)}">
+    <div class="chips">${[['tots','Tots'],['P','Presents'],['C','Coordinació'],['V','Absents']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-a="pf" data-f="${k}">${l}</button>`).join('')}</div>
+  </div>
+  <p class="hint" style="margin:-4px 0 12px">Tothom participa llevat que el marquis com a absent (baixa, sortida, formació…). Toca un nom per marcar hores concretes en què no hi és.</p>
+  <div class="plist" id="plist">${profList()}</div>`;
+  return `<div class="kpis">
+    ${kpi('Presents',`${P}<small>/ ${S.profs.length}</small>`,pct(P,S.profs.length)+' del claustre','ok')}
+    ${kpi('Fan vaga',`${V}`,pct(V,S.profs.length)+' del claustre',V?'bad':'')}
+    ${kpi('Sense marcar',`${N}`,N?'cal confirmar-ho':'tothom confirmat',N?'warn':'ok')}
+  </div>
+  <div class="toolbar">
+    <input class="search" type="search" placeholder="Cerca per nom o departament…" data-in="pcerca" value="${esc(S.ui.cerca)}">
+    <div class="chips">${[['tots','Tots'],['pend','Sense marcar'],['P','Presents'],['V','Vaga']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-a="pf" data-f="${k}">${l}</button>`).join('')}</div>
+    <button class="btn sm" data-a="prof-allP" ${N?'':'disabled'}>Marcar els ${N} pendents com a presents</button>
+  </div>
+  <p class="hint" style="margin:-4px 0 12px">Toca el nom d'un professor per veure el seu horari d'avui (${DIES[diaHorari()]||'–'}) i marcar hores concretes en què no hi és (p. ex. arriba més tard).</p>
+  <div class="plist" id="plist">${profList()}</div>`;
+}
+function profList(){
+  const q=norm(S.ui.cerca), f=S.ui.pf;
+  const list=S.profs.filter(p=>{
+    if(q && !norm(p.nom+' '+(p.dept||'')).includes(q)) return false;
+    const e=pEstat(p.id);
+    if(f==='pend') return !e; if(f==='P') return e==='P'; if(f==='V') return e==='V'; if(f==='C') return e==='C'; return true;
+  }).sort(profCmp);
+  if(!list.length) return `<p class="hint">Cap professor coincideix amb el filtre.</p>`;
+  const dia=diaHorari();
+  return list.map(p=>{
+    const e=pEstat(p.id), hrs=jTipus()==='activitat'?actFranges().filter(fr=>!!act(p.id,dia,fr.id)).length:lectFranges().filter(fr=>isWork(act(p.id,dia,fr.id))).length;
+    const exp=S.ui.exp[p.id], abs=pAbs(p.id);
+    return `<div class="card pcard ${e==='P'?'is-p':e==='V'?'is-v':e==='C'?'is-c':''}">
+      <div class="prow"><button class="pmain" data-a="prof-exp" data-id="${p.id}"><span class="av">${esc(inicials(p.nom))}</span><span style="min-width:0"><div class="pname">${esc(nomLl(p.nom))}</div><div class="pmeta">${p.dept?esc(p.dept)+' · ':''}${e==='C'?'<b style="color:var(--pri)">Coordinació</b> · ':''}${hrs} h avui${abs.length&&e==='P'?` · <b style="color:var(--warn)">${abs.length} h absent</b>`:''} ${exp?'▴':'▾'}</div></span></button>
+      <div class="seg"><button class="${e==='P'?'on p':''}" data-a="prof-set" data-id="${p.id}" data-e="P">Present</button>${jTipus()==='activitat'?`<button class="${e==='C'?'on c':''}" data-a="prof-set" data-id="${p.id}" data-e="C">Coordina</button>`:''}<button class="${e==='V'?'on v':''}" data-a="prof-set" data-id="${p.id}" data-e="V">${jTipus()==='activitat'?'Absent':'Vaga'}</button></div></div>
+      ${exp?`<div class="pdet">${S.config.franges.map(fr=>{
+        const a=act(p.id,dia,fr.id), isAbs=abs.includes(fr.id);
+        const cls=isAbs?'abs':(jTipus()==='activitat'?!!a:isWork(a))?'act':'none';
+        const can=e==='P';
+        return `<button class="fbox ${cls}" ${can?`data-a="prof-abs" data-id="${p.id}" data-f="${fr.id}" title="Marca/desmarca absència en aquesta hora"`:'disabled'}><b>${esc(fr.label)}</b><span>${isAbs?'No hi és':esc(actLabel(a))}</span></button>`;
+      }).join('')}${e==='P'?'':`<span class="hint" style="align-self:center">Marca'l com a present per indicar hores d'absència.</span>`}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* ----- 3. Assignació ----- */
+function vAssign(){
+  if(!S.grups.length||!S.profs.length) return emptyView('Falten dades','Per assignar professorat cal tenir grups, professorat i horari a Configuració.');
+  const lf=lectFranges();
+  if(!lf.length) return emptyView('No hi ha franges lectives','Defineix les franges horàries a Configuració.');
+  const ags=agrupacions(), st=nivellStats().filter(x=>x.n>0);
+  const head=`<div class="sec-h" style="margin-top:0"><div><h2>Assignació per hores</h2><p>Toca una casella per triar el professor. ${S.ui.incFree?'Disponible = present al centre.':'Disponible = present i amb classe o guàrdia aquella hora.'}</p></div>
+    <div class="row-actions">
+      <button class="btn acc" data-a="asg-auto-all" ${ags.length?'':'disabled'}>Proposta automàtica</button>
+      <button class="btn danger" data-a="asg-clear-all" ${ags.length?'':'disabled'}>Buidar tot</button>
+    </div></div>
+    <label class="check" style="margin-bottom:12px"><input type="checkbox" data-in="incfree" ${S.ui.incFree?'checked':''}> Incloure també professors presents sense classe ni guàrdia a aquella hora</label>`;
+  if(!ags.length) return head+`<div class="card empty"><h2>Encara no hi ha agrupacions</h2><p>Fes primer el recompte d'alumnes: les agrupacions per nivell surten d'aquí.</p><button class="btn pri" data-a="tab" data-tab="alumnes">Anar al recompte</button></div>`;
+  const reserves={};
+  const rows=lf.map(f=>{
+    const asg=(S.jornada&&S.jornada.assign&&S.jornada.assign[f.id])||{};
+    const av=disponibles(f.id,S.ui.incFree); const avIds=new Set(av.map(x=>x.p.id));
+    const where={}; ags.forEach(ag=>{ if(asg[ag.id]&&avIds.has(asg[ag.id])) where[asg[ag.id]]=ag.id; });
+    const cov=Object.keys(where).length;
+    reserves[f.id]=av.filter(x=>!where[x.p.id]).sort((x,y)=>profCmp(x.p,y.p)).map(x=>curt(x.p.nom));
+    const nApl=ags.filter(ag=>fApplies(f,ag.nv)).length;
+    const cells=ags.map(ag=>{
+      if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}" title="Aquest nivell no té classe en aquesta franja">—</td>`;
+      const cur=asg[ag.id], ok=cur&&avIds.has(cur);
+      const rank=x=>actNivell(x.a)===ag.nv?0:isClass(x.a)?1:x.a&&x.a.t==='GU'?2:3;
+      const lliures=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
+      const ocupats=av.filter(x=>where[x.p.id]&&x.p.id!==cur).sort((x,y)=>profCmp(x.p,y.p));
+      const opt=x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(actShort(x.a))}</option>`;
+      const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(ag.id)}" aria-label="${esc(agLabel(ag))} ${esc(f.label)}">
+        <option value="">${ok?'— Treure —':'Triar…'}</option>
+        ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(opt).join('')}</optgroup>`:''}
+        ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>`<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(agLabel(agById(where[x.p.id])))}</option>`).join('')}</optgroup>`:''}
+      </select>`;
+      return `<td class="cell ${ok?'p':'miss'} ${ag.idx===1?'nvs':''}" title="${ok?esc(profById(cur).nom):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${sel}</td>`;
+    }).join('');
+    const cls=cov>=nApl?'ok':cov?'warn':'bad';
+    return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div></td>${cells}</tr>`;
+  }).join('');
+  const table=`<div class="card tblw"><table class="t qg qa"><thead>
+    <tr><th class="hcol" rowspan="2">Hora</th>${st.map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
+    <tr>${ags.map(ag=>`<th class="${ag.idx===1?'nvs':''}">G${ag.idx}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
+  </thead><tbody>${rows}</tbody></table></div>`;
+  const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva / guàrdia) per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+esc(reserves[f.id].join(', ')):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
+  return head+table+resv;
+}
+
+/* ----- 4. Resum ----- */
+function vResum(){
+  if(!S.grups.length) return welcome();
+  const st=nivellStats(), lf=lectFranges(), ags=agrupacions();
+  const mat=sum(st.map(s=>s.mat)), pres=sum(st.map(s=>s.pres));
+  const P=S.profs.filter(p=>pEstat(p.id)==='P'), V=S.profs.filter(p=>pEstat(p.id)==='V').length;
+  const fullCov=ags.length?lf.filter(f=>{ const c=coverage(f.id); return c.cov>=c.need; }).length:0;
+  const asg=fid=>(S.jornada&&S.jornada.assign&&S.jornada.assign[fid])||{};
+  const tNiv=`<div class="card tblw"><table class="t"><thead><tr><th>Nivell</th><th class="c">Matriculats</th><th class="c">Presents</th><th class="c">%</th><th class="c">Agrupacions</th><th class="c">Alumnes/agrup.</th></tr></thead><tbody>
+    ${st.map(s=>`<tr><td><b>${esc(s.nv)}</b>${s.pendents?` <span class="badge">${s.pendents} pendents</span>`:''}</td><td class="c num">${s.mat}</td><td class="c num"><b>${s.pres}</b></td><td class="c num">${pct(s.pres,s.mat)}</td><td class="c num"><b>${s.n}</b></td><td class="c num">${s.n?'≈ '+Math.ceil(s.pres/s.n):'–'}</td></tr>`).join('')}
+    <tr class="tot"><td>Total</td><td class="c num"><b>${mat}</b></td><td class="c num"><b>${pres}</b></td><td class="c num"><b>${pct(pres,mat)}</b></td><td class="c num"><b>${ags.length}</b></td><td></td></tr>
+  </tbody></table></div>`;
+  const stN=st.filter(x=>x.n>0);
+  const avCache={}, reserves={}; lf.forEach(f=>{ avCache[f.id]=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id)); });
+  const tGrid=ags.length?`<div class="card tblw"><table class="t qg"><thead>
+    <tr><th class="hcol" rowspan="2">Hora</th>${stN.map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
+    <tr>${ags.map(ag=>`<th class="${ag.idx===1?'nvs':''}">G${ag.idx}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
+  </thead><tbody>
+    ${lf.map(f=>{ const a=asg(f.id); const used=new Set();
+      const cells=ags.map(ag=>{ if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}">—</td>`; const pid=a[ag.id]; const ok=pid&&avCache[f.id].has(pid); if(ok) used.add(pid);
+        return ok?`<td class="p ${ag.idx===1?'nvs':''}" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss ${ag.idx===1?'nvs':''}">Sense prof.</td>`; }).join('');
+      reserves[f.id]=[...avCache[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>curt(p.nom));
+      return `<tr><td class="hcol">${esc(f.label)}</td>${cells}</tr>`; }).join('')}
+  </tbody></table></div>
+  <div class="card resv"><div class="resv-h">Professorat de reserva / guàrdia per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+esc(reserves[f.id].join(', ')):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`:`<p class="hint">Encara no hi ha agrupacions (fes el recompte d'alumnes).</p>`;
+  const tProf=P.length?`<div class="card tblw"><table class="t"><thead><tr><th>Professor/a</th>${lf.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
+    ${P.slice().sort(profCmp).map(p=>`<tr><td><b>${esc(nomLl(p.nom))}</b></td>${lf.map(f=>{
+      const cell=profCell(p.id,f.id);
+      return `<td class="${cell.cls}">${esc(cell.txt)}</td>`;
+    }).join('')}</tr>`).join('')}
+  </tbody></table></div>`:`<p class="hint">Encara no hi ha professorat marcat com a present.</p>`;
+  return `<div class="kpis">
+    ${kpi('Alumnes presents',`${pres}<small>/ ${mat}</small>`,pct(pres,mat)+" d'assistència")}
+    ${kpi('Professorat present',`${P.length}<small>/ ${S.profs.length}</small>`,`${V} fan vaga`)}
+    ${kpi('Agrupacions',`${ags.length}`,`ràtio màxima ${S.config.ratio}`)}
+    ${kpi('Hores cobertes',`${fullCov}<small>/ ${lf.length}</small>`,'franges amb totes les agrupacions cobertes',ags.length&&fullCov<lf.length?'warn':'ok')}
+  </div>
+  <div class="sec-h"><div><h2>Resum de la jornada · ${fmtDate(jDate())}</h2><p>Per enviar al claustre o a l'equip directiu.</p></div>
+    <div class="row-actions"><button class="btn pri" data-a="copy-resum">Copiar resum (text)</button><button class="btn" data-a="dl-csv">Descarregar quadre (CSV)</button></div></div>
+  ${tNiv}
+  <div class="sec-h"><div><h2>Quadre d'agrupacions per hora</h2></div></div>${tGrid}
+  <div class="sec-h"><div><h2>Què fa cada professor/a</h2><p>Reserva = disponible a aquesta hora però sense agrupació assignada.</p></div></div>${tProf}`;
+}
+function profCell(pid,fid){
+  const a=(S.jornada&&S.jornada.assign&&S.jornada.assign[fid])||{};
+  const ags=agrupacions(); const ag=ags.find(x=>a[x.id]===pid);
+  const avail=disponibles(fid,S.ui.incFree).some(x=>x.p.id===pid);
+  if(pAbs(pid).includes(fid)) return {txt:'Absent',cls:'abs'};
+  if(ag&&avail) return {txt:agLabel(ag),cls:''};
+  if(avail) return {txt:'Reserva',cls:'res'};
+  return {txt:'–',cls:'abs'};
+}
+function resumText(){
+  const st=nivellStats(), lf=lectFranges(), ags=agrupacions();
+  const mat=sum(st.map(s=>s.mat)), pres=sum(st.map(s=>s.pres));
+  const P=S.profs.filter(p=>pEstat(p.id)==='P').length;
+  let t=`DIA DE VAGA · ${fmtDate(jDate())}${S.config.centre?' · '+S.config.centre:''}\n\n`;
+  t+=`ALUMNAT: ${pres}/${mat} presents (${pct(pres,mat)})\n`;
+  st.forEach(s=>{ t+=`· ${s.nv}: ${s.pres} alumnes → ${s.n} agrupaci${s.n===1?'ó':'ons'}\n`; });
+  t+=`\nPROFESSORAT: ${P}/${S.profs.length} presents\n`;
+  lf.forEach(f=>{
+    const a=(S.jornada&&S.jornada.assign&&S.jornada.assign[f.id])||{};
+    const av=disponibles(f.id,S.ui.incFree); const ids=new Set(av.map(x=>x.p.id));
+    t+=`\n${f.label}\n`;
+    ags.filter(ag=>fApplies(f,ag.nv)).forEach(ag=>{ const pid=a[ag.id]; t+=`· ${agLabel(ag)}: ${pid&&ids.has(pid)?profById(pid).nom:'SENSE PROFESSOR'}\n`; });
+    const used=new Set(ags.map(ag=>a[ag.id]).filter(Boolean));
+    const r=av.filter(x=>!used.has(x.p.id)).sort((x,y)=>profCmp(x.p,y.p)).map(x=>x.p.nom);
+    if(r.length) t+=`· Reserva/guàrdia: ${r.join(', ')}\n`;
+  });
+  return t;
+}
+function csvQuadre(){
+  const lf=lectFranges(), ags=agrupacions();
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[['Agrupació','Alumnes',...lf.map(f=>f.label)]];
+  ags.forEach(ag=>{
+    rows.push([agLabel(ag),ag.alumnes,...lf.map(f=>{ if(!fApplies(f,ag.nv)) return '—'; const a=(S.jornada&&S.jornada.assign&&S.jornada.assign[f.id])||{}; const pid=a[ag.id]; return pid&&disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid)?profById(pid).nom:'SENSE PROFESSOR'; })]);
+  });
+  rows.push([]); rows.push(['Professor/a','',...lf.map(f=>f.label)]);
+  S.profs.filter(p=>pEstat(p.id)==='P').sort(profCmp).forEach(p=>rows.push([nomLl(p.nom),'',...lf.map(f=>profCell(p.id,f.id).txt)]));
+  return '﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n');
+}
+
+/* ----- 5. Configuració ----- */
+function vConfig(){
+  const d=new Date(jDate()+'T12:00:00').getDay();
+  const jd=(S.jornada&&S.jornada.diaHorari)||'';
+  const nh=pid=>Object.values(S.horari[pid]||{}).filter(v=>v==='GU'||/^(G|C):/.test(String(v))).length;
+  return `
+  <div class="cfg-grid">
+    <div class="card pad"><h2 class="card-t">Jornada oberta</h2>
+      ${S.jornada?`<div class="field"><label>Jornada</label><div><b>${esc(jTipus()==='activitat'?jTitol(S.jornada):'Dia de vaga')}</b> · ${DIES[d]} ${fmtDate(jDate())} <button class="linkb" data-a="tab" data-tab="inici">canviar</button></div></div>
+      <div class="field"><label for="diah">Horari que s'aplica</label><select id="diah" data-in="diah">
+        <option value="">Automàtic (${DIES[d]})</option>${[1,2,3,4,5].map(i=>`<option value="${i}" ${+jd===i?'selected':''}>${DIES[i]}</option>`).join('')}</select></div>
+      <p class="hint">Útil si la jornada cau en cap de setmana o voleu fer servir l'horari d'un altre dia.</p>`:`<p class="hint">No hi ha cap jornada oberta. Crea-la o obre-la a <button class="linkb" data-a="tab" data-tab="inici">Inici</button>.</p>`}
+    </div>
+    <div class="card pad"><h2 class="card-t">Centre</h2>
+      <div class="field"><label for="cn">Nom del centre</label><input id="cn" type="text" data-in="cfg-centre" value="${esc(S.config.centre)}" placeholder="Institut…"></div>
+      <div class="field"><label for="cr">Ràtio màxima d'alumnes per agrupació</label><input id="cr" type="number" min="1" data-in="cfg-ratio" value="${S.config.ratio}"></div>
+      <p class="hint">S'utilitza per proposar quantes agrupacions fer a cada nivell (presents ÷ ràtio, arrodonit amunt).</p>
+    </div>
+  </div>
+
+  <div class="sec-h"><div><h2>Franges horàries</h2><p>El número de franja serveix per importar l'horari. Les no lectives (pati) no s'assignen. Si una franja només és per a alguns nivells (p. ex. patis desplaçats), marca'ls; si no en marques cap, és per a tots.</p></div>
+    <div class="row-actions">${S.grups.length&&Object.keys(S.horari).length?'<button class="btn sm" data-a="fr-detect">Detectar nivells segons els horaris</button>':''}<button class="btn sm" data-a="add-fr">+ Afegir franja</button></div></div>
+  <div class="card tblw"><table class="t"><thead><tr><th style="width:40px">Nº</th><th>Franja</th><th class="c">Lectiva</th><th>Nivells</th><th style="width:140px"></th></tr></thead><tbody>
+    ${S.config.franges.map((f,i)=>`<tr><td class="c"><b>${i+1}</b></td><td><input type="text" data-in="fr-label" data-f="${f.id}" value="${esc(f.label)}"></td><td class="c"><input type="checkbox" data-in="fr-lect" data-f="${f.id}" ${f.lect?'checked':''}></td>
+      <td>${f.lect?`<div class="nvchips">${nivells().map(nv=>`<button class="nvc ${(f.nivells||[]).includes(nv)?'on':''}" data-a="fr-niv" data-f="${f.id}" data-nv="${esc(nv)}">${esc(nv)}</button>`).join('')}${(f.nivells||[]).length?'':'<span class="hint">Tots</span>'}</div>`:''}</td>
+      <td><div class="row-actions"><button class="ghost" data-a="mv-fr" data-f="${f.id}" data-d="-1" ${i?'':'disabled'}>↑</button><button class="ghost" data-a="mv-fr" data-f="${f.id}" data-d="1" ${i<S.config.franges.length-1?'':'disabled'}>↓</button><button class="ghost" data-a="del-fr" data-f="${f.id}">Esborrar</button></div></td></tr>`).join('')}
+  </tbody></table></div>
+
+  <div class="sec-h"><div><h2>Grups classe (${S.grups.length})</h2><p>El nivell agrupa els grups (p. ex. «2n ESO»). El tutor/a és opcional: a les activitats de centre se li proposa acompanyar el seu grup.</p></div>
+    <div class="row-actions"><button class="btn sm" data-a="imp" data-k="grups">Importar CSV / enganxar</button><button class="btn sm" data-a="add-g">+ Afegir grup</button></div></div>
+  <div class="card tblw">${S.grups.length?`<table class="t"><thead><tr><th>Grup</th><th>Nivell</th><th>Matriculats</th><th>Tutor/a</th><th></th></tr></thead><tbody>
+    ${S.grups.slice().sort((a,b)=>natCmp(a.nom,b.nom)).map(g=>`<tr><td><input type="text" data-in="g-nom" data-id="${g.id}" value="${esc(g.nom)}"></td><td><input type="text" data-in="g-niv" data-id="${g.id}" value="${esc(g.nivell)}"></td><td><input type="number" min="0" data-in="g-alu" data-id="${g.id}" value="${+g.alumnes||0}"></td><td><select class="tsel" data-in="g-tut" data-id="${g.id}"><option value="">—</option>${profOpts(g.tutor)}</select></td><td style="width:90px"><button class="ghost" data-a="del-g" data-id="${g.id}">Esborrar</button></td></tr>`).join('')}
+  </tbody></table>`:'<p class="pad hint" style="margin:0">Cap grup. Importa\'ls o afegeix-los un a un.</p>'}</div>
+
+  <div class="sec-h"><div><h2>Professorat (${S.profs.length})</h2><p>Ordenats per cognom. Si algú té nom compost, escriu-lo com «Cognoms, Nom» (p. ex. «Puig Soler, Maria Rosa»).</p></div>
+    <div class="row-actions"><button class="btn sm acc" data-a="pdf-imp">Importar horaris (PDF)</button><button class="btn sm" data-a="imp" data-k="horari">Importar horari (Excel/CSV)</button><button class="btn sm" data-a="imp" data-k="profs">Importar llista</button><button class="btn sm" data-a="add-p">+ Afegir professor</button></div></div>
+  <div class="card tblw">${S.profs.length?`<table class="t"><thead><tr><th>Nom</th><th>Departament</th><th class="c">h/setmana</th><th></th></tr></thead><tbody>
+    ${S.profs.slice().sort(profCmp).map(p=>`<tr><td><input type="text" data-in="p-nom" data-id="${p.id}" value="${esc(p.nom)}"></td><td><input type="text" data-in="p-dept" data-id="${p.id}" value="${esc(p.dept||'')}"></td><td class="c num">${nh(p.id)}</td><td style="width:190px"><div class="row-actions"><button class="ghost" data-a="hor" data-id="${p.id}">Horari</button><button class="ghost" data-a="del-p" data-id="${p.id}">Esborrar</button></div></td></tr>`).join('')}
+  </tbody></table>`:'<p class="pad hint" style="margin:0">Cap professor. Importa l\'horari (crea el professorat automàticament) o afegeix-los un a un.</p>'}</div>
+
+  <div class="sec-h"><div><h2>Dades</h2><p>${S.mode==='db'?(caps.fb?'Les dades es desen a la base de dades del centre (Firebase) i només hi poden entrar els comptes autoritzats.':'Les dades es desen al núvol i les veu qui tingui accés a aquesta app.'):'Les dades es desen en aquest navegador.'}</p></div></div>
+  <div class="card pad">${caps.fb?`<p style="margin-top:0">Has entrat com a <b>${esc(S.userEmail||'')}</b>. <button class="linkb" data-a="sortir">Tancar la sessió</button></p>`:''}<div class="row-actions">
+    <button class="btn" data-a="export">Descarregar còpia de seguretat</button>
+    <button class="btn" data-a="copy-json">Copiar còpia (JSON)</button>
+    <button class="btn" data-a="imp" data-k="json">Restaurar còpia</button>
+    <button class="btn" data-a="demo">Carregar dades d'exemple</button>
+    <button class="btn danger" data-a="wipe">Esborrar-ho tot</button>
+  </div></div>`;
+}
+
+function rangF(f){ const m=String(f.label).match(/(\d{1,2})[:.h](\d{2})\D+(\d{1,2})[:.h](\d{2})/); return m?[(+m[1])*60+(+m[2]),(+m[3])*60+(+m[4])]:null; }
+function solapen(a,b){ const ra=rangF(a), rb=rangF(b); return !!ra&&!!rb&&ra[0]<rb[1]&&rb[0]<ra[1]; }
+function detectNivells(totes){
+  const lf=lectFranges(), all=nivells(); let n=0;
+  lf.forEach(f=>{
+    if(!lf.some(o=>o!==f&&solapen(f,o))) return;           // només franges que se solapen amb una altra
+    if(!totes&&(f.nivells||[]).length&&!f.nivAuto) return;   // respecta els canvis fets a mà
+    const cnt={};
+    Object.values(S.horari).forEach(h=>{ for(let d=1;d<=5;d++){ const v=h[d+'-'+f.id]; if(!v) continue; let nv=null;
+      if(v.startsWith('G:')){ const g=grupById(v.slice(2)); nv=g&&g.nivell; } else if(v.startsWith('C:')) nv=v.slice(2);
+      if(nv) cnt[nv]=(cnt[nv]||0)+1; } });
+    const nivs=all.filter(x=>cnt[x]);
+    if(nivs.length&&nivs.length<all.length&&JSON.stringify(nivs)!==JSON.stringify(f.nivells||[])){ f.nivells=nivs; f.nivAuto=true; n++; }
+  });
+  if(n) saveConfig();
+  return n;
+}
+
+/* ----- Inici: jornades ----- */
+function vInici(){
+  const list=Object.entries(S.jornades).filter(([k,j])=>j).sort((a,b)=>String(b[1].data||b[0]).localeCompare(String(a[1].data||a[0])));
+  const setup=!S.grups.length||!S.profs.length;
+  const card=([id,j])=>{
+    const a=j.tipus==='activitat'; const dt=j.data||id.slice(0,10); const d=new Date(dt+'T12:00:00').getDay();
+    let stats='';
+    if(a){ const cols=(j.cols||[]); const n=sum(cols.map(c=>+c.n||0)); const fr=(j.fr||[]).length; const abs=Object.values(j.profs||{}).filter(p=>p.e==='V').length; const co=Object.values(j.profs||{}).filter(p=>p.e==='C').length;
+      stats=`${cols.length} elements · ${n} places · ${fr} hores${co?` · ${co} a coordinació`:''}${abs?` · ${abs} absents`:''}`; }
+    else { const al=Object.values(j.alumnes||{}); const pres=sum(al); const P=Object.values(j.profs||{}).filter(p=>p.e==='P').length;
+      stats=al.length?`${pres} alumnes presents · ${P} professors presents`:'Sense recompte encara'; }
+    return `<div class="card jcard ${id===S.jornadaId?'cur':''}" data-a="open-j" data-id="${esc(id)}" role="button" tabindex="0">
+      <div class="jcard-l"><span class="jt ${a?'act':'vag'}">${a?'Activitat':'Vaga'}</span>
+        <div><div class="jcard-t">${esc(jTitol(j))}</div><div class="jcard-s">${DIES[d]} ${fmtDate(dt)} · ${esc(stats)}</div></div></div>
+      <div class="row-actions">${id===S.jornadaId?'<span class="badge man">Oberta</span>':''}<button class="ghost" data-a="del-j" data-id="${esc(id)}">Esborrar</button></div></div>`;
+  };
+  return `${setup?welcome():''}
+  <div class="sec-h" style="margin-top:0"><div><h2>Jornades</h2><p>Cada jornada és un dia de vaga o una activitat de centre. Els grups, el professorat i els horaris són comuns a totes.</p></div>
+    <button class="btn acc" data-a="nova-j" ${setup?'disabled':''}>+ Nova jornada</button></div>
+  ${list.length?`<div class="jlist">${list.map(card).join('')}</div>`:`<div class="card empty"><h2>Encara no hi ha cap jornada</h2><p>Crea un dia de vaga o una activitat de centre per començar.</p><button class="btn acc" data-a="nova-j" ${setup?'disabled':''}>+ Nova jornada</button></div>`}
+  ${!setup&&!list.some(([k,j])=>j.tipus==='activitat')?`<p class="hint mt">Vols veure com funciona una activitat de centre? <button class="linkb" data-a="demo-act">Crea'n una d'exemple</button> amb el professorat actual.</p>`:''}`;
+}
+function novaJornadaModal(){
+  openModal(`<div class="modal-h"><h2>Nova jornada</h2><button class="x" data-a="close">×</button></div>
+  <div class="modal-b">
+    <div class="njg"><button class="njt on" data-a="nj-tipus" data-t="vaga"><b>Dia de vaga</b><span>Recompte d'alumnes per grup, agrupacions per nivell i professorat present segons l'horari.</span></button>
+      <button class="njt" data-a="nj-tipus" data-t="activitat"><b>Activitat de centre</b><span>Tot el professorat participa: assignes cada professor a un grup o lloc, segons el seu horari.</span></button></div>
+    <div class="field mt"><label for="njData">Data</label><input type="date" id="njData" value="${todayISO()}"></div>
+    <div class="field" id="njNomF" style="display:none"><label for="njNom">Nom de l'activitat</label><input type="text" id="njNom" placeholder="p. ex. Jornada esportiva, Sant Jordi, La Marató…"></div>
+  </div>
+  <div class="modal-f"><button class="btn" data-a="close">Cancel·lar</button><button class="btn acc" data-a="nj-go">Crear jornada</button></div>`);
+}
+function crearJornada(){
+  const t=(document.querySelector('.njt.on')||{}).dataset?.t||'vaga'; const dt=$('#njData').value; if(!dt){ toast('Tria una data.'); return; }
+  if(t==='vaga'){
+    const ex=Object.entries(S.jornades).find(([k,j])=>j&&(j.tipus||'vaga')==='vaga'&&(j.data||k.slice(0,10))===dt);
+    closeModal();
+    if(ex){ setJornada(ex[0]); toast('Ja hi havia una jornada de vaga aquest dia: s\'ha obert.'); }
+    else { S.jornadaId=dt; S.jornada={tipus:'vaga',data:dt,alumnes:{},profs:{},agr:{},assign:{},diaHorari:null}; saveJ(); }
+    S.ui.tab='alumnes';
+  } else {
+    const nom=$('#njNom').value.trim()||'Activitat de centre';
+    closeModal();
+    S.jornadaId=dt+'_a'+uid();
+    S.jornada={tipus:'activitat',data:dt,nom,profs:{},assign:{},diaHorari:null,fr:lectFranges().map(f=>f.id),
+      cols:S.grups.slice().sort(grupCmp).map(g=>({id:'g_'+g.id,tipus:'grup',grup:g.id,nom:g.nom,n:1}))};
+    saveJ(); S.ui.tab='activitat';
+  }
+  history.replaceState(null,'','#'+S.ui.tab); render(); window.scrollTo(0,0);
+}
+
+/* ----- Activitat de centre: model ----- */
+const actFranges = () => { const ids=(S.jornada&&S.jornada.fr)||[]; return S.config.franges.filter(f=>ids.includes(f.id)); };
+const actCols = () => ((S.jornada&&S.jornada.cols)||[]).filter(c=>(+c.n||0)>0);
+function colNom(c){ if(c.tipus==='grup'){ const g=grupById(c.grup); return g?g.nom:(c.nom||'Grup'); } return c.nom||'Lloc'; }
+function actSlots(){ const out=[]; actCols().forEach(c=>{ for(let k=1;k<=(+c.n||0);k++) out.push({id:c.id+'#'+k,col:c,k}); }); return out; }
+function actCoverage(fid){
+  const asg=(S.jornada&&S.jornada.assign&&S.jornada.assign[fid])||{};
+  const av=disponibles(fid,S.ui.incFree), ids=new Set(av.map(x=>x.p.id));
+  const slots=actSlots().filter(s=>slotApplies(s,fid)); return {cov:slots.filter(s=>asg[s.id]&&ids.has(asg[s.id])).length,need:slots.length,av:av.length};
+}
+function slotApplies(sl,f){ if(sl.col.tipus!=='grup') return true; const g=grupById(sl.col.grup); return !g||fApplies(f,g.nivell); }
+const teachesAt=(pid,gid,dia,fid)=>{ const a=act(pid,dia,fid); return !!a&&a.t==='G'&&a.grup===gid; };
+
+/* ----- 1. Activitat ----- */
+function vActivitat(){
+  if(!S.grups.length||!S.profs.length) return emptyView('Falten dades','Per organitzar una activitat cal tenir grups, professorat i horaris a Configuració.');
+  const j=ensureJ(); const d=new Date(jDate()+'T12:00:00').getDay();
+  const fr=actFranges(); const cols=(j.cols||[]); const slots=actSlots();
+  const frIds=new Set(j.fr||[]);
+  const need=slots.length;
+  const tbl=cols.length?`<div class="card tblw"><table class="t"><thead><tr><th>Què cal cobrir</th><th>Tipus</th><th>Tutor/a</th><th class="c">Professors</th><th></th></tr></thead><tbody>
+    ${cols.map(c=>{ const g=c.tipus==='grup'?grupById(c.grup):null; const tut=g&&g.tutor?profById(g.tutor):null;
+      return `<tr><td>${c.tipus==='grup'?`<b>${esc(colNom(c))}</b>`:`<input type="text" data-in="act-cnom" data-c="${esc(c.id)}" value="${esc(c.nom)}">`}</td>
+      <td><span class="badge ${c.tipus==='grup'?'':'man'}">${c.tipus==='grup'?'Grup':'Lloc / tasca'}</span></td>
+      <td class="hint">${tut?esc(nomLl(tut.nom)):c.tipus==='grup'?'<span title="Es pot indicar a Configuració → Grups">—</span>':''}</td>
+      <td class="c"><div class="stepper sm" style="display:inline-flex"><button data-a="act-deln" data-c="${esc(c.id)}" data-d="-1">−</button><b>${+c.n||0}</b><button data-a="act-deln" data-c="${esc(c.id)}" data-d="1">+</button></div></td>
+      <td style="width:80px"><button class="ghost" data-a="act-del" data-c="${esc(c.id)}">Treure</button></td></tr>`; }).join('')}
+  </tbody></table></div>`:`<div class="card empty" style="padding:28px"><p>Encara no hi ha res a cobrir. Afegeix tots els grups (cada grup acompanyat per un professor) i/o llocs concrets.</p></div>`;
+  const bal=fr.length&&need?`<div class="card tblw mt"><table class="t"><thead><tr><th>Hora</th><th class="c">Places a cobrir</th><th class="c">Professors al centre</th><th class="c">Marge</th></tr></thead><tbody>
+    ${fr.map(f=>{ const av=disponibles(f.id,S.ui.incFree).length; const need=slots.filter(s=>slotApplies(s,f)).length; const m=av-need; return `<tr><td><b>${esc(f.label)}</b></td><td class="c num">${need}</td><td class="c num">${av}</td><td class="c num" style="color:${m<0?'var(--bad)':'var(--ok)'};font-weight:650">${m>=0?'+'+m:m}</td></tr>`; }).join('')}
+  </tbody></table></div><p class="hint">«Professors al centre» = presents que, segons el seu horari del ${DIES[diaHorari()]||'dia'}, tenen alguna cosa en aquella hora (classe, guàrdia, reunió…).</p>`:'';
+  return `<div class="cfg-grid">
+    <div class="card pad"><h2 class="card-t">Activitat</h2>
+      <div class="field"><label for="actNom">Nom</label><input id="actNom" type="text" data-in="act-nom" value="${esc(j.nom||'')}" placeholder="Jornada esportiva, Sant Jordi…"></div>
+      <div class="field"><label for="actData">Data</label><input id="actData" type="date" data-in="act-data" value="${esc(jDate())}"></div>
+      <p class="hint" style="margin:0">S'aplica l'horari del ${DIES[diaHorari()]||'–'}${S.jornada.diaHorari?' (triat a Configuració)':''}.</p>
+    </div>
+    <div class="card pad"><h2 class="card-t">Coordinació de l'activitat</h2>
+      ${coordCard()}
+    </div>
+    <div class="card pad"><h2 class="card-t">Hores de l'activitat</h2>
+      <div class="frchk">${S.config.franges.map(f=>`<label class="check frc ${frIds.has(f.id)?'on':''}"><input type="checkbox" data-in="act-fr" data-f="${f.id}" ${frIds.has(f.id)?'checked':''}> ${esc(f.label)}</label>`).join('')}</div>
+      <p class="hint" style="margin:8px 0 0">Marca les franges en què es fa l'activitat i cal professorat.</p>
+    </div>
+  </div>
+  <div class="sec-h"><div><h2>Què cal cobrir (${cols.length})</h2><p>${need} professors per hora. Cada professor es queda amb el mateix grup o lloc tota la jornada sempre que el seu horari ho permeti.</p></div>
+    <div class="row-actions"><button class="btn sm" data-a="act-addg">+ Tots els grups</button><button class="btn sm" data-a="act-addl">+ Lloc o tasca</button>${cols.length?'<button class="btn sm danger" data-a="act-delall">Treure-ho tot</button>':''}</div></div>
+  ${tbl}${bal}
+  ${need&&fr.length?`<div class="row-actions mt"><button class="btn acc" data-a="tab" data-tab="assignacio">Anar a l'assignació →</button></div>`:''}`;
+}
+
+function coordCard(){
+  const co=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
+  const altres=S.profs.filter(p=>pEstat(p.id)==='P').sort(profCmp);
+  return `${co.length?`<div class="cchips">${co.map(p=>`<span class="cchip">${esc(nomLl(p.nom))}<button data-a="coord-del" data-id="${p.id}" aria-label="Treure">✕</button></span>`).join('')}</div>`:'<p class="hint" style="margin-top:0">Encara no hi ha cap coordinador/a.</p>'}
+    <div class="field" style="margin:0"><select data-in="coord-add" aria-label="Afegir coordinador/a"><option value="">+ Afegir coordinador/a…</option>${altres.map(p=>`<option value="${p.id}">${esc(nomLl(p.nom))}</option>`).join('')}</select></div>
+    <p class="hint" style="margin:8px 0 0">Participen tota la jornada però no se'ls assigna cap grup ni lloc.</p>`;
+}
+
+/* ----- 3. Assignació (activitat) ----- */
+function autoAssignAct(){
+  const j=ensureJ(); const fr=actFranges(); const slots=actSlots(); const dia=diaHorari();
+  const av={}; fr.forEach(f=>{ av[f.id]=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id)); });
+  const used={}; fr.forEach(f=>used[f.id]=new Set());
+  const res={}; fr.forEach(f=>res[f.id]={});
+  const freeHours=pid=>fr.filter(f=>av[f.id].has(pid)&&!used[f.id].has(pid)).length;
+  const teachCount=(pid,gid)=>fr.filter(f=>teachesAt(pid,gid,dia,f.id)).length;
+  // 1. titular per a cada plaça (prioritat: grups amb tutor, després grups, després llocs)
+  const order=slots.slice().sort((a,b)=>{ const r=s=>s.col.tipus==='grup'?(grupById(s.col.grup)&&grupById(s.col.grup).tutor&&s.k===1?0:1):2; return r(a)-r(b); });
+  order.forEach(sl=>{
+    const gid=sl.col.tipus==='grup'?sl.col.grup:null; const g=gid?grupById(gid):null;
+    let best=null,bs=-1; const frS=fr.filter(f=>slotApplies(sl,f));
+    S.profs.forEach(p=>{ const fh=frS.filter(f=>av[f.id].has(p.id)&&!used[f.id].has(p.id)).length; if(!fh) return;
+      let sc=fh*10; if(g&&g.tutor===p.id&&sl.k===1) sc+=1000; if(gid) sc+=teachCount(p.id,gid)*6;
+      if(sc>bs){ bs=sc; best=p.id; } });
+    if(best) fr.forEach(f=>{ if(slotApplies(sl,f)&&av[f.id].has(best)&&!used[f.id].has(best)){ res[f.id][sl.id]=best; used[f.id].add(best); } });
+  });
+  // 2. forats: busca un segon titular que cobreixi tots (o el màxim) dels forats d'aquella plaça
+  let changed=true, guard=0;
+  while(changed&&guard++<20){ changed=false;
+    order.forEach(sl=>{ const gid=sl.col.tipus==='grup'?sl.col.grup:null;
+      const gaps=fr.filter(f=>slotApplies(sl,f)&&!res[f.id][sl.id]); if(!gaps.length) return;
+      let best=null,bs=0;
+      S.profs.forEach(p=>{ const c=gaps.filter(f=>av[f.id].has(p.id)&&!used[f.id].has(p.id)).length; if(!c) return;
+        const sc=c*100+(gid?gaps.filter(f=>teachesAt(p.id,gid,dia,f.id)).length*10:0)-freeHours(p.id);
+        if(best===null||sc>bs){ bs=sc; best=p.id; } });
+      if(best){ gaps.forEach(f=>{ if(av[f.id].has(best)&&!used[f.id].has(best)){ res[f.id][sl.id]=best; used[f.id].add(best); } }); changed=true; }
+    });
+  }
+  j.assign=res;
+  const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); const cov=fr.reduce((a,f)=>a+Object.keys(res[f.id]).length,0);
+  const per={}; fr.forEach(f=>Object.entries(res[f.id]).forEach(([s,p])=>{ (per[p]=per[p]||new Set()).add(s); }));
+  const cont=Object.entries(per).filter(([p,set])=>set.size===1).length;
+  return {cov,tot,cont};
+}
+function vAssignAct(){
+  const fr=actFranges(), slots=actSlots(), cols=actCols();
+  if(!fr.length||!slots.length) return `<div class="card empty"><h2>Falta definir l'activitat</h2><p>Indica les hores de l'activitat i què cal cobrir (grups o llocs).</p><button class="btn pri" data-a="tab" data-tab="activitat">Anar a Activitat</button></div>`;
+  const dia=diaHorari(); const multi=cols.some(c=>(+c.n||0)>1);
+  const head=`<div class="sec-h" style="margin-top:0"><div><h2>Assignació · ${esc(jTitol(S.jornada))}</h2><p>Toca una casella per triar el professor. Primer surten els que ja hi són a l'hora anterior o posterior, el tutor/a i qui fa classe a aquell grup.</p></div>
+    <div class="row-actions"><button class="btn acc" data-a="asg-auto-act">Proposta automàtica</button><button class="btn danger" data-a="asg-clear-all">Buidar tot</button></div></div>
+    <label class="check" style="margin-bottom:12px"><input type="checkbox" data-in="incfree" ${S.ui.incFree?'checked':''}> Incloure també professors presents que no tenen res a l'horari a aquella hora</label>`;
+  const asgAt=fid=>(S.jornada.assign&&S.jornada.assign[fid])||{};
+  const reserves={};
+  const rows=fr.map((f,fi)=>{
+    const asg=asgAt(f.id); const av=disponibles(f.id,S.ui.incFree); const avIds=new Set(av.map(x=>x.p.id));
+    const where={}; slots.forEach(sl=>{ if(asg[sl.id]&&avIds.has(asg[sl.id])) where[asg[sl.id]]=sl.id; });
+    const cov=Object.keys(where).length;
+    reserves[f.id]=av.filter(x=>!where[x.p.id]).sort((x,y)=>profCmp(x.p,y.p)).map(x=>curt(x.p.nom));
+    const prevA=fi>0?asgAt(fr[fi-1].id):{}, nextA=fi<fr.length-1?asgAt(fr[fi+1].id):{};
+    const nApl=slots.filter(sl=>slotApplies(sl,f)).length;
+    const cells=slots.map(sl=>{
+      if(!slotApplies(sl,f)) return `<td class="na ${sl.k===1?'nvs':''}" title="Aquest grup no té classe en aquesta franja">—</td>`;
+      const cur=asg[sl.id], ok=cur&&avIds.has(cur); const gid=sl.col.tipus==='grup'?sl.col.grup:null; const g=gid?grupById(gid):null;
+      const rank=x=>(prevA[sl.id]===x.p.id||nextA[sl.id]===x.p.id)?0:(g&&g.tutor===x.p.id)?1:(gid&&x.a&&x.a.t==='G'&&x.a.grup===gid)?2:isClass(x.a)?3:x.a&&x.a.t==='GU'?4:5;
+      const tag=x=>{ const r=rank(x); return r===0?'continuïtat':r===1?'tutor/a':actShort(x.a); };
+      const lliures=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
+      const ocupats=av.filter(x=>where[x.p.id]&&x.p.id!==cur).sort((x,y)=>profCmp(x.p,y.p));
+      const slLab=s=>{ const sl2=slots.find(z=>z.id===s); return sl2?colNom(sl2.col)+((+sl2.col.n||0)>1?' ('+sl2.k+')':''):'?'; };
+      const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(sl.id)}" aria-label="${esc(colNom(sl.col))} ${esc(f.label)}">
+        <option value="">${ok?'— Treure —':'Triar…'}</option>
+        ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(tag(x))}</option>`).join('')}</optgroup>`:''}
+        ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>`<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(slLab(where[x.p.id]))}</option>`).join('')}</optgroup>`:''}
+      </select>`;
+      const same=ok&&prevA[sl.id]===cur;
+      return `<td class="cell ${ok?'p':'miss'} ${sl.k===1?'nvs':''} ${same?'cont':''}" title="${ok?esc(profById(cur).nom):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${sel}</td>`;
+    }).join('');
+    const cls=cov>=nApl?'ok':cov?'warn':'bad';
+    return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div></td>${cells}</tr>`;
+  }).join('');
+  const thead=multi?`<tr><th class="hcol" rowspan="2">Hora</th>${cols.map(c=>(+c.n||0)>1?`<th class="nvs" colspan="${c.n}">${esc(colNom(c))}</th>`:`<th class="nvs" rowspan="2">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>
+    <tr>${slots.filter(sl=>(+sl.col.n||0)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">Prof. ${sl.k}</th>`).join('')}</tr>`
+    :`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
+  const table=`<div class="card tblw"><table class="t qg qa"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
+  const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+esc(reserves[f.id].join(', ')):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
+  return head+table+resv;
+}
+
+/* ----- 4. Resum (activitat) ----- */
+function profPlaAct(pid){
+  const fr=actFranges(), slots=actSlots();
+  const coord=pEstat(pid)==='C';
+  return fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const av=disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
+    if(pAbs(pid).includes(f.id)) return {f,txt:'Absent',cls:'abs'};
+    if(coord) return {f,txt:'Coordinació',cls:'co'};
+    const sl=slots.find(s=>asg[s.id]===pid);
+    if(sl&&av) return {f,txt:colNom(sl.col),cls:''};
+    if(av) return {f,txt:'Reserva',cls:'res'};
+    return {f,txt:'–',cls:'abs'}; });
+}
+function compacta(pla){ const out=[]; pla.forEach(x=>{ const l=out[out.length-1]; if(l&&l.txt===x.txt) l.to=x.f; else out.push({from:x.f,to:x.f,txt:x.txt}); }); return out; }
+const hIni=f=>(f.label.match(/\d{1,2}[:.]\d{2}/)||[f.label])[0];
+const hFi=f=>{ const m=f.label.match(/\d{1,2}[:.]\d{2}/g); return m&&m.length>1?m[1]:hIni(f); };
+function vResumAct(){
+  const fr=actFranges(), slots=actSlots(), cols=actCols();
+  const P=S.profs.filter(p=>pEstat(p.id)==='P'), CO=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
+  const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); let cov=0; fr.forEach(f=>{ cov+=actCoverage(f.id).cov; });
+  const assigned=P.filter(p=>profPlaAct(p.id).some(x=>x.cls===''&&x.txt!=='Reserva'));
+  const grid=slots.length&&fr.length?`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slots.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${(+sl.col.n||0)>1?'<small>prof. '+sl.k+'</small>':''}</th>`).join('')}</tr></thead><tbody>
+    ${fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const ids=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id));
+      return `<tr><td class="hcol">${esc(f.label)}</td>${slots.map(sl=>{ if(!slotApplies(sl,f)) return '<td class="na nvs">—</td>'; const pid=asg[sl.id]; return pid&&ids.has(pid)?`<td class="p nvs" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss nvs">Sense prof.</td>`; }).join('')}</tr>`; }).join('')}
+  </tbody></table></div>`:'<p class="hint">Falta definir l\'activitat.</p>';
+  const tProf=`<div class="card tblw"><table class="t"><thead><tr><th>Professor/a</th>${fr.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
+    ${[...CO,...P.slice().sort(profCmp)].map(p=>`<tr><td><b>${esc(nomLl(p.nom))}</b></td>${profPlaAct(p.id).map(x=>`<td class="${x.cls}">${esc(x.txt)}</td>`).join('')}</tr>`).join('')}
+  </tbody></table></div>`;
+  const abs=S.profs.filter(p=>pEstat(p.id)==='V');
+  return `<div class="kpis">
+    ${kpi('Professorat participant',`${P.length+CO.length}<small>/ ${S.profs.length}</small>`,`${CO.length} a coordinació${abs.length?` · ${abs.length} absents`:''}`)}
+    ${kpi('Elements a cobrir',`${cols.length}`,`${slots.length} places per hora · ${fr.length} hores`)}
+    ${kpi('Cobertura',`${cov}<small>/ ${tot}</small>`,'caselles amb professor',cov<tot?'warn':'ok')}
+    ${kpi('Amb tasca assignada',`${assigned.length}<small>/ ${P.length}</small>`,`${P.length-assigned.length} només en reserva`)}
+  </div>
+  <div class="sec-h"><div><h2>${esc(jTitol(S.jornada))} · ${fmtDate(jDate())}</h2><p>Per enviar al claustre: el text agrupa les hores seguides al mateix lloc.</p></div>
+    <div class="row-actions"><button class="btn pri" data-a="copy-resum">Copiar full de cada professor</button><button class="btn" data-a="dl-csv">Descarregar quadre (CSV)</button></div></div>
+  ${CO.length?`<div class="card resv" style="margin:0 0 10px"><div class="resv-r" style="border-top:0"><b>Coordinació</b><span><em>${CO.length}</em> ${esc(CO.map(p=>nomLl(p.nom)).join('; '))}</span></div></div>`:''}
+  ${grid}
+  <div class="sec-h"><div><h2>Què fa cada professor/a</h2><p>Reserva = al centre però sense grup ni lloc assignat.</p></div></div>${tProf}`;
+}
+function resumTextAct(){
+  const P=S.profs.filter(p=>pEstat(p.id)==='P').sort(profCmp), CO=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
+  let t=`${jTitol(S.jornada).toUpperCase()} · ${fmtDate(jDate())}${S.config.centre?' · '+S.config.centre:''}\n\n`;
+  if(CO.length) t+=`COORDINACIÓ: ${CO.map(p=>nomLl(p.nom)).join('; ')}\n\n`;
+  P.forEach(p=>{ const c=compacta(profPlaAct(p.id)).filter(x=>x.txt!=='–');
+    t+=`${nomLl(p.nom)}: ${c.length?c.map(x=>`${hIni(x.from)}–${hFi(x.to)} ${x.txt}`).join(' · '):'sense tasca'}\n`; });
+  const abs=S.profs.filter(p=>pEstat(p.id)==='V').sort(profCmp);
+  if(abs.length) t+=`\nAbsents: ${abs.map(p=>nomLl(p.nom)).join('; ')}\n`;
+  return t;
+}
+function csvAct(){
+  const fr=actFranges(); const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[['Professor/a',...fr.map(f=>f.label)]];
+  S.profs.filter(p=>['P','C'].includes(pEstat(p.id))).sort((a,b)=>(pEstat(a.id)==='C'?0:1)-(pEstat(b.id)==='C'?0:1)||profCmp(a,b)).forEach(p=>rows.push([nomLl(p.nom),...profPlaAct(p.id).map(x=>x.txt)]));
+  return '﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n');
+}
+function demoActivitat(){
+  const prevId=S.jornadaId, prevJ=S.jornada;
+  const base=new Date(); base.setDate(base.getDate()+14); while(base.getDay()===0||base.getDay()===6) base.setDate(base.getDate()+1);
+  const dt=base.getFullYear()+'-'+pad(base.getMonth()+1)+'-'+pad(base.getDate());
+  const rnd=seeded(99);
+  // tutors d'exemple si no n'hi ha
+  if(!S.grups.some(g=>g.tutor)){ const dia=base.getDay(); const usats=new Set();
+    S.grups.forEach(g=>{ const c=S.profs.filter(p=>!usats.has(p.id)).map(p=>({p,n:Object.values(S.horari[p.id]||{}).filter(v=>v==='G:'+g.id).length})).sort((a,b)=>b.n-a.n)[0]; if(c){ g.tutor=c.p.id; usats.add(c.p.id); } }); saveGrups(); }
+  S.jornadaId=dt+'_a'+uid();
+  S.jornada={tipus:'activitat',data:dt,nom:"Jornada esportiva (exemple)",profs:{},assign:{},diaHorari:null,fr:lectFranges().map(f=>f.id),
+    cols:[...S.grups.slice().sort(grupCmp).map(g=>({id:'g_'+g.id,tipus:'grup',grup:g.id,nom:g.nom,n:1})),
+      {id:'l_coord',tipus:'lloc',nom:'Coordinació i megafonia',n:2},{id:'l_aux',tipus:'lloc',nom:'Primers auxilis',n:1},{id:'l_mat',tipus:'lloc',nom:'Material i pistes',n:2}]};
+  S.profs.forEach(p=>{ if(rnd()<0.06) S.jornada.profs[p.id]={e:'V',abs:[]}; });
+  autoAssignAct(); saveJ();
+  if(prevJ===null&&prevId===null){ /* deixem oberta l'activitat */ }
+}
+
+/* ---------- Modals ---------- */
+function openModal(html,wide){ $('#modal').innerHTML=`<div class="ov" data-a="ov"><div class="modal ${wide?'wide':''}" role="dialog">${html}</div></div>`; }
+function closeModal(){ $('#modal').innerHTML=''; if(needRender){ needRender=false; render(); } }
+function ask(msg,ok='Confirmar',danger=true){
+  return new Promise(res=>{
+    openModal(`<div class="modal-h"><h2>Confirmació</h2></div><div class="modal-b"><p style="margin:0">${msg}</p></div>
+      <div class="modal-f"><button class="btn" id="askNo">Cancel·lar</button><button class="btn ${danger?'acc':'pri'}" id="askOk">${ok}</button></div>`);
+    $('#askNo').onclick=()=>{ closeModal(); res(false); };
+    $('#askOk').onclick=()=>{ closeModal(); res(true); };
+  });
+}
+let toastT;
+function toast(msg){
+  let el=$('.toast'); if(!el){ el=document.createElement('div'); el.className='toast'; document.body.appendChild(el); }
+  el.textContent=msg; el.style.display='block';
+  clearTimeout(toastT); toastT=setTimeout(()=>{ el.style.display='none'; },3200);
+}
+function showText(title,text){
+  openModal(`<div class="modal-h"><h2>${esc(title)}</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b"><p class="hint" style="margin-top:0">Selecciona-ho i copia-ho manualment.</p><textarea id="txtOut" readonly>${esc(text)}</textarea></div>`);
+  const ta=$('#txtOut'); ta.focus(); ta.select();
+}
+async function copyText(text,label){
+  try{ await navigator.clipboard.writeText(text); toast((label||'Text')+' copiat al porta-retalls.'); }
+  catch(e){ showText(label||'Copiar',text); }
+}
+async function saveFile(name,text,mime){
+  if(caps.downloads){
+    try{ await caps.downloads.save({filename:name,data:text}); return; }catch(e){ if(e&&/cancel|declin|reject/i.test(String(e.code||e.message))) return; }
+  }
+  if(!window.claude){
+    try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:mime||'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); return; }catch(e){}
+  }
+  showText(name,text);
+}
+
+function horariModal(pid){
+  const p=profById(pid); if(!p) return;
+  const gs=S.grups.slice().sort((a,b)=>natCmp(a.nom,b.nom));
+  const cell=(d,f)=>{
+    const v=(S.horari[pid]||{})[d+'-'+f.id]||'';
+    const cls=v==='GU'?'gu':(v.startsWith('G:')||v.startsWith('C:'))?'g':'';
+    const extra=v.startsWith('AL:')?`<option value="${esc(v)}" selected>${esc(v.slice(3))}</option>`:v.startsWith('C:')?`<option value="${esc(v)}" selected>Classe · ${esc(v.slice(2))}</option>`:'';
+    return `<select class="${cls}" data-in="h-cell" data-p="${pid}" data-k="${d}-${f.id}"><option value="">—</option><option value="GU" ${v==='GU'?'selected':''}>Guàrdia</option>${extra}<optgroup label="Classe amb…">${gs.map(g=>`<option value="G:${g.id}" ${v==='G:'+g.id?'selected':''}>${esc(g.nom)}</option>`).join('')}</optgroup></select>`;
+  };
+  openModal(`<div class="modal-h"><h2>Horari · ${esc(nomLl(p.nom))}</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b hgrid tblw"><table class="t"><thead><tr><th>Franja</th>${[1,2,3,4,5].map(d=>`<th>${DIES[d]}</th>`).join('')}</tr></thead><tbody>
+    ${S.config.franges.map(f=>`<tr><td><b>${esc(f.label)}</b></td>${[1,2,3,4,5].map(d=>`<td>${cell(d,f)}</td>`).join('')}</tr>`).join('')}
+    </tbody></table><p class="hint">Verd = classe, blau = guàrdia. Els canvis es desen sols.</p></div>
+    <div class="modal-f"><button class="btn pri" data-a="close">Fet</button></div>`,true);
+}
+
+const IMP={
+  grups:{title:'Importar grups',help:`Una línia per grup: <code>grup;nivell;matriculats</code>. El nivell és opcional (<code>grup;matriculats</code>). Pots enganxar directament columnes d'un Excel.`,ex:`Grup;Nivell;Alumnes\n1r ESO A;1r ESO;28\n1r ESO B;1r ESO;27\n2n ESO A;2n ESO;29\n1r Batx A;1r Batx;32`},
+  profs:{title:'Importar llista de professorat',help:`Una línia per professor: <code>nom;departament</code> (el departament és opcional).`,ex:`Nom;Departament\nAnna Puig;Matemàtiques\nJordi Vidal;Educació Física`},
+  horari:{title:"Importar horari del professorat",help:`<b>La manera més fàcil:</b> descarrega la plantilla, omple-la amb Excel o Numbers i torna-la a pujar aquí (també pots copiar les cel·les de l'Excel i enganxar-les).<br><br>
+  <b>Format A · una fila per professor i dia</b> (el de la plantilla): columnes <code>Professor; Dia; 8:00; 9:00; …</code> i, a cada hora, el grup o «Guàrdia». Les caselles buides vol dir que no té res.<br>
+  <b>Format B · una fila per sessió:</b> <code>professor; dia; franja; activitat</code>, on la franja és el número (vegeu la taula de franges) o l'hora d'inici.<br><br>
+  • <b>Dia</b>: Dilluns…Divendres, DL/DT/DC/DJ/DV o 1–5.<br>• <b>Grup</b>: el nom del grup, encara que vagi acompanyat de la matèria (<code>2ESO-B Mates</code> → 2n ESO B).<br>• Les altres activitats (reunions, tutoria…) es guarden però no compten com a disponibles.<br>• Els professors que no existeixin es creen sols. Per a noms compostos fes servir «Cognoms, Nom».`,ex:`Professor;Dia;8:00;9:00;10:00;11:30;12:30;13:30\nPuig Soler, Anna;Dilluns;1r ESO A;Guàrdia;;2n ESO C;;Reunió\nPuig Soler, Anna;Dimarts;;3r ESO B;3r ESO B;;Guàrdia;`,tpl:true},
+  json:{title:'Restaurar còpia de seguretat',help:`Tria el fitxer <code>.json</code> d'una còpia anterior o enganxa'n el contingut. <b>Substituirà totes les dades actuals.</b>`,ex:''}
+};
+function importModal(k){
+  const c=IMP[k];
+  openModal(`<div class="modal-h"><h2>${c.title}</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b"><p style="margin-top:0">${c.help}</p>${c.ex?`<pre class="ex">${esc(c.ex)}</pre>`:''}${c.tpl?`<div class="row-actions" style="margin-bottom:12px"><button class="btn acc sm" data-a="tpl-horari">Descarregar plantilla (${S.profs.length?'amb l\'horari actual':'buida'})</button><button class="btn sm" data-a="tpl-copy">Copiar plantilla</button></div>`:''}
+    <div class="field"><label>Fitxer (CSV, TXT o JSON)</label><input type="file" id="impFile" accept=".csv,.txt,.tsv,.json,text/*"></div>
+    <div class="field"><label>O enganxa aquí el contingut</label><textarea id="impText" placeholder="Enganxa aquí…"></textarea></div>
+    ${k!=='json'?`<div class="field"><label>Mode</label><div class="row-actions"><label class="check"><input type="radio" name="impMode" value="merge" checked> Afegir / actualitzar</label><label class="check"><input type="radio" name="impMode" value="replace"> Substituir-ho tot</label></div></div>`:''}
+    <div id="impMsg"></div></div>
+    <div class="modal-f"><button class="btn" data-a="close">Cancel·lar</button><button class="btn pri" id="impGo">Importar</button></div>`);
+  $('#impFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ $('#impText').value=String(r.result); }; r.readAsText(f,'utf-8'); };
+  $('#impGo').onclick=()=>{
+    const txt=$('#impText').value; if(!txt.trim()){ $('#impMsg').innerHTML='<div class="banner warn">No hi ha res per importar.</div>'; return; }
+    const modeEl=document.querySelector('input[name=impMode]:checked'); const mode=modeEl?modeEl.value:'merge';
+    try{
+      const msg=({grups:impGrups,profs:impProfs,horari:impHorari,json:impJson})[k](txt,mode);
+      closeModal(); render(); toast(msg);
+    }catch(e){ $('#impMsg').innerHTML=`<div class="banner err">${esc(e.message||String(e))}</div>`; }
+  };
+}
+
+/* ---------- Importar horaris des de PDF ---------- */
+const PDFJS_BASE = (window.PDFJS_BASE) || 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/';
+let pdfjsP=null;
+function loadPdfjs(){
+  if(!pdfjsP) pdfjsP=(async()=>{
+    const lib=await import(PDFJS_BASE+'pdf.min.mjs');
+    try{ globalThis.pdfjsWorker=await import(PDFJS_BASE+'pdf.worker.min.mjs'); }catch(e){}
+    lib.GlobalWorkerOptions.workerSrc=PDFJS_BASE+'pdf.worker.min.mjs';
+    return lib;
+  })().catch(e=>{ pdfjsP=null; throw e; });
+  return pdfjsP;
+}
+async function pdfPages(file){
+  const lib=await loadPdfjs();
+  const data=new Uint8Array(await file.arrayBuffer());
+  const doc=await lib.getDocument({data,isEvalSupported:false,useSystemFonts:true,disableFontFace:true}).promise;
+  const pages=[];
+  for(let n=1;n<=doc.numPages;n++){
+    const pg=await doc.getPage(n); const vp=pg.getViewport({scale:1});
+    const tc=await pg.getTextContent();
+    const items=tc.items.filter(it=>it.str&&it.str.trim()).map(it=>{
+      const h=Math.abs(it.height||it.transform[3])||8;
+      return {s:it.str.trim(),x:it.transform[4],y:vp.height-it.transform[5],w:it.width||0,h};
+    });
+    pages.push({items,W:vp.width,H:vp.height});
+  }
+  return pages;
+}
+const DAYRE=[[1,/^(dilluns|lunes|dl|ll|lu|monday)$/],[2,/^(dimarts|martes|dt|ma|tuesday)$/],[3,/^(dimecres|miercoles|dc|dx|mi|x|wednesday)$/],[4,/^(dijous|jueves|dj|ju|thursday)$/],[5,/^(divendres|viernes|dv|vi|friday)$/]];
+function dayOfTxt(s){ const n=norm(s).replace(/[^a-z ]/g,' ').trim().split(/\s+/)[0]||''; for(const [d,re] of DAYRE) if(re.test(n)) return d; return 0; }
+const TIMERE=/(\d{1,2})\s*[:.h]\s*(\d{2})/;
+function median(a){ if(!a.length) return 0; const b=a.slice().sort((x,y)=>x-y); return b[Math.floor(b.length/2)]; }
+function clusterBy(arr,key,tol){ const s=arr.slice().sort((a,b)=>key(a)-key(b)); const out=[]; s.forEach(it=>{ const g=out[out.length-1]; if(g&&Math.abs(key(it)-g.k)<=tol){ g.items.push(it); } else out.push({k:key(it),items:[it]}); }); return out; }
+
+function parseTimetablePage(page,fallbackName){
+  let items=page.items; const lh=median(items.map(i=>i.h))||9;
+  const findHeaders=its=>{
+    const days=its.filter(i=>dayOfTxt(i.s));
+    return clusterBy(days,i=>i.y,lh*0.6).map(g=>{ const m={}; g.items.forEach(i=>{ const d=dayOfTxt(i.s); if(!m[d]) m[d]=i; }); return {y:g.k,days:m}; }).filter(h=>Object.keys(h.days).length>=3);
+  };
+  const orig=items; let swapped=false;
+  let headers=findHeaders(items);
+  if(!headers.length){ // els dies van en files (format aSc): girem la graella
+    const sw=items.map(i=>({s:i.s,x:i.y-i.h/2,y:i.x+i.w/2,w:i.h,h:lh,_o:i}));
+    const h2=findHeaders(sw); if(h2.length){ items=sw; headers=h2.slice(0,1); swapped=true; }
+  }
+  if(!headers.length) return [];
+  headers.sort((a,b)=>a.y-b.y);
+  const blocks=[];
+  headers.forEach((hd,bi)=>{
+    const yEnd=bi<headers.length-1?headers[bi+1].y-lh*1.5:Infinity;
+    const yStartName=bi>0?(blocks[bi-1]._maxY||headers[bi-1].y):-Infinity;
+    // columnes
+    const ds=Object.entries(hd.days).map(([d,i])=>({d:+d,c:i.x+i.w/2})).sort((a,b)=>a.c-b.c);
+    const pitch=ds.length>1?(ds[ds.length-1].c-ds[0].c)/(ds.length-1):100;
+    const bounds=ds.map((o,k)=>({d:o.d,l:k?(ds[k-1].c+o.c)/2:o.c-pitch/2,r:k<ds.length-1?(o.c+ds[k+1].c)/2:o.c+pitch/2}));
+    const left=bounds[0].l;
+    const body=items.filter(i=>i.y>hd.y+lh*0.4&&i.y<yEnd);
+    // etiquetes d'hora a l'esquerra
+    const tl=body.filter(i=>TIMERE.test(i.s)&&(i.x+i.w/2<left+2||i.x+i.w<ds[0].c-2)&&i.s.replace(TIMERE,'').replace(TIMERE,'').replace(/[\s\-–a]/gi,'').length<=2).sort((a,b)=>a.y-b.y||a.x-b.x);
+    const groups=[];
+    tl.forEach(i=>{ const g=groups[groups.length-1]; if(g&&i.y-g.last<=lh*1.9){ g.last=i.y; g.items.push(i); } else groups.push({first:i.y,last:i.y,items:[i]}); });
+    const rows=groups.map(g=>{ const ts=[]; g.items.forEach(i=>{ const re=new RegExp(TIMERE.source,'g'); let m; while((m=re.exec(i.s))) ts.push((+m[1])+':'+m[2]); });
+      const t=ts[0]; const te=ts.find(x=>x!==t)||null; return {t,te,f:parseFranja(t),c:(g.first+g.last)/2-lh*0.35,top:g.first}; });
+    if(!rows.length) return;
+    const rowPitch=rows.length>1?median(rows.slice(1).map((r,k)=>r.c-rows[k].c)):lh*5;
+    const lastRowEnd=rows[rows.length-1].c+rowPitch*0.75;
+    // contingut de cada columna -> blocs de línies -> fila més propera
+    const cells={}, raw={};
+    bounds.forEach(b=>{
+      const its=body.filter(i=>{ const cx=i.x+i.w/2; return cx>=b.l&&cx<b.r&&i.y>=rows[0].c-rowPitch*0.75&&i.y<=lastRowEnd&&(!TIMERE.test(i.s)||i.s.length>12); });
+      const lines=clusterBy(its,i=>i.y,lh*0.45).map(g=>({y:g.k,t:g.items.sort((a,b)=>a.x-b.x).map(i=>i.s).join(' ')}));
+      let blobs=[]; lines.forEach(l=>{ const bl=blobs[blobs.length-1]; if(bl&&l.y-bl.last<=lh*1.6){ bl.last=l.y; bl.lines.push(l); } else blobs.push({first:l.y,last:l.y,lines:[l]}); });
+      // parteix blocs massa alts
+      const split=[]; blobs.forEach(bl=>{ let cur=[bl.lines[0]]; for(let k=1;k<bl.lines.length;k++){ const nearPrev=rows.reduce((a,r)=>Math.abs(r.c-cur[0].y)<Math.abs(a.c-cur[0].y)?r:a); const nearThis=rows.reduce((a,r)=>Math.abs(r.c-bl.lines[k].y)<Math.abs(a.c-bl.lines[k].y)?r:a); if(bl.lines[k].y-cur[0].y>rowPitch*0.8&&nearPrev!==nearThis){ split.push(cur); cur=[]; } cur.push(bl.lines[k]); } split.push(cur); });
+      split.forEach(ls=>{
+        const c=(ls[0].y+ls[ls.length-1].y)/2;
+        const r=rows.reduce((a,x)=>Math.abs(x.c-c)<Math.abs(a.c-c)?x:a);
+        if(!r.f) return;
+        const txt=ls.map(l=>l.t).join(' · ');
+        if(/^pati$|^esbarjo$|^recreo$/i.test(norm(txt))) return;
+        const k=b.d+'-'+r.f; raw[k]=raw[k]?raw[k]+' · '+txt:txt;
+      });
+    });
+    // nom del professor
+    let above;
+    if(swapped){ const top=Math.min(...tl.map(i=>i._o.y-i._o.h), ...Object.values(hd.days).map(i=>i._o.y-i._o.h)); above=orig.filter(i=>i.y<top-lh*0.3&&!dayOfTxt(i.s)&&!/^\d{1,2}$/.test(i.s)); }
+    else above=items.filter(i=>i.y<hd.y-lh*0.3&&i.y>yStartName&&!dayOfTxt(i.s));
+    const aLines=clusterBy(above,i=>i.y,lh*0.45).map(g=>({y:g.k,h:Math.max(...g.items.map(i=>i.h)),t:g.items.sort((a,b)=>a.x-b.x).map(i=>i.s).join(' ').replace(/\s+/g,' ').trim()}));
+    let name='';
+    for(const l of aLines.slice().reverse()){ const m=l.t.match(/(?:professor(?:\/a|a)?|docent|nom(?: i cognoms)?|profesor(?:\/a|a)?)\s*[:\-–]\s*(.+)$/i); if(m){ name=m[1]; break; } }
+    if(!name){ const cand=aLines.filter(l=>/[a-zà-ú]{2}/i.test(l.t)&&!/institut|escola|^ins\b|^ies\b|curs\s*\d|^\d|p[aà]gina|generat|horari\s*$|centre/i.test(norm(l.t))&&!TIMERE.test(l.t));
+      if(cand.length){ const maxH=Math.max(...cand.map(c=>c.h)); const best=cand.filter(c=>c.h>=maxH-0.5).pop(); name=best.t; } }
+    name=name.replace(/^(horari\s+(del?\s+)?(professor(\/a|a)?\s+)?|horario\s+(de(l)?\s+)?(profesor(\/a|a)?\s+)?)/i,'').replace(/^[:\-–\s]+/,'').replace(/\s*[-–·|]\s*curs.*$/i,'').replace(/["«»“”]/g,'').trim();
+    if(name && name===name.toUpperCase() && /[A-ZÀ-Ú]/.test(name)) name=name.toLowerCase().replace(/(^|[\s,'’\-])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase()).replace(/\b(De|Del|I|La|Les|Dels)\b(?!,)/g,w=>w.toLowerCase());
+    if(!name&&headers.length===1) name=fallbackName||'';
+    // treu el nom del mateix professor que iEduca repeteix a cada casella
+    const pq=parts(name), own=new Set([norm(pq.nom+' '+(pq.cog.split(' ')[0]||'')),norm(pq.nom+' '+pq.cog),norm(name)].filter(x=>x.includes(' ')));
+    Object.keys(raw).forEach(k=>{ raw[k]=raw[k].split(' · ').filter(l=>!own.has(norm(l))).join(' · '); });
+    Object.entries(raw).forEach(([k,t])=>{ const v=actFrom(t); if(v) cells[k]=v; });
+    blocks.push({name,cells,raw,_maxY:Math.max(lastRowEnd,hd.y),nDays:ds.length,nRows:rows.filter(r=>r.f).length,badRows:rows.filter(r=>!r.f).map(r=>r.t),rowsInfo:rows.map(r=>({t:r.t,te:r.te}))});
+  });
+  return blocks;
+}
+
+let pdfImport=[], pdfCache=[];
+function pdfParseAll(prev){
+  pdfImport=[];
+  pdfCache.forEach(({name,pages})=>{ const base=name.replace(/\.pdf$/i,'').replace(/[_]+/g,' ');
+    pages.forEach((pg,pi)=>{ parseTimetablePage(pg,pages.length===1?base:'').forEach(b=>{ b.file=name; b.page=pi+1; b.on=Object.keys(b.cells).length>0; pdfImport.push(b); }); }); });
+  if(prev) pdfImport.forEach((b,i)=>{ const o=prev[i]; if(o&&o.file===b.file&&o.page===b.page){ b.name=o.name; if(o.nc>0) b.on=o.on&&Object.keys(b.cells).length>0; } });
+}
+const toMin=t=>{ const [h,m]=t.split(':').map(Number); return h*60+m; };
+function pdfFranges(){
+  const map={};
+  pdfImport.forEach(b=>(b.rowsInfo||[]).forEach(r=>{ if(r.t&&!map[r.t]) map[r.t]=r.te; else if(r.t&&r.te&&!map[r.t]) map[r.t]=r.te; }));
+  const ts=Object.keys(map).sort((a,b)=>toMin(a)-toMin(b));
+  return ts.map((t,i)=>{ const te=map[t]||ts[i+1]||null; const dur=te?toMin(te)-toMin(t):60;
+    const pati=dur<=35; const lect=!pati&&toMin(t)<15*60;
+    return {id:'h'+t.replace(':',''),label:t+(te?' – '+te:'')+(pati?' · Pati':''),lect}; });
+}
+function findProf(name){
+  const n=norm(name); if(!n) return null;
+  const q=parts(name);
+  const exact=S.profs.find(p=>{ const a=parts(p.nom); return norm(p.nom)===n||norm(a.cog+', '+a.nom)===n||norm(a.nom+' '+a.cog)===n||(norm(a.cog)===norm(q.cog)&&norm(a.nom)===norm(q.nom)); });
+  if(exact) return exact;
+  // mateix nom i primer cognom (p. ex. «Ferrer Coll, Jaume» = «Jaume Ferrer»), només si és únic
+  const c1=w=>norm(w).split(' ')[0];
+  const cands=S.profs.filter(p=>{ const a=parts(p.nom); return norm(a.nom)===norm(q.nom)&&c1(a.cog)&&c1(a.cog)===c1(q.cog); });
+  return cands.length===1?cands[0]:null;
+}
+function pdfModal(){
+  openModal(`<div class="modal-h"><h2>Importar horaris des de PDF</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b"><p style="margin-top:0">Tria un o diversos PDF d'horaris (un professor per pàgina o diversos per pàgina). L'app llegeix la graella i et mostra què ha entès <b>abans de desar res</b>.</p>
+    <p class="hint">Funciona amb PDF generats pel programa d'horaris (amb text seleccionable). Les franges es casen per l'hora d'inici amb les de Configuració.</p>
+    <div class="field"><label>Fitxers PDF</label><input type="file" id="pdfFiles" accept="application/pdf,.pdf" multiple></div>
+    <div id="pdfMsg"></div><div id="pdfRes"></div></div>
+    <div class="modal-f" id="pdfFoot"><button class="btn" data-a="close">Cancel·lar</button></div>`,true);
+  $('#pdfFiles').onchange=async e=>{
+    const files=[...e.target.files]; if(!files.length) return;
+    $('#pdfMsg').innerHTML='<div class="banner info">Llegint els PDF…</div>'; $('#pdfRes').innerHTML='';
+    pdfImport=[]; pdfCache=[]; let noText=0;
+    try{
+      for(const f of files){
+        const pages=await pdfPages(f);
+        if(pages.every(p=>!p.items.length)) noText++;
+        pdfCache.push({name:f.name,pages});
+      }
+      pdfParseAll();
+    }catch(err){
+      $('#pdfMsg').innerHTML=`<div class="banner err">No s'ha pogut llegir el PDF${S.mode!=='db'&&!window.claude?' (cal connexió a internet per carregar el lector)':''}. ${esc(err&&err.message||'')}</div>`; return;
+    }
+    if(!pdfImport.length){
+      $('#pdfMsg').innerHTML = noText
+        ? `<div class="banner err"><div><b>${noText===files.length?'Aquest PDF no té text':'Algun PDF no té text'}: és una imatge de la pàgina.</b> Passa quan es fa servir «Microsoft Print to PDF» o s'escaneja. Torna'l a generar així: obre l'horari a iEduca amb Chrome o Edge → <b>Imprimeix</b> → Destinació: <b>«Desa com a PDF»</b> (no «Microsoft Print to PDF»).</div></div>`
+        : `<div class="banner err">No he trobat cap graella d'horari. Comprova que el PDF té els dies de la setmana a la capçalera i les hores a l'esquerra.</div>`;
+      return; }
+    $('#pdfMsg').innerHTML=''; renderPdfRes();
+  };
+}
+function renderPdfRes(){
+  const lf=S.config.franges;
+  const dl=`<datalist id="profsDL">${S.profs.slice().sort(profCmp).map(p=>`<option value="${esc(nomLl(p.nom))}">`).join('')}</datalist>`;
+  const n=pdfImport.filter(b=>b.on&&b.name.trim()).length;
+  const bad=[...new Set(pdfImport.flatMap(b=>b.badRows))];
+  const fr=bad.length?pdfFranges():[];
+  const frBanner=bad.length?`<div class="banner warn"><div><b>Les hores del PDF no coincideixen amb les franges configurades</b> (${esc(bad.join(', '))}). Aquestes sessions no s'importarien.<br>Franges del PDF: ${fr.map(f=>`<span class="badge" style="margin:2px 2px 0 0;${f.lect?'':'opacity:.6'}">${esc(f.label)}${f.lect?'':' (no lectiva)'}</span>`).join('')}<div class="row-actions" style="margin-top:8px"><button class="btn sm acc" data-a="pdf-franges">Fer servir les franges del PDF</button><span class="hint">Substitueix les franges del centre. Els horaris entrats amb les franges antigues s'hauran de tornar a importar.</span></div></div></div>`:'';
+  $('#pdfRes').innerHTML=dl+frBanner+`<p style="margin:4px 0 10px"><b>${pdfImport.length}</b> horaris trobats. Revisa el nom de cada professor i desmarca els que no vulguis importar. L'horari importat <b>substitueix</b> el que tingui ara aquell professor.</p>`+
+  pdfImport.map((b,i)=>{
+    const p=findProf(b.name); const nc=Object.keys(b.cells).length;
+    const nAl=Object.values(b.cells).filter(v=>v.startsWith('AL:')&&lf.some(f=>f.lect&&Object.keys(b.cells).some(k=>k.endsWith('-'+f.id)&&b.cells[k]===v))).length;
+    const grid=`<table class="t pg"><thead><tr><th></th>${[1,2,3,4,5].map(d=>`<th>${DIES_C[d]}</th>`).join('')}</tr></thead><tbody>${lf.map(f=>`<tr><td class="pgh">${esc((f.label.match(/\d{1,2}[:.]\d{2}/)||[f.label])[0])}</td>${[1,2,3,4,5].map(d=>{ const v=b.cells[d+'-'+f.id]; const raw=b.raw[d+'-'+f.id]||'';
+      if(!v) return '<td></td>'; const cls=v==='GU'?'gu':(v.startsWith('G:')||v.startsWith('C:'))?'g':'al'; const txt=v==='GU'?'Guàrdia':v.startsWith('G:')?(grupById(v.slice(2))||{}).nom:v.startsWith('C:')?v.slice(2):v.slice(3);
+      return `<td class="${cls}" title="${esc(raw)}">${esc(txt)}</td>`; }).join('')}</tr>`).join('')}</tbody></table>`;
+    return `<div class="card pdfb ${b.on?'':'off'}">
+      <div class="pdfb-h"><label class="check"><input type="checkbox" data-in="pdf-on" data-i="${i}" ${b.on?'checked':''}></label>
+        <input type="text" list="profsDL" data-in="pdf-name" data-i="${i}" value="${esc(b.name)}" placeholder="Nom del professor (Cognoms, Nom)">
+        <span class="badge ${p?'':'man'}" id="pdfst${i}">${p?'Existent':'Nou professor'}</span></div>
+      <div class="hint" style="margin:4px 0 6px">${esc(b.file)} · pàg. ${b.page} · ${nc} sessions${nAl?` (${nAl} no són grup ni guàrdia)`:''}${b.badRows.length?` · <span style="color:var(--bad)">hores no reconegudes: ${esc(b.badRows.join(', '))}</span>`:''}</div>
+      <div class="tblw">${grid}</div></div>`;
+  }).join('');
+  $('#pdfFoot').innerHTML=`<button class="btn" data-a="close">Cancel·lar</button><button class="btn acc" data-a="pdf-go" ${n?'':'disabled'}>Importar ${n} horari${n===1?'':'s'}</button>`;
+}
+function pdfApply(){
+  let nous=0,ok=0;
+  pdfImport.filter(b=>b.on&&b.name.trim()).forEach(b=>{
+    let p=findProf(b.name);
+    if(!p){ p={id:uid(),nom:b.name.trim(),dept:''}; S.profs.push(p); nous++; }
+    S.horari[p.id]=clone(b.cells); ok++;
+  });
+  saveProfs(); saveHorari(); const nf=detectNivells(false); closeModal(); render();
+  toast(`${ok} horaris importats${nous?`, ${nous} professors nous`:''}.${nf?` ${nf} franges assignades només als nivells que hi tenen classe (ho pots revisar a Configuració).`:''}`);
+}
+
+/* ---------- Imports ---------- */
+function parseRows(txt){
+  const lines=txt.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length) return [];
+  const d=lines[0].includes('\t')?'\t':lines[0].includes(';')?';':',';
+  return lines.map(l=>l.split(d).map(c=>c.trim().replace(/^"(.*)"$/,'$1').trim()));
+}
+const isHeader=(r,re)=>re.test(norm(r[0]));
+function impGrups(txt,mode){
+  let rows=parseRows(txt); if(rows.length&&isHeader(rows[0],/^(grup|nom|classe|curs)/)) rows=rows.slice(1);
+  const nous=rows.filter(r=>r[0]).map(r=>{
+    let nom=r[0],niv='',alu=0;
+    if(r.length>=3){ niv=r[1]; alu=parseInt(r[2])||0; }
+    else if(r.length===2){ if(/^\d+$/.test(r[1])) alu=+r[1]; else niv=r[1]; }
+    return {nom,nivell:niv||nivellDe(nom),alumnes:alu};
+  });
+  if(!nous.length) throw new Error("No s'ha trobat cap grup.");
+  const byName=Object.fromEntries(S.grups.map(g=>[norm(g.nom),g]));
+  const out=mode==='replace'?[]:S.grups.slice();
+  nous.forEach(n=>{
+    const ex=byName[norm(n.nom)];
+    if(ex){ ex.nom=n.nom; ex.nivell=n.nivell; ex.alumnes=n.alumnes; if(mode==='replace') out.push(ex); }
+    else out.push({id:uid(),...n});
+  });
+  S.grups=out; saveGrups();
+  return `${nous.length} grups importats.`;
+}
+function impProfs(txt,mode){
+  let rows=parseRows(txt); if(rows.length&&isHeader(rows[0],/^(nom|professor|docent)/)) rows=rows.slice(1);
+  const nous=rows.filter(r=>r[0]).map(r=>({nom:r[0],dept:r[1]||''}));
+  if(!nous.length) throw new Error("No s'ha trobat cap professor.");
+  const byName=Object.fromEntries(S.profs.map(p=>[norm(p.nom),p]));
+  const out=mode==='replace'?[]:S.profs.slice();
+  nous.forEach(n=>{ const ex=byName[norm(n.nom)]; if(ex){ if(n.dept) ex.dept=n.dept; if(mode==='replace') out.push(ex);} else out.push({id:uid(),...n}); });
+  if(mode==='replace'){ const keep=new Set(out.map(p=>p.id)); Object.keys(S.horari).forEach(id=>{ if(!keep.has(id)) delete S.horari[id]; }); saveHorari(); }
+  S.profs=out; saveProfs();
+  return `${nous.length} professors importats.`;
+}
+function parseDia(s){
+  const n=norm(s).replace(/\./g,'');
+  if(/^[1-5]$/.test(n)) return +n;
+  const map=[[1,/^(dl|dilluns|lunes|l|lu)$/],[2,/^(dt|dimarts|martes|m|ma)$/],[3,/^(dc|dimecres|miercoles|x|mi)$/],[4,/^(dj|dijous|jueves|j|ju)$/],[5,/^(dv|divendres|viernes|v|vi)$/]];
+  for(const [d,re] of map) if(re.test(n)) return d;
+  for(const [d,w] of [[1,'dilluns'],[2,'dimarts'],[3,'dimecres'],[4,'dijous'],[5,'divendres']]) if(n.startsWith(w.slice(0,4))) return d;
+  return null;
+}
+function parseFranja(s){
+  const t=String(s).trim();
+  if(/^\d+$/.test(t)){ const f=S.config.franges[+t-1]; return f?f.id:null; }
+  const m=t.match(/(\d{1,2})[:.h](\d{2})/);
+  if(m){ const key=(+m[1])+':'+m[2]; const f=S.config.franges.find(fr=>{ const mm=fr.label.match(/(\d{1,2})[:.h](\d{2})/); return mm&&((+mm[1])+':'+mm[2])===key; }); return f?f.id:null; }
+  const f=S.config.franges.find(fr=>norm(fr.label)===norm(t)); return f?f.id:null;
+}
+const gKey=s=>norm(s).replace(/\b(\d)(r|n|t|er|o|º|a)\b/g,'$1').replace(/[^a-z0-9]/g,'');
+function matchGrup(txt){
+  const k=gKey(txt); if(!k) return null;
+  let best=null;
+  S.grups.forEach(g=>{ const gk=gKey(g.nom); if(gk && (k===gk || k.includes(gk)) && (!best||gk.length>gKey(best.nom).length)) best=g; });
+  return best;
+}
+function grupInfo(g){
+  const n=norm(g.nom+' '+(g.nivell||''));
+  const num=(n.match(/[1-4]/)||[])[0]||'';
+  const stage=/bat|bach/.test(n)?'B':/cf|cicle|ciclo|fp|pfi/.test(n)?'F':'E';
+  const lt=(norm(g.nom).match(/(?:^|[^a-z0-9])([a-h])\s*$/)||[])[1]||'';
+  return {num,stage,lt};
+}
+const STG='(eso|batxillerat|bachillerato|batx|bach|bat)';
+function lettersBetween(a,b){ const out=[]; for(let c=a.charCodeAt(0);c<=b.charCodeAt(0);c++) out.push(String.fromCharCode(c)); return out; }
+function classRef(txt){
+  const n=norm(txt);
+  // grups desdoblats / agrupats: «Castellà A-B 1r», «A-E 3r», «1r A-B», «2n ESO A/C»
+  const rr=[new RegExp("(?:^|[^a-z0-9])([a-h])\\s*[-–/]\\s*([a-h])\\s+([1-4])\\s*(?:r|n|t|er|o|a)?\\s*"+STG+"?(?=$|[^a-z0-9])"),
+            new RegExp("(?:^|[^a-z0-9])([1-4])\\s*(?:r|n|t|er|o|a)?\\s*"+STG+"?\\s*([a-h])\\s*[-–/]\\s*([a-h])(?=$|[^a-z0-9])")];
+  for(let k=0;k<2;k++){ const m=n.match(rr[k]); if(!m) continue;
+    const num=k?m[1]:m[3], st=k?m[2]:m[4], l1=k?m[3]:m[1], l2=k?m[4]:m[2];
+    const stage=st?(/bat|bach/.test(st)?'B':'E'):null; const lts=l1<=l2?lettersBetween(l1,l2):[l1,l2];
+    const info=S.grups.map(g=>({g,...grupInfo(g)}));
+    let c=info.filter(x=>x.num===num&&(stage?x.stage===stage:x.stage==='E')&&lts.includes(x.lt));
+    if(!c.length&&!stage) c=info.filter(x=>x.num===num&&lts.includes(x.lt));
+    if(c.length===1) return {g:c[0].g};
+    const nivs=[...new Set(c.map(x=>x.g.nivell))];
+    if(nivs.length===1) return {txt:nivs[0]};
+    return {txt:num+(num==='1'?'r':num==='2'?'n':num==='3'?'r':'t')+' '+(stage==='B'?'Batx':'ESO')};
+  }
+  const re=/(?:^|[^a-z0-9])([1-4])\s*(?:r|n|t|er|o|a)?\s*(?:de\s+|d')?(eso|batxillerat|bachillerato|batx|bach|bat)?\s*[-.]?\s*([a-h])?(?=$|[^a-z0-9])/g;
+  let m, refs=[];
+  while((m=re.exec(n))){ if(m[2]||m[3]) refs.push({num:m[1],stage:m[2]?(/bat|bach/.test(m[2])?'B':'E'):null,lt:m[3]||''}); if(re.lastIndex===m.index) re.lastIndex++; }
+  if(!refs.length) return null;
+  const r=refs.filter(x=>x.lt).pop()||refs[refs.length-1];
+  const info=S.grups.map(g=>({g,...grupInfo(g)}));
+  let c=info.filter(x=>x.num===r.num&&(r.stage?x.stage===r.stage:x.stage==='E')&&(!r.lt||x.lt===r.lt));
+  if(!c.length&&!r.stage) c=info.filter(x=>x.num===r.num&&(!r.lt||x.lt===r.lt));
+  if(c.length===1) return {g:c[0].g};
+  if(c.length>1){ const nivs=[...new Set(c.map(x=>x.g.nivell))]; if(nivs.length===1) return {txt:nivs[0]}; }
+  if(r.stage==='B'||r.stage==='E') return {txt:r.num+(r.num==='1'?'r':r.num==='2'?'n':r.num==='3'?'r':'t')+' '+(r.stage==='B'?'Batx':'ESO')+(r.lt?' '+r.lt.toUpperCase():'')};
+  return null;
+}
+function actFrom(txt){
+  const t=String(txt||'').trim(); if(!t) return null;
+  if(/gu[aà]rdi/i.test(t)) return 'GU';
+  const g=matchGrup(t); if(g) return 'G:'+g.id;
+  const c=classRef(t); if(c) return c.g?'G:'+c.g.id:'C:'+c.txt;
+  return 'AL:'+t;
+}
+function impHorari(txt,mode){
+  let rows=parseRows(txt).filter(r=>r.some(c=>c));
+  if(!rows.length) throw new Error("No s'ha trobat cap sessió.");
+  // Format ampli: Professor;Dia;8:00;9:00;...  (una fila per professor i dia)
+  const cols=rows[0].map((c,j)=>j>=2&&c?parseFranja(c):null);
+  const wide=cols.filter(Boolean).length>=2;
+  if(!wide && isHeader(rows[0],/^(professor|nom|docent|cognom)/)) rows=rows.slice(1);
+  if(wide) rows=rows.slice(1);
+  const byName=Object.fromEntries(S.profs.map(p=>[norm(p.nom),p]));
+  // també casa «Nom Cognoms» amb «Cognoms, Nom»
+  S.profs.forEach(p=>{ const q=parts(p.nom); byName[norm(q.nom+' '+q.cog)]=byName[norm(q.nom+' '+q.cog)]||p; byName[norm(q.cog+', '+q.nom)]=byName[norm(q.cog+', '+q.nom)]||p; });
+  let nousP=0,ok=0; const errs=[]; const altres=new Set(); const tocats=new Set();
+  const getP=nom=>{ let p=byName[norm(nom)]; if(!p){ p={id:uid(),nom:nom.trim(),dept:''}; S.profs.push(p); byName[norm(nom)]=p; nousP++; }
+    if(mode==='replace' && !tocats.has(p.id)){ S.horari[p.id]={}; tocats.add(p.id); }
+    S.horari[p.id]=S.horari[p.id]||{}; return p; };
+  const put=(p,d,f,act)=>{ const v=actFrom(act); const k=d+'-'+f; if(v){ S.horari[p.id][k]=v; ok++; if(v.startsWith('AL:')) altres.add(act.trim()); } else if(wide) delete S.horari[p.id][k]; };
+  rows.forEach((r,i)=>{
+    const nom=(r[0]||'').trim(); if(!nom) return;
+    const d=parseDia(r[1]||'');
+    if(!d){ errs.push(`Línia ${i+2}: dia «${r[1]||''}» no reconegut`); return; }
+    if(wide){
+      const p=getP(nom);
+      cols.forEach((f,j)=>{ if(f) put(p,d,f,r[j]||''); });
+    } else {
+      if(r.length<4){ errs.push(`Línia ${i+1}: calen 4 columnes`); return; }
+      const f=parseFranja(r[2]);
+      if(!f){ errs.push(`Línia ${i+1}: franja «${r[2]}» no reconeguda`); return; }
+      put(getP(nom),d,f,r.slice(3).join(' '));
+    }
+  });
+  if(!ok && !wide) throw new Error('Cap sessió vàlida. '+errs.slice(0,5).join(' · '));
+  saveProfs(); saveHorari();
+  let msg=`${ok} sessions importades${nousP?`, ${nousP} professors nous`:''}.`;
+  if(altres.size) msg+=` ${altres.size} activitats no són ni grup ni guàrdia (no compten): ${[...altres].slice(0,3).join(', ')}${altres.size>3?'…':''}.`;
+  if(errs.length) msg+=` ${errs.length} línies amb errors.`;
+  return msg;
+}
+function plantillaHorari(){
+  const lf=lectFranges();
+  const hora=f=>{ const m=f.label.match(/(\d{1,2})[:.h](\d{2})/); return m?(+m[1])+':'+m[2]:f.label; };
+  const q=v=>{ v=String(v??''); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const rows=[['Professor','Dia',...lf.map(hora)]];
+  const val=v=>!v?'':v==='GU'?'Guàrdia':v.startsWith('G:')?((grupById(v.slice(2))||{}).nom||''):v.startsWith('AL:')?v.slice(3):v.startsWith('C:')?v.slice(2):'';
+  const profs=S.profs.slice().sort(profCmp);
+  if(profs.length) profs.forEach(p=>{ for(let d=1;d<=5;d++) rows.push([nomLl(p.nom),DIES[d],...lf.map(f=>val((S.horari[p.id]||{})[d+'-'+f.id]))]); });
+  else { const g=S.grups[0]?S.grups[0].nom:'1r ESO A'; rows.push(['Puig Soler, Anna','Dilluns',g,'Guàrdia','','','','']); rows.push(['Puig Soler, Anna','Dimarts','','',g,'','','']); }
+  return '﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n');
+}
+function impJson(txt){
+  let d; try{ d=JSON.parse(txt); }catch(e){ throw new Error('El contingut no és un JSON vàlid.'); }
+  if(!d||!Array.isArray(d.grups)||!Array.isArray(d.profs)) throw new Error('Aquest fitxer no sembla una còpia d\'aquesta app.');
+  applyAll(d);
+  return 'Còpia restaurada.';
+}
+function applyAll(d){
+  S.config=normConfig(d.config); S.grups=d.grups||[]; S.profs=d.profs||[]; S.horari=d.horari||{};
+  const old=Object.keys(S.jornades);
+  S.jornades=d.jornades||{};
+  old.forEach(id=>{ if(!S.jornades[id]) Store.remove('jornades/'+id); });
+  S.jornada=S.jornades[S.jornadaId]||null;
+  saveConfig(); saveGrups(); saveProfs(); saveHorari();
+  Object.entries(S.jornades).forEach(([id,j])=>Store.save('jornades/'+id,j));
+}
+function exportData(){ return {app:'dia-de-vaga',versio:1,exportat:new Date().toISOString(),config:S.config,grups:S.grups,profs:S.profs,horari:S.horari,jornades:S.jornades}; }
+
+/* ---------- Dades d'exemple ---------- */
+function seeded(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function demoData(){
+  const rnd=seeded(20261111);
+  const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const grups=[];
+  ['1r ESO','2n ESO','3r ESO','4t ESO'].forEach(nv=>'ABCDE'.split('').forEach(l=>grups.push({id:uid(),nom:nv+' '+l,nivell:nv,alumnes:25+Math.floor(rnd()*6)})));
+  'ABC'.split('').forEach(l=>grups.push({id:uid(),nom:'1r Batx '+l,nivell:'1r Batx',alumnes:30+Math.floor(rnd()*6)}));
+  'AB'.split('').forEach(l=>grups.push({id:uid(),nom:'2n Batx '+l,nivell:'2n Batx',alumnes:29+Math.floor(rnd()*6)}));
+  const noms=['Anna','Jordi','Marta','Pere','Laia','Oriol','Núria','Xavier','Elena','Marc','Clara','Albert','Montse','Joan','Sílvia','David','Rosa','Toni','Gemma','Ramon','Irene','Sergi','Judit','Enric','Berta','Pau','Mireia','Quim','Lluïsa','Carles','Eva','Àlex','Rut','Ferran','Neus','Arnau','Teresa','Jaume','Aina','Roger'];
+  const cognoms=['Puig','Vidal','Soler','Casals','Ferrer','Martí','Roca','Pujol','Serra','Font','Vila','Riera','Sala','Torras','Mas','Camps','Bosch','Prat','Pons','Fuster','Coll','Bonet','Grau','Valls','Rius','Ribas','Costa','Badia','Planas','Ventura','Oliva','Esteve','Sanz','Moreno','Batlle','Farré','Llobet','Canals','Gil','Segura'];
+  const depts=[['Matemàtiques',8],['Llengua catalana',6],['Llengua castellana',6],['Anglès',6],['Ciències',7],['Ciències socials',6],['Tecnologia',5],['Educació Física',4],['Música',2],['Visual i plàstica',3],['Filosofia',2],['Llatí i grec',1],['Orientació',2],['Francès',2]];
+  const dlist=[]; depts.forEach(([d,n])=>{ for(let i=0;i<n;i++) dlist.push(d); });
+  const used=new Set(), profs=[];
+  for(let i=0;profs.length<60;i++){
+    const nom=noms[Math.floor(rnd()*noms.length)]+' '+cognoms[Math.floor(rnd()*cognoms.length)];
+    if(used.has(nom)) continue; used.add(nom);
+    profs.push({id:uid(),nom,dept:dlist[profs.length]});
+  }
+  const horari={}; profs.forEach(p=>horari[p.id]={});
+  const lect=DEF_FRANGES.filter(f=>f.lect);
+  // Cada professor té uns grups "propis" (hi fa classe tota la setmana)
+  const propis={}; profs.forEach(p=>{ propis[p.id]=shuffle(grups).slice(0,3+Math.floor(rnd()*3)).map(g=>g.id); });
+  for(let d=1;d<=5;d++) lect.forEach(f=>{
+    const lliures=new Set(profs.map(p=>p.id));
+    shuffle(grups).forEach(g=>{
+      const cand=shuffle([...lliures]);
+      const pid=cand.find(id=>propis[id].includes(g.id))||cand[0];
+      horari[pid][d+'-'+f.id]='G:'+g.id; lliures.delete(pid);
+    });
+    shuffle([...lliures]).slice(0,7).forEach(pid=>{ horari[pid][d+'-'+f.id]='GU'; });
+  });
+  return {config:{centre:'Institut de mostra (dades inventades)',ratio:25,franges:clone(DEF_FRANGES)},grups,profs,horari,jornades:{}};
+}
+function demoJornada(){
+  const rnd=seeded(777);
+  const wd=new Date(S.jornadaId+'T12:00:00').getDay();
+  S.jornada={tipus:'vaga',data:S.jornadaId.slice(0,10),alumnes:{},profs:{},agr:{},assign:{},diaHorari:(wd===0||wd===6)?3:null};
+  S.jornades[S.jornadaId]=S.jornada;
+  const taxa={'1r ESO':.62,'2n ESO':.55,'3r ESO':.45,'4t ESO':.38,'1r Batx':.25,'2n Batx':.35};
+  S.grups.forEach(g=>{ const t=(taxa[g.nivell]||.5)+(rnd()-.5)*.2; S.jornada.alumnes[g.id]=Math.max(0,Math.round(g.alumnes*t)); });
+  const lect=lectFranges();
+  S.profs.forEach(p=>{ S.jornada.profs[p.id]= rnd()<.4 ? {e:'V',abs:[]} : {e:'P',abs:[]}; });
+  // dos professors arriben més tard
+  S.profs.filter(p=>S.jornada.profs[p.id].e==='P').slice(0,2).forEach(p=>{ S.jornada.profs[p.id].abs=[lect[0].id]; });
+  lect.forEach((f,i)=>autoAssign(f.id,i>0?lect[i-1].id:null));
+  saveJ();
+}
+
+/* ---------- Esdeveniments ---------- */
+const A={
+  tab:b=>{ S.ui.tab=b.dataset.tab; if(location.hash!=='#'+S.ui.tab) history.replaceState(null,'','#'+S.ui.tab); render(); window.scrollTo(0,0); },
+  'al-step':b=>{ const j=ensureJ(), g=b.dataset.g, d=+b.dataset.d; const cur=j.alumnes[g];
+    if(cur==null){ if(d<0) return; j.alumnes[g]=1; } else j.alumnes[g]=Math.max(0,cur+d);
+    saveJ(); const inp=document.querySelector(`input[data-in="al-count"][data-g="${g}"]`); if(inp) inp.value=j.alumnes[g]; updateLive(); },
+  'al-set':b=>{ const j=ensureJ(); const g=b.dataset.g; if(b.dataset.v==='') delete j.alumnes[g]; else j.alumnes[g]=+b.dataset.v; saveJ(); render(); },
+  'agr-step':b=>{ const j=ensureJ(), nv=b.dataset.nv; const s=nivellStats().find(x=>x.nv===nv); if(!s) return; j.agr[nv]=Math.max(0,s.n+(+b.dataset.d)); saveJ(); updateLive(); },
+  'agr-auto':b=>{ const j=ensureJ(); delete j.agr[b.dataset.nv]; saveJ(); updateLive(); },
+  pf:b=>{ S.ui.pf=b.dataset.f; render(); },
+  'prof-exp':b=>{ const id=b.dataset.id; S.ui.exp[id]=!S.ui.exp[id]; $('#plist').innerHTML=profList(); },
+  'prof-set':b=>{ const j=ensureJ(), id=b.dataset.id, e=b.dataset.e; const cur=j.profs[id]||{};
+    if(cur.e===e) delete j.profs[id]; else j.profs[id]={e,abs:e==='P'?(cur.abs||[]):[]};
+    saveJ(); render(); },
+  'prof-abs':b=>{ const j=ensureJ(), id=b.dataset.id, f=b.dataset.f; const p=j.profs[id]; if(!p) return; p.abs=p.abs||[];
+    p.abs=p.abs.includes(f)?p.abs.filter(x=>x!==f):[...p.abs,f]; saveJ(); render(); },
+  'prof-allP':async()=>{ const pend=S.profs.filter(p=>!pEstat(p.id)); if(!pend.length) return;
+    if(!await ask(`Marcar ${pend.length} professors pendents com a presents?`,'Marcar presents',false)) return;
+    const j=ensureJ(); pend.forEach(p=>{ j.profs[p.id]={e:'P',abs:[]}; }); saveJ(); render(); },
+  'fr-sel':b=>{ S.ui.franja=b.dataset.f; render(); },
+  'asg-auto':()=>{ const lf=lectFranges(); const i=lf.findIndex(f=>f.id===S.ui.franja); const r=autoAssign(S.ui.franja,i>0?lf[i-1].id:null); saveJ(); render(); toast(`Proposta: ${r.cov} de ${r.need} agrupacions cobertes.`); },
+  'asg-auto-all':async()=>{ const has=S.jornada&&Object.values(S.jornada.assign||{}).some(o=>Object.keys(o||{}).length);
+    if(has && !await ask('Això substituirà les assignacions de totes les hores per una proposta nova. Continuar?','Generar proposta')) return;
+    const lf=lectFranges(); let tc=0,tn=0; lf.forEach((f,i)=>{ const r=autoAssign(f.id,i>0?lf[i-1].id:null); tc+=r.cov; tn+=r.need; });
+    saveJ(); render(); toast(`Proposta generada: ${tc} de ${tn} sessions cobertes.`); },
+  'asg-clear-all':async()=>{ if(!await ask('Buidar totes les assignacions de totes les hores?','Buidar tot')) return; const j=ensureJ(); j.assign={}; saveJ(); render(); },
+  'asg-clear':async()=>{ if(!await ask('Buidar totes les assignacions d\'aquesta hora?','Buidar')) return; const j=ensureJ(); delete j.assign[S.ui.franja]; saveJ(); render(); },
+  'copy-resum':()=>copyText(jTipus()==='activitat'?resumTextAct():resumText(),'Resum'),
+  'dl-csv':()=>saveFile(jTipus()==='activitat'?`activitat-${jDate()}.csv`:`vaga-${jDate()}.csv`,jTipus()==='activitat'?csvAct():csvQuadre(),'text/csv'),
+  'fr-niv':b=>{ const f=franjaById(b.dataset.f); if(!f) return; const set=new Set(f.nivells||[]); const nv=b.dataset.nv; if(set.has(nv)) set.delete(nv); else set.add(nv); f.nivells=nivells().filter(x=>set.has(x)); f.nivAuto=false; saveConfig(); render(); },
+  'fr-detect':()=>{ const n=detectNivells(true); render(); toast(n?`${n} franges ajustades als nivells que hi tenen classe.`:'No cal ajustar cap franja: no n\'hi ha cap que se solapi.'); },
+  'add-fr':()=>{ S.config.franges.push({id:'f'+uid(),label:'Nova franja',lect:true}); saveConfig(); render(); },
+  'mv-fr':b=>{ const a=S.config.franges, i=a.findIndex(f=>f.id===b.dataset.f), k=i+(+b.dataset.d); if(k<0||k>=a.length) return; [a[i],a[k]]=[a[k],a[i]]; saveConfig(); render(); },
+  'del-fr':async b=>{ const f=franjaById(b.dataset.f); if(!await ask(`Esborrar la franja «${esc(f.label)}»? Les sessions d'horari d'aquesta franja deixaran de comptar.`,'Esborrar')) return;
+    S.config.franges=S.config.franges.filter(x=>x.id!==f.id); saveConfig(); render(); },
+  'add-g':()=>{ S.grups.push({id:uid(),nom:'Nou grup',nivell:'',alumnes:0}); saveGrups(); render(); },
+  'del-g':async b=>{ const g=grupById(b.dataset.id); if(!await ask(`Esborrar el grup «${esc(g.nom)}»?`,'Esborrar')) return; S.grups=S.grups.filter(x=>x.id!==g.id); saveGrups(); render(); },
+  'add-p':()=>{ const p={id:uid(),nom:'Nou professor',dept:''}; S.profs.push(p); saveProfs(); render(); },
+  'del-p':async b=>{ const p=profById(b.dataset.id); if(!await ask(`Esborrar «${esc(p.nom)}» i el seu horari?`,'Esborrar')) return;
+    S.profs=S.profs.filter(x=>x.id!==p.id); delete S.horari[p.id]; saveProfs(); saveHorari(); render(); },
+  hor:b=>horariModal(b.dataset.id),
+  'pdf-imp':()=>pdfModal(),
+  'pdf-go':()=>pdfApply(),
+  'pdf-franges':()=>{ const fr=pdfFranges(); if(!fr.length) return; S.config.franges=fr; saveConfig(); const prev=pdfImport.map(b=>({file:b.file,page:b.page,name:b.name,on:b.on,nc:Object.keys(b.cells).length})); pdfParseAll(prev); renderPdfRes(); toast(`Franges actualitzades: ${fr.filter(f=>f.lect).length} lectives.`); },
+  'tpl-horari':()=>saveFile('plantilla-horari-professorat.csv',plantillaHorari(),'text/csv'),
+  'tpl-copy':()=>copyText(plantillaHorari().replace(/^\ufeff/,'').replace(/;/g,'\t'),'Plantilla (enganxa-la a l\'Excel)'),
+  imp:b=>importModal(b.dataset.k),
+  export:()=>saveFile(`dia-de-vaga-copia-${todayISO()}.json`,JSON.stringify(exportData(),null,1),'application/json'),
+  'copy-json':()=>copyText(JSON.stringify(exportData()),'Còpia de seguretat'),
+  demo:async()=>{ if((S.grups.length||S.profs.length) && !await ask(`Les dades d'exemple substituiran els grups, el professorat i l'horari actuals, i crearan una jornada de vaga (avui) i una activitat de centre d'exemple. Continuar?`,'Carregar exemple')) return;
+    const d=demoData(); d.jornades=S.jornades; applyAll(d); S.jornadaId=todayISO(); demoJornada(); demoActivitat(); S.jornadaId=null; S.jornada=null; S.ui.tab='inici'; history.replaceState(null,'','#inici'); render(); window.scrollTo(0,0);
+    toast("Dades d'exemple: 25 grups, 60 professors, una vaga i una activitat de centre."); },
+  'demo-act':()=>{ demoActivitat(); S.ui.tab='resum'; render(); toast("Activitat d'exemple creada."); },
+  wipe:async()=>{ if(!await ask('Esborrar <b>totes</b> les dades (grups, professorat, horaris i jornades)? No es pot desfer.','Esborrar-ho tot')) return;
+    ['app/config','app/grups','app/professors','app/horari'].forEach(p=>Store.remove(p));
+    Object.keys(S.jornades).forEach(id=>Store.remove('jornades/'+id));
+    S.config=normConfig(null); S.grups=[]; S.profs=[]; S.horari={}; S.jornades={}; S.jornada=null; render(); toast('Dades esborrades.'); },
+  'open-j':b=>{ setJornada(b.dataset.id); S.ui.tab=jTipus()==='activitat'?'activitat':'alumnes'; history.replaceState(null,'','#'+S.ui.tab); render(); window.scrollTo(0,0); },
+  'del-j':async (b,e)=>{ e.stopPropagation(); const id=b.dataset.id; const j=S.jornades[id]; if(!await ask(`Esborrar «${esc(j?jTitol(j):'')}» del ${fmtDate((j&&j.data)||id.slice(0,10))}? No es pot desfer.`,'Esborrar')) return;
+    delete S.jornades[id]; if(id===S.jornadaId){ S.jornada=null; S.jornadaId=null; } Store.remove('jornades/'+id); render(); },
+  'nova-j':()=>novaJornadaModal(),
+  'nj-tipus':b=>{ document.querySelectorAll('.njt').forEach(x=>x.classList.toggle('on',x===b)); $('#njNomF').style.display=b.dataset.t==='activitat'?'':'none'; },
+  'nj-go':()=>crearJornada(),
+  'act-addg':()=>{ const j=ensureJ(); j.cols=j.cols||[]; let n=0; S.grups.slice().sort(grupCmp).forEach(g=>{ if(!j.cols.some(c=>c.grup===g.id)){ j.cols.push({id:'g_'+g.id,tipus:'grup',grup:g.id,nom:g.nom,n:1}); n++; } }); saveJ(); render(); toast(n?`${n} grups afegits.`:'Ja hi eren tots.'); },
+  'coord-del':b=>{ const j=ensureJ(); delete j.profs[b.dataset.id]; saveJ(); render(); },
+  'act-addl':()=>{ const j=ensureJ(); j.cols=j.cols||[]; j.cols.push({id:'l_'+uid(),tipus:'lloc',nom:'Nou lloc o tasca',n:1}); saveJ(); render(); },
+  'act-deln':b=>{ const j=ensureJ(); const c=(j.cols||[]).find(x=>x.id===b.dataset.c); if(!c) return; c.n=Math.max(0,(+c.n||0)+(+b.dataset.d)); if(c.n===0){ j.cols=j.cols.filter(x=>x!==c); } saveJ(); render(); },
+  'act-del':b=>{ const j=ensureJ(); j.cols=(j.cols||[]).filter(x=>x.id!==b.dataset.c); saveJ(); render(); },
+  'act-delall':async()=>{ if(!await ask('Treure tots els elements a cobrir?','Treure')) return; const j=ensureJ(); j.cols=[]; saveJ(); render(); },
+  'asg-auto-act':async()=>{ const has=S.jornada&&Object.values(S.jornada.assign||{}).some(o=>Object.keys(o||{}).length);
+    if(has && !await ask('Això substituirà les assignacions actuals per una proposta nova. Continuar?','Generar proposta',false)) return;
+    const r=autoAssignAct(); saveJ(); render(); toast(`Proposta: ${r.cov} de ${r.tot} caselles cobertes · ${r.cont} professors fan tota la jornada al mateix lloc.`); },
+  sortir:async()=>{ if(caps.fb&&await ask('Vols tancar la sessió?','Tancar sessió',false)){ await caps.fb.signOut(); location.reload(); } },
+  close:()=>closeModal(),
+  ov:(b,e)=>{ if(e.target===b) closeModal(); }
+};
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]'); if(!b||b.disabled) return;
+  const fn=A[b.dataset.a]; if(fn) fn(b,e);
+});
+function setJornada(id){ S.jornadaId=id; S.jornada=S.jornades[id]||null; }
+function profOpts(sel){ return S.profs.slice().sort(profCmp).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(nomLl(p.nom))}</option>`).join(''); }
+
+const IN={
+  'al-count':el=>{ const j=ensureJ(), g=el.dataset.g; const v=el.value.trim();
+    if(v==='') delete j.alumnes[g]; else j.alumnes[g]=Math.max(0,parseInt(v)||0); saveJ(); updateLive(); },
+  pcerca:el=>{ S.ui.cerca=el.value; $('#plist').innerHTML=profList(); },
+  incfree:el=>{ S.ui.incFree=el.checked; render(); },
+  asg:el=>{ const j=ensureJ(), f=el.dataset.f, ag=el.dataset.ag, v=el.value; j.assign[f]=j.assign[f]||{};
+    if(v){ Object.keys(j.assign[f]).forEach(k=>{ if(j.assign[f][k]===v) delete j.assign[f][k]; }); j.assign[f][ag]=v; } else delete j.assign[f][ag];
+    saveJ(); el.blur(); render(); },
+  diah:el=>{ const j=ensureJ(); j.diaHorari=el.value?+el.value:null; saveJ(); render(); },
+  'cfg-centre':el=>{ S.config.centre=el.value; saveConfig(); renderTop(); },
+  'cfg-ratio':el=>{ const v=parseInt(el.value); if(v>0){ S.config.ratio=v; saveConfig(); } },
+  'fr-label':el=>{ const f=franjaById(el.dataset.f); if(f){ f.label=el.value; saveConfig(); } },
+  'fr-lect':el=>{ const f=franjaById(el.dataset.f); if(f){ f.lect=el.checked; saveConfig(); } },
+  'g-nom':el=>{ const g=grupById(el.dataset.id); if(g){ const autoNiv=!g.nivell||g.nivell===nivellDe(g.nom); g.nom=el.value; if(autoNiv) g.nivell=nivellDe(g.nom); saveGrups(); } },
+  'g-niv':el=>{ const g=grupById(el.dataset.id); if(g){ g.nivell=el.value.trim(); saveGrups(); } },
+  'act-nom':el=>{ const j=ensureJ(); j.nom=el.value; saveJ(); renderTop(); },
+  'act-data':el=>{ if(!el.value) return; const j=ensureJ(); j.data=el.value; saveJ(); render(); },
+  'act-fr':el=>{ const j=ensureJ(); const set=new Set(j.fr||[]); if(el.checked) set.add(el.dataset.f); else set.delete(el.dataset.f); j.fr=S.config.franges.map(f=>f.id).filter(id=>set.has(id)); saveJ(); render(); },
+  'coord-add':el=>{ if(!el.value) return; const j=ensureJ(); j.profs[el.value]={e:'C',abs:[]}; saveJ(); render(); },
+  'act-cnom':el=>{ const j=ensureJ(); const c=(j.cols||[]).find(x=>x.id===el.dataset.c); if(c){ c.nom=el.value; saveJ(); } },
+  'g-tut':el=>{ const g=grupById(el.dataset.id); if(g){ g.tutor=el.value||null; saveGrups(); } },
+  'g-alu':el=>{ const g=grupById(el.dataset.id); if(g){ g.alumnes=Math.max(0,parseInt(el.value)||0); saveGrups(); } },
+  'p-nom':el=>{ const p=profById(el.dataset.id); if(p){ p.nom=el.value; saveProfs(); } },
+  'p-dept':el=>{ const p=profById(el.dataset.id); if(p){ p.dept=el.value; saveProfs(); } },
+  'pdf-name':el=>{ const b=pdfImport[+el.dataset.i]; if(!b) return; b.name=el.value; const st=$('#pdfst'+el.dataset.i); if(st){ const p=findProf(b.name); st.textContent=p?'Existent':'Nou professor'; st.className='badge '+(p?'':'man'); } const n=pdfImport.filter(x=>x.on&&x.name.trim()).length; const go=document.querySelector('[data-a="pdf-go"]'); if(go){ go.disabled=!n; go.textContent=`Importar ${n} horari${n===1?'':'s'}`; } },
+  'pdf-on':el=>{ const b=pdfImport[+el.dataset.i]; if(!b) return; b.on=el.checked; renderPdfRes(); },
+  'h-cell':el=>{ const pid=el.dataset.p, k=el.dataset.k; S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
+    el.className=el.value==='GU'?'gu':el.value.startsWith('G:')?'g':''; saveHorari(); }
+};
+const ONCHANGE=new Set(['coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
+document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
+document.addEventListener('change',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in;
+  if(ONCHANGE.has(k)){ IN[k]&&IN[k](el); return; }
+  if(/^(g-|p-|fr-label|cfg-)/.test(k)) needRender=true; });
+document.addEventListener('keydown',e=>{ if(e.key==='Enter' && e.target.matches('input[data-in]')) e.target.blur(); if(e.key==='Escape' && $('#modal').innerHTML) closeModal(); });
+
+function readHash(){ const h=location.hash.slice(1); if(ALL_TABS.includes(h)) S.ui.tab=h; }
+window.addEventListener('hashchange',()=>{ readHash(); render(); });
+
+/* ---------- Inici ---------- */
+async function init(){
+  readHash(); render();
+  let db=null;
+  if(window.__fbReady){
+    const r=await window.__fbReady;
+    caps.db=r.db; caps.fb=r; S.mode='db'; S.userEmail=r.email; setSync('loading'); subscribe(); render(); Store.flushAll(); return;
+  }
+  if(window.claude && typeof window.claude.use==='function'){
+    try{ db=await window.claude.use('db'); }catch(e){ db=null; }
+    try{ caps.downloads=await window.claude.use('downloads'); }catch(e){}
+  }
+  if(db){
+    caps.db=db; S.mode='db'; setSync('loading');
+    try{ const u=await window.claude.use('user'); caps.user=u; if(u&&typeof u.can==='function'){ const c=await u.can('data.write'); if(c===false) S.readonly=true; } }catch(e){}
+    subscribe();
+  } else {
+    S.mode='local'; loadLocal(); setSync('local');
+  }
+  render(); Store.flushAll();
+}
+init();
+})();
+</script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+const C = window.JORNADES_FB, dom = C.domini.toLowerCase().replace(/^@/, '');
+const llista = (C.autoritzats || []).map(e => e.toLowerCase().trim()).filter(Boolean);
+const app = initializeApp(C.config), auth = getAuth(app);
+const fs = initializeFirestore(app, { localCache: persistentLocalCache() });
+const L = document.getElementById('login'), M = document.getElementById('lMsg');
+document.getElementById('lFoot').textContent = 'Només comptes @' + dom + (llista.length ? ' autoritzats' : '');
+const valid = u => u && u.emailVerified && u.email && u.email.toLowerCase().endsWith('@' + dom) && (!llista.length || llista.includes(u.email.toLowerCase()));
+const err = e => { const c = e && e.code || ''; return { code: c === 'permission-denied' ? 'invalid_argument' : (c === 'unavailable' || c === 'deadline-exceeded') ? 'unavailable' : c === 'resource-exhausted' ? 'quota_exceeded' : 'unavailable', message: e && e.message || '' }; };
+const wrapDoc = s => ({ id: s.id, exists: s.exists(), data: () => s.data(), metadata: s.metadata });
+const db = {
+  doc: p => ({
+    path: p,
+    set: d => setDoc(doc(fs, p), d).catch(e => { throw err(e); }),
+    delete: () => deleteDoc(doc(fs, p)).catch(e => { throw err(e); }),
+    onSnapshot: (next, bad) => onSnapshot(doc(fs, p), { includeMetadataChanges: true }, s => next(wrapDoc(s)), e => bad && bad(err(e)))
+  }),
+  collection: p => ({
+    onSnapshot: (next, bad) => onSnapshot(collection(fs, p), { includeMetadataChanges: true }, q => next({ docs: q.docs.map(wrapDoc), size: q.size, empty: q.empty, metadata: q.metadata }), e => bad && bad(err(e)))
+  })
+};
+document.getElementById('gLogin').onclick = async () => {
+  M.textContent = '';
+  const p = new GoogleAuthProvider(); p.setCustomParameters({ hd: dom, prompt: 'select_account' });
+  try { await signInWithPopup(auth, p); }
+  catch (e) {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') await signInWithRedirect(auth, p);
+    else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') M.textContent = "No s'ha pogut entrar: " + (e.code || e.message);
+  }
+};
+let ready = false;
+onAuthStateChanged(auth, async u => {
+  if (!u) { if (ready) location.reload(); L.hidden = false; return; }
+  if (!valid(u)) { const em = u.email; await signOut(auth); L.hidden = false; M.textContent = `El compte ${em} no té accés. Entra amb un compte @${dom}${llista.length ? ' autoritzat' : ''}.`; return; }
+  L.hidden = true;
+  if (!ready) { ready = true; window.__fbResolve({ db, email: u.email, signOut: () => signOut(auth) }); }
+});
+</script>
+</body>
+</html>
