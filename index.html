@@ -387,7 +387,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.11-c';
+const VERSIO = '2026.11.11-d';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -1382,6 +1382,64 @@ const TIMERE=/(\d{1,2})\s*[:.h]\s*(\d{2})/;
 function median(a){ if(!a.length) return 0; const b=a.slice().sort((x,y)=>x-y); return b[Math.floor(b.length/2)]; }
 function clusterBy(arr,key,tol){ const s=arr.slice().sort((a,b)=>key(a)-key(b)); const out=[]; s.forEach(it=>{ const g=out[out.length-1]; if(g&&Math.abs(key(it)-g.k)<=tol){ g.items.push(it); } else out.push({k:key(it),items:[it]}); }); return out; }
 
+function rowsFrom(tl,lh){
+  const groups=[];
+  tl.forEach(i=>{ const g=groups[groups.length-1]; if(g&&i.y-g.last<=lh*1.9){ g.last=i.y; g.items.push(i); } else groups.push({first:i.y,last:i.y,items:[i]}); });
+  return groups.map(g=>{ const ts=[]; g.items.forEach(i=>{ const re=new RegExp(TIMERE.source,'g'); let m; while((m=re.exec(i.s))) ts.push((+m[1])+':'+m[2]); });
+    const t=ts[0]; const te=ts.find(x=>x!==t)||null; return {t,te,f:parseFranja(t),c:(g.first+g.last)/2-lh*0.35,top:g.first}; });
+}
+const isTimeLabel=(i,left,firstC)=>TIMERE.test(i.s)&&(i.x+i.w/2<left+2||i.x+i.w<firstC-2)&&i.s.replace(TIMERE,'').replace(TIMERE,'').replace(/[\s\-–a]/gi,'').length<=2;
+function assignCells(body,bounds,rows,rowPitch,lh,raw,y0,y1){
+  bounds.forEach(b=>{
+    const its=body.filter(i=>{ const cx=i.x+i.w/2; return cx>=b.l&&cx<b.r&&i.y>=y0&&i.y<=y1&&(!TIMERE.test(i.s)||i.s.length>12); });
+    const lines=clusterBy(its,i=>i.y,lh*0.45).map(g=>({y:g.k,t:g.items.sort((a,b)=>a.x-b.x).map(i=>i.s).join(' ')}));
+    let blobs=[]; lines.forEach(l=>{ const bl=blobs[blobs.length-1]; if(bl&&l.y-bl.last<=lh*1.6){ bl.last=l.y; bl.lines.push(l); } else blobs.push({first:l.y,last:l.y,lines:[l]}); });
+    const split=[]; blobs.forEach(bl=>{ let cur=[bl.lines[0]]; for(let k=1;k<bl.lines.length;k++){ const nearPrev=rows.reduce((a,r)=>Math.abs(r.c-cur[0].y)<Math.abs(a.c-cur[0].y)?r:a); const nearThis=rows.reduce((a,r)=>Math.abs(r.c-bl.lines[k].y)<Math.abs(a.c-bl.lines[k].y)?r:a); if(bl.lines[k].y-cur[0].y>rowPitch*0.8&&nearPrev!==nearThis){ split.push(cur); cur=[]; } cur.push(bl.lines[k]); } split.push(cur); });
+    split.forEach(ls=>{
+      const c=(ls[0].y+ls[ls.length-1].y)/2;
+      const r=rows.reduce((a,x)=>Math.abs(x.c-c)<Math.abs(a.c-c)?x:a);
+      if(!r.f) return;
+      const txt=ls.map(l=>l.t).join(' · ');
+      if(/^pati$|^esbarjo$|^recreo$/i.test(norm(txt))) return;
+      const k=b.d+'-'+r.f; raw[k]=raw[k]?raw[k]+' · '+txt:txt;
+    });
+  });
+}
+function finishCells(blk){
+  const pq=parts(blk.name), own=new Set([norm(pq.nom+' '+(pq.cog.split(' ')[0]||'')),norm(pq.nom+' '+pq.cog),norm(blk.name)].filter(x=>x.includes(' ')));
+  const cells={};
+  Object.keys(blk.raw).forEach(k=>{ blk.raw[k]=blk.raw[k].split(' · ').filter(l=>!own.has(norm(l))).join(' · '); });
+  Object.entries(blk.raw).forEach(([k,t])=>{ const v=actFrom(t); if(v) cells[k]=v; });
+  blk.cells=cells;
+}
+// Pàgina sense capçalera de dies: continuació de la graella de la pàgina anterior (files partides)
+function continuePage(page,pb){
+  const g=pb&&pb._geo; if(!g||g.swapped) return false;
+  const H=page.H, lh=g.lh;
+  const items=page.items.filter(i=>i.y>34&&i.y<H-30&&!/^\d+\s*\/\s*\d+$/.test(i.s)&&!/^https?:/i.test(i.s)&&!/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(i.s)&&!/-\s*horari\s*$/i.test(i.s));
+  if(!items.length) return false;
+  const left=g.bounds[0].l, right=g.bounds[g.bounds.length-1].r;
+  if(!items.some(i=>i.x+i.w/2>=left&&i.x+i.w/2<=right)) return false;
+  const tl=items.filter(i=>isTimeLabel(i,left,g.ds[0].c)).sort((a,b)=>a.y-b.y||a.x-b.x);
+  const rows=rowsFrom(tl,lh);
+  const firstTop=rows.length?rows[0].top-lh*1.2:Infinity;
+  // 1) el que hi ha abans de la primera hora és la resta de l'última fila de la pàgina anterior
+  const carry=items.filter(i=>i.y<firstTop&&!TIMERE.test(i.s));
+  if(carry.length&&g.lastF){
+    g.bounds.forEach(b=>{ const its=carry.filter(i=>{ const cx=i.x+i.w/2; return cx>=b.l&&cx<b.r; });
+      if(!its.length) return; const txt=clusterBy(its,i=>i.y,lh*0.45).map(x=>x.items.sort((a,c)=>a.x-c.x).map(i=>i.s).join(' ')).join(' · ');
+      const k=b.d+'-'+g.lastF; pb.raw[k]=pb.raw[k]?pb.raw[k]+' · '+txt:txt; });
+  }
+  // 2) files noves en aquesta pàgina
+  if(rows.length){
+    const rowPitch=rows.length>1?median(rows.slice(1).map((r,k)=>r.c-rows[k].c)):g.rowPitch;
+    assignCells(items,g.bounds,rows,rowPitch,lh,pb.raw,rows[0].c-rowPitch*0.75,rows[rows.length-1].c+rowPitch*0.75);
+    rows.forEach(r=>{ pb.rowsInfo.push({t:r.t,te:r.te}); if(!r.f) pb.badRows.push(r.t); });
+    const lastOk=rows.filter(r=>r.f).pop(); if(lastOk) g.lastF=lastOk.f;
+  }
+  finishCells(pb);
+  return true;
+}
 function parseTimetablePage(page,fallbackName){
   let items=page.items; const lh=median(items.map(i=>i.h))||9;
   const findHeaders=its=>{
@@ -1407,31 +1465,14 @@ function parseTimetablePage(page,fallbackName){
     const left=bounds[0].l;
     const body=items.filter(i=>i.y>hd.y+lh*0.4&&i.y<yEnd);
     // etiquetes d'hora a l'esquerra
-    const tl=body.filter(i=>TIMERE.test(i.s)&&(i.x+i.w/2<left+2||i.x+i.w<ds[0].c-2)&&i.s.replace(TIMERE,'').replace(TIMERE,'').replace(/[\s\-–a]/gi,'').length<=2).sort((a,b)=>a.y-b.y||a.x-b.x);
-    const groups=[];
-    tl.forEach(i=>{ const g=groups[groups.length-1]; if(g&&i.y-g.last<=lh*1.9){ g.last=i.y; g.items.push(i); } else groups.push({first:i.y,last:i.y,items:[i]}); });
-    const rows=groups.map(g=>{ const ts=[]; g.items.forEach(i=>{ const re=new RegExp(TIMERE.source,'g'); let m; while((m=re.exec(i.s))) ts.push((+m[1])+':'+m[2]); });
-      const t=ts[0]; const te=ts.find(x=>x!==t)||null; return {t,te,f:parseFranja(t),c:(g.first+g.last)/2-lh*0.35,top:g.first}; });
+    const tl=body.filter(i=>isTimeLabel(i,left,ds[0].c)).sort((a,b)=>a.y-b.y||a.x-b.x);
+    const rows=rowsFrom(tl,lh);
     if(!rows.length) return;
     const rowPitch=rows.length>1?median(rows.slice(1).map((r,k)=>r.c-rows[k].c)):lh*5;
     const lastRowEnd=rows[rows.length-1].c+rowPitch*0.75;
     // contingut de cada columna -> blocs de línies -> fila més propera
-    const cells={}, raw={};
-    bounds.forEach(b=>{
-      const its=body.filter(i=>{ const cx=i.x+i.w/2; return cx>=b.l&&cx<b.r&&i.y>=rows[0].c-rowPitch*0.75&&i.y<=lastRowEnd&&(!TIMERE.test(i.s)||i.s.length>12); });
-      const lines=clusterBy(its,i=>i.y,lh*0.45).map(g=>({y:g.k,t:g.items.sort((a,b)=>a.x-b.x).map(i=>i.s).join(' ')}));
-      let blobs=[]; lines.forEach(l=>{ const bl=blobs[blobs.length-1]; if(bl&&l.y-bl.last<=lh*1.6){ bl.last=l.y; bl.lines.push(l); } else blobs.push({first:l.y,last:l.y,lines:[l]}); });
-      // parteix blocs massa alts
-      const split=[]; blobs.forEach(bl=>{ let cur=[bl.lines[0]]; for(let k=1;k<bl.lines.length;k++){ const nearPrev=rows.reduce((a,r)=>Math.abs(r.c-cur[0].y)<Math.abs(a.c-cur[0].y)?r:a); const nearThis=rows.reduce((a,r)=>Math.abs(r.c-bl.lines[k].y)<Math.abs(a.c-bl.lines[k].y)?r:a); if(bl.lines[k].y-cur[0].y>rowPitch*0.8&&nearPrev!==nearThis){ split.push(cur); cur=[]; } cur.push(bl.lines[k]); } split.push(cur); });
-      split.forEach(ls=>{
-        const c=(ls[0].y+ls[ls.length-1].y)/2;
-        const r=rows.reduce((a,x)=>Math.abs(x.c-c)<Math.abs(a.c-c)?x:a);
-        if(!r.f) return;
-        const txt=ls.map(l=>l.t).join(' · ');
-        if(/^pati$|^esbarjo$|^recreo$/i.test(norm(txt))) return;
-        const k=b.d+'-'+r.f; raw[k]=raw[k]?raw[k]+' · '+txt:txt;
-      });
-    });
+    const raw={};
+    assignCells(body,bounds,rows,rowPitch,lh,raw,rows[0].c-rowPitch*0.75,lastRowEnd);
     // nom del professor
     let above;
     if(swapped){ const top=Math.min(...tl.map(i=>i._o.y-i._o.h), ...Object.values(hd.days).map(i=>i._o.y-i._o.h)); above=orig.filter(i=>i.y<top-lh*0.3&&!dayOfTxt(i.s)&&!/^\d{1,2}$/.test(i.s)); }
@@ -1444,11 +1485,10 @@ function parseTimetablePage(page,fallbackName){
     name=name.replace(/^(horari\s+(del?\s+)?(professor(\/a|a)?\s+)?|horario\s+(de(l)?\s+)?(profesor(\/a|a)?\s+)?)/i,'').replace(/^[:\-–\s]+/,'').replace(/\s*[-–·|]\s*curs.*$/i,'').replace(/["«»“”]/g,'').trim();
     if(name && name===name.toUpperCase() && /[A-ZÀ-Ú]/.test(name)) name=name.toLowerCase().replace(/(^|[\s,'’\-])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase()).replace(/\b(De|Del|I|La|Les|Dels)\b(?!,)/g,w=>w.toLowerCase());
     if(!name&&headers.length===1) name=fallbackName||'';
-    // treu el nom del mateix professor que iEduca repeteix a cada casella
-    const pq=parts(name), own=new Set([norm(pq.nom+' '+(pq.cog.split(' ')[0]||'')),norm(pq.nom+' '+pq.cog),norm(name)].filter(x=>x.includes(' ')));
-    Object.keys(raw).forEach(k=>{ raw[k]=raw[k].split(' · ').filter(l=>!own.has(norm(l))).join(' · '); });
-    Object.entries(raw).forEach(([k,t])=>{ const v=actFrom(t); if(v) cells[k]=v; });
-    blocks.push({name,cells,raw,_maxY:Math.max(lastRowEnd,hd.y),nDays:ds.length,nRows:rows.filter(r=>r.f).length,badRows:rows.filter(r=>!r.f).map(r=>r.t),rowsInfo:rows.map(r=>({t:r.t,te:r.te}))});
+    // treu el nom del mateix professor que iEduca repeteix a cada casella i interpreta cada casella
+    const blk={name,cells:{},raw,_maxY:Math.max(lastRowEnd,hd.y),nDays:ds.length,nRows:rows.filter(r=>r.f).length,badRows:rows.filter(r=>!r.f).map(r=>r.t),rowsInfo:rows.map(r=>({t:r.t,te:r.te})),
+      _geo:{bounds,ds,rowPitch,lh,swapped,lastF:(rows.filter(r=>r.f).pop()||{}).f}};
+    finishCells(blk); blocks.push(blk);
   });
   return blocks;
 }
@@ -1457,7 +1497,10 @@ let pdfImport=[], pdfCache=[];
 function pdfParseAll(prev){
   pdfImport=[];
   pdfCache.forEach(({name,pages})=>{ const base=name.replace(/\.pdf$/i,'').replace(/[_]+/g,' ');
-    pages.forEach((pg,pi)=>{ parseTimetablePage(pg,pages.length===1?base:'').forEach(b=>{ b.file=name; b.page=pi+1; b.on=Object.keys(b.cells).length>0; pdfImport.push(b); }); }); });
+    let last=null;
+    pages.forEach((pg,pi)=>{ const bl=parseTimetablePage(pg,pages.length===1?base:'');
+      if(!bl.length){ if(last&&continuePage(pg,last)) last.on=Object.keys(last.cells).length>0; return; }
+      bl.forEach(b=>{ b.file=name; b.page=pi+1; b.on=Object.keys(b.cells).length>0; pdfImport.push(b); last=b; }); }); });
   if(prev) pdfImport.forEach((b,i)=>{ const o=prev[i]; if(o&&o.file===b.file&&o.page===b.page){ b.name=o.name; if(o.nc>0) b.on=o.on&&Object.keys(b.cells).length>0; } });
 }
 const toMin=t=>{ const [h,m]=t.split(':').map(Number); return h*60+m; };
