@@ -1626,9 +1626,10 @@ function classRef(txt){
     if(nivs.length===1) return {txt:nivs[0]};
     return {txt:num+(num==='1'?'r':num==='2'?'n':num==='3'?'r':'t')+' '+(stage==='B'?'Batx':'ESO')};
   }
-  const re=/(?:^|[^a-z0-9])([1-4])\s*(?:r|n|t|er|o|a)?\s*(?:de\s+|d')?(eso|batxillerat|bachillerato|batx|bach|bat)?\s*[-.]?\s*([a-h])?(?=$|[^a-z0-9])/g;
+  const re=/(?:^|[^a-z0-9])([1-4])\s*(r|n|t|er|o|a)?\s*(?:de\s+|d')?(eso|batxillerat|bachillerato|batx|bach|bat)?\s*[-.]?\s*([a-h])?(?=$|[^a-z0-9])/g;
   let m, refs=[];
-  while((m=re.exec(n))){ if(m[2]||m[3]) refs.push({num:m[1],stage:m[2]?(/bat|bach/.test(m[2])?'B':'E'):null,lt:m[3]||''}); if(re.lastIndex===m.index) re.lastIndex++; }
+  // compta si hi ha etapa (ESO/Batx), lletra de grup o un ordinal clar (1r, 2n, 3r, 4t): «OPT EMPRENEDORIA 4t»
+  while((m=re.exec(n))){ const ord=m[2]&&/^(r|n|t|er)$/.test(m[2]); if(m[3]||m[4]||ord) refs.push({num:m[1],stage:m[3]?(/bat|bach/.test(m[3])?'B':'E'):null,lt:m[4]||''}); if(re.lastIndex===m.index) re.lastIndex++; }
   if(!refs.length) return null;
   const r=refs.filter(x=>x.lt).pop()||refs[refs.length-1];
   const info=S.grups.map(g=>({g,...grupInfo(g)}));
@@ -1642,6 +1643,7 @@ function classRef(txt){
 function actFrom(txt){
   const t=String(txt||'').trim(); if(!t) return null;
   if(/gu[aà]rdi/i.test(t)) return 'GU';
+  if(/\b(reunio|reunion|claustre|claustro|comissio|comision|coordinacio|coordinacion|cicle|departament|departamento|dept)\b/.test(norm(t))) return 'AL:'+t;
   const g=matchGrup(t); if(g) return 'G:'+g.id;
   const c=classRef(t); if(c) return c.g?'G:'+c.g.id:'C:'+c.txt;
   return 'AL:'+t;
