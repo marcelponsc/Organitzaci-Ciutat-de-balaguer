@@ -387,6 +387,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+const VERSIO = '2026.11.11-c';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -983,7 +984,7 @@ function vConfig(){
     <button class="btn" data-a="imp" data-k="json">Restaurar còpia</button>
     <button class="btn" data-a="demo">Carregar dades d'exemple</button>
     <button class="btn danger" data-a="wipe">Esborrar-ho tot</button>
-  </div></div>`;
+  </div><p class="hint" style="margin:10px 0 0">Versió de l'app: <b>${VERSIO}</b></p></div>`;
 }
 
 function rangF(f){ const m=String(f.label).match(/(\d{1,2})[:.h](\d{2})\D+(\d{1,2})[:.h](\d{2})/); return m?[(+m[1])*60+(+m[2]),(+m[3])*60+(+m[4])]:null; }
@@ -1479,7 +1480,7 @@ function findProf(name){
   return cands.length===1?cands[0]:null;
 }
 function pdfModal(){
-  openModal(`<div class="modal-h"><h2>Importar horaris des de PDF</h2><button class="x" data-a="close">×</button></div>
+  openModal(`<div class="modal-h"><h2>Importar horaris des de PDF <span class="badge">v. ${VERSIO}</span></h2><button class="x" data-a="close">×</button></div>
     <div class="modal-b"><p style="margin-top:0">Tria un o diversos PDF d'horaris (un professor per pàgina o diversos per pàgina). L'app llegeix la graella i et mostra què ha entès <b>abans de desar res</b>.</p>
     <p class="hint">Funciona amb PDF generats pel programa d'horaris (amb text seleccionable). Les franges es casen per l'hora d'inici amb les de Configuració.</p>
     <div class="field"><label>Fitxers PDF</label><input type="file" id="pdfFiles" accept="application/pdf,.pdf" multiple></div>
