@@ -389,7 +389,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.12-a';
+const VERSIO = '2026.11.12-c';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -899,7 +899,7 @@ function vResum(){
     ${kpi('Hores cobertes',`${fullCov}<small>/ ${lf.length}</small>`,'franges amb totes les agrupacions cobertes',ags.length&&fullCov<lf.length?'warn':'ok')}
   </div>
   <div class="sec-h"><div><h2>Resum de la jornada · ${fmtDate(jDate())}</h2><p>Per enviar al claustre o a l'equip directiu.</p></div>
-    <div class="row-actions"><button class="btn pri" data-a="copy-resum">Copiar resum (text)</button><button class="btn" data-a="dl-csv">Descarregar quadre (CSV)</button></div></div>
+    <div class="row-actions"><button class="btn acc" data-a="dl-pdf">Descarregar PDF</button><button class="btn" data-a="dl-pdfq">PDF només del quadre</button><button class="btn pri" data-a="copy-resum">Copiar resum (text)</button><button class="btn" data-a="dl-csv">Descarregar quadre (CSV)</button></div></div>
   ${tNiv}
   <div class="sec-h"><div><h2>Quadre d'agrupacions per hora</h2></div></div>${tGrid}
   <div class="sec-h"><div><h2>Què fa cada professor/a</h2><p>Reserva = disponible a aquesta hora però sense agrupació assignada.</p></div></div>${tProf}`;
@@ -1236,7 +1236,7 @@ function vResumAct(){
     ${kpi('Amb tasca assignada',`${assigned.length}<small>/ ${P.length}</small>`,`${P.length-assigned.length} només en reserva`)}
   </div>
   <div class="sec-h"><div><h2>${esc(jTitol(S.jornada))} · ${fmtDate(jDate())}</h2><p>Per enviar al claustre: el text agrupa les hores seguides al mateix lloc.</p></div>
-    <div class="row-actions"><button class="btn pri" data-a="copy-resum">Copiar full de cada professor</button><button class="btn" data-a="dl-csv">Descarregar quadre (CSV)</button></div></div>
+    <div class="row-actions"><button class="btn acc" data-a="dl-pdf">Descarregar PDF</button><button class="btn" data-a="dl-pdfq">PDF només del quadre</button><button class="btn pri" data-a="copy-resum">Copiar full de cada professor</button><button class="btn" data-a="dl-csv">Descarregar quadre (CSV)</button></div></div>
   ${CO.length?`<div class="card resv" style="margin:0 0 10px"><div class="resv-r" style="border-top:0"><b>Coordinació</b><span><em>${CO.length}</em> ${esc(CO.map(p=>nomLl(p.nom)).join('; '))}</span></div></div>`:''}
   ${grid}
   <div class="sec-h"><div><h2>Què fa cada professor/a</h2><p>Reserva = al centre però sense grup ni lloc assignat.</p></div></div>${tProf}`;
@@ -1274,6 +1274,137 @@ function demoActivitat(){
   if(prevJ===null&&prevId===null){ /* deixem oberta l'activitat */ }
 }
 
+/* ---------- Resum en PDF (pdf-lib) ---------- */
+const PDFLIB_URL = window.PDFLIB_URL || 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+let pdfLibP=null;
+function loadPdfLib(){
+  if(window.PDFLib) return Promise.resolve(window.PDFLib);
+  if(!pdfLibP) pdfLibP=new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src=PDFLIB_URL; sc.onload=()=>window.PDFLib?res(window.PDFLib):rej(new Error('pdf-lib')); sc.onerror=()=>{ pdfLibP=null; rej(new Error("No s'ha pogut carregar el generador de PDF")); }; document.head.appendChild(sc); });
+  return pdfLibP;
+}
+const WINANSI_EXTRA='–—‘’“”•…€';
+const pdfTxt=s=>String(s??'').replace(/[→]/g,'->').replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”•…€]/g,'');
+async function buildPdf(spec){
+  const {PDFDocument,StandardFonts,rgb}=await loadPdfLib();
+  const doc=await PDFDocument.create();
+  const F=await doc.embedFont(StandardFonts.Helvetica), FB=await doc.embedFont(StandardFonts.HelveticaBold);
+  const W=842,H=595,M=28; let page,y;
+  const C={ink:rgb(.09,.09,.11),mut:rgb(.45,.45,.5),line:rgb(.86,.86,.89),head:rgb(.95,.95,.97),ok:rgb(.92,.97,.94),bad:rgb(.99,.92,.92),badT:rgb(.75,.17,.13),na:rgb(.93,.93,.95),pri:rgb(.25,.24,.73),pri2:rgb(.93,.93,.99),warn:rgb(1,.96,.88)};
+  const newPage=()=>{ page=doc.addPage([W,H]); y=H-M; page.drawText(pdfTxt(spec.footer),{x:M,y:14,size:7,font:F,color:C.mut}); page.drawText(String(doc.getPageCount()),{x:W-M-10,y:14,size:7,font:F,color:C.mut}); };
+  const fit=(t,f,sz,w)=>{ t=pdfTxt(t); if(f.widthOfTextAtSize(t,sz)<=w) return t; while(t.length>1&&f.widthOfTextAtSize(t+'…',sz)>w) t=t.slice(0,-1); return t+'…'; };
+  const wrap=(t,f,sz,w)=>{ const words=pdfTxt(t).split(/\s+/); const lines=[]; let cur=''; words.forEach(wd=>{ const n=cur?cur+' '+wd:wd; if(f.widthOfTextAtSize(n,sz)<=w) cur=n; else { if(cur) lines.push(cur); cur=f.widthOfTextAtSize(wd,sz)<=w?wd:fit(wd,f,sz,w); } }); if(cur) lines.push(cur); return lines.length?lines:['']; };
+  const text=(t,{size=10,bold=false,color=C.ink,x=M}={})=>{ page.drawText(pdfTxt(t),{x,y:y-size,size,font:bold?FB:F,color}); y-=size+4; };
+  const para=(t,{size=9,color=C.ink}={})=>{ wrap(t,F,size,W-2*M).forEach(l=>{ if(y-size<M+20) newPage(); page.drawText(l,{x:M,y:y-size,size,font:F,color}); y-=size+3; }); y-=3; };
+  const ensure=h=>{ if(y-h<M+20){ newPage(); return true; } return false; };
+  // taula: cols=[{w}] ; head=[[{t,span,fill}]] ; rows=[[{t,fill,color,bold}]] ; opts.size, opts.wrapCols
+  const table=(cols,head,rows,opts={})=>{
+    const sz=opts.size||8, px=3, py=3+(opts.rowPad||0)/2, lh=sz+3;
+    const xs=[]; let acc=M; cols.forEach(c=>{ xs.push(acc); acc+=c.w; });
+    const drawHead=()=>{ head.forEach(hr=>{ let ci=0; const h=lh+6; hr.forEach(cell=>{ const span=cell.span||1; const x=xs[ci], w=cols.slice(ci,ci+span).reduce((a,c)=>a+c.w,0);
+        page.drawRectangle({x,y:y-h,width:w,height:h,color:cell.fill||C.head,borderColor:C.line,borderWidth:.5});
+        page.drawText(fit(cell.t,FB,sz,w-px*2),{x:x+px,y:y-3-sz,size:sz,font:FB,color:C.ink}); ci+=span; }); y-=h; }); };
+    ensure((lh+6)*(head.length+1)); drawHead();
+    rows.forEach(r=>{
+      const linesPer=r.map((cell,ci)=>(opts.wrapCols||[]).includes(ci)?wrap(cell.t,cell.bold?FB:F,sz,cols[ci].w-px*2):[fit(cell.t,cell.bold?FB:F,sz,cols[ci].w-px*2)]);
+      const nl=Math.max(...linesPer.map(l=>l.length)); const h=nl*lh+py*2-2;
+      if(ensure(h)) drawHead();
+      r.forEach((cell,ci)=>{ page.drawRectangle({x:xs[ci],y:y-h,width:cols[ci].w,height:h,color:cell.fill||rgb(1,1,1),borderColor:C.line,borderWidth:.5});
+        const top=y-(h-(linesPer[ci].length*lh-2))/2; // centrat vertical
+        linesPer[ci].forEach((l,li)=>page.drawText(l,{x:xs[ci]+px,y:top-sz-li*lh+1,size:sz,font:cell.bold?FB:F,color:cell.color||C.ink})); });
+      y-=h;
+    });
+    y-=10;
+  };
+  newPage();
+  const measure=(t,sz,bold)=>(bold?FB:F).widthOfTextAtSize(pdfTxt(t),sz);
+  spec.render({text,para,table,ensure,newPage,measure,C,W,M,get y(){return y;},set y(v){y=v;}});
+  return await doc.save();
+}
+const fullW=842-56;
+function pdfVaga(nomesQuadre){
+  const st=nivellStats(), lf=lectFranges(), ags=agrupacions();
+  const mat=sum(st.map(s=>s.mat)), pres=sum(st.map(s=>s.pres));
+  const P=S.profs.filter(p=>pEstat(p.id)==='P'), V=S.profs.filter(p=>pEstat(p.id)==='V').length;
+  const fullCov=ags.length?lf.filter(f=>{ const c=coverage(f.id); return c.cov>=c.need; }).length:0;
+  const asg=fid=>(S.jornada&&S.jornada.assign&&S.jornada.assign[fid])||{};
+  const d=new Date(jDate()+'T12:00:00').getDay();
+  return {footer:`${S.config.centre||'Jornades'} · Dia de vaga ${fmtDate(jDate())} · generat ${fmtDate(todayISO())}`, render:R=>{
+    R.text(`Dia de vaga · ${DIES[d]} ${fmtDate(jDate())}`,{size:16,bold:true});
+    if(S.config.centre) R.text(S.config.centre,{size:10,color:R.C.mut});
+    if(nomesQuadre){ R.para(`Alumnes presents: ${pres} de ${mat} (${pct(pres,mat)})   ·   Agrupacions: ${ags.length}   ·   Professorat present: ${P.length}`,{size:9.5}); }
+    else { R.y-=2; R.para(`Alumnes presents: ${pres} de ${mat} (${pct(pres,mat)})   ·   Professorat present: ${P.length} de ${S.profs.length} (${V} fan vaga)   ·   Agrupacions: ${ags.length}   ·   Hores cobertes: ${fullCov} de ${lf.length}`,{size:9.5});
+    R.text('Alumnes per nivell',{size:11,bold:true});
+    const cw=[140,90,90,70,90,100];
+    R.table(cw.map(w=>({w})),[[{t:'Nivell'},{t:'Matriculats'},{t:'Presents'},{t:'%'},{t:'Agrupacions'},{t:'Alumnes/agrup.'}]],
+      [...st.map(s=>[{t:s.nv,bold:true},{t:String(s.mat)},{t:String(s.pres),bold:true},{t:pct(s.pres,s.mat)},{t:String(s.n),bold:true},{t:s.n?'≈ '+Math.ceil(s.pres/s.n):'–'}]),
+       [{t:'Total',bold:true},{t:String(mat),bold:true},{t:String(pres),bold:true},{t:pct(pres,mat),bold:true},{t:String(ags.length),bold:true},{t:''}]],{size:9}); }
+    if(ags.length){
+      if(!nomesQuadre){ R.ensure(140); R.text("Quadre d'agrupacions per hora",{size:11,bold:true}); } else R.y-=4;
+      const hw=72, cw2=Math.max(30,(fullW-hw)/ags.length); const stN=st.filter(x=>x.n>0);
+      const avC={}; lf.forEach(f=>{ avC[f.id]=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id)); });
+      const reserves={};
+      const rows=lf.map(f=>{ const a=asg(f.id); const used=new Set();
+        const cells=ags.map(ag=>{ if(!fApplies(f,ag.nv)) return {t:'—',fill:R.C.na,color:R.C.mut}; const pid=a[ag.id]; const ok=pid&&avC[f.id].has(pid); if(ok){ used.add(pid); return {t:curt(profById(pid).nom)}; } return {t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; });
+        reserves[f.id]=[...avC[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>curt(p.nom));
+        return [{t:f.label,bold:true},...cells]; });
+      let szQ=ags.length>18?6.5:7.5, padQ=0;
+      if(nomesQuadre){
+        const noms=rows.flatMap(r=>r.slice(1).map(c=>c.t));
+        szQ=11; while(szQ>6&&Math.max(...noms.map(t=>R.measure(t,szQ,false)))>cw2-7) szQ-=0.5;
+        const disp=R.y-28-20-(szQ+9)*2; padQ=Math.max(0,Math.min(28,disp/Math.max(1,rows.length)-(szQ+9)));
+      }
+      R.table([{w:hw},...ags.map(()=>({w:cw2}))],
+        [[{t:'Hora'},...stN.map(x=>({t:x.n>1?`${x.nv} (${x.pres} al.)`:x.nv,span:x.n}))],[{t:''},...ags.map(ag=>({t:`G${ag.idx} ≈${ag.alumnes}`}))]],rows,{size:szQ,rowPad:padQ});
+      if(nomesQuadre) return;
+      R.text('Professorat de reserva / guàrdia per hora',{size:11,bold:true});
+      R.table([{w:110},{w:fullW-110}],[[{t:'Hora'},{t:'Professors lliures'}]],lf.map(f=>[{t:f.label,bold:true},{t:reserves[f.id].length?`(${reserves[f.id].length}) `+reserves[f.id].join(', '):'Ningú'}]),{size:8,wrapCols:[1]});
+    }
+    if(P.length&&!nomesQuadre){
+      R.newPage(); R.text('Què fa cada professor/a',{size:13,bold:true});
+      const pw=170, cw3=(fullW-pw)/Math.max(1,lf.length);
+      R.table([{w:pw},...lf.map(()=>({w:cw3}))],[[{t:'Professor/a'},...lf.map(f=>({t:f.label}))]],
+        P.slice().sort(profCmp).map(p=>[{t:nomLl(p.nom),bold:true},...lf.map(f=>{ const c=profCell(p.id,f.id); return {t:c.txt,fill:c.cls==='res'?R.C.pri2:c.cls==='abs'?undefined:R.C.ok,color:c.cls==='abs'?R.C.mut:R.C.ink}; })]),{size:7.5});
+    }
+  }};
+}
+function pdfAct(nomesQuadre){
+  const fr=actFranges(), slots=actSlots();
+  const P=S.profs.filter(p=>pEstat(p.id)==='P'), CO=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp), AB=S.profs.filter(p=>pEstat(p.id)==='V').sort(profCmp);
+  const d=new Date(jDate()+'T12:00:00').getDay();
+  const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); let cov=0; fr.forEach(f=>{ cov+=actCoverage(f.id).cov; });
+  return {footer:`${S.config.centre||'Jornades'} · ${jTitol(S.jornada)} ${fmtDate(jDate())} · generat ${fmtDate(todayISO())}`, render:R=>{
+    R.text(`${jTitol(S.jornada)} · ${DIES[d]} ${fmtDate(jDate())}`,{size:16,bold:true});
+    if(S.config.centre) R.text(S.config.centre,{size:10,color:R.C.mut});
+    if(nomesQuadre){ if(CO.length) R.para('Coordinació: '+CO.map(p=>nomLl(p.nom)).join('; '),{size:9.5}); }
+    else { R.y-=2; R.para(`Professorat participant: ${P.length+CO.length} de ${S.profs.length}   ·   Coordinació: ${CO.length}   ·   Absents: ${AB.length}   ·   Caselles cobertes: ${cov} de ${tot}`,{size:9.5});
+    if(CO.length) R.para('Coordinació: '+CO.map(p=>nomLl(p.nom)).join('; '),{size:9.5});
+    if(AB.length) R.para('Absents: '+AB.map(p=>nomLl(p.nom)).join('; '),{size:9,color:R.C.mut});
+    R.text('Què fa cada professor/a',{size:11,bold:true});
+    const pw=170, cw=(fullW-pw)/Math.max(1,fr.length);
+    R.table([{w:pw},...fr.map(()=>({w:cw}))],[[{t:'Professor/a'},...fr.map(f=>({t:f.label}))]],
+      [...CO,...P.slice().sort(profCmp)].map(p=>[{t:nomLl(p.nom),bold:true},...profPlaAct(p.id).map(x=>({t:x.txt,fill:x.cls==='co'?R.C.pri2:x.cls==='res'?R.C.warn:x.cls==='abs'?undefined:R.C.ok,color:x.cls==='abs'?R.C.mut:R.C.ink}))]),{size:7.5}); }
+    if(slots.length&&fr.length){
+      if(!nomesQuadre){ R.newPage(); R.text('Per grup o lloc',{size:13,bold:true}); } else R.y-=4;
+      const ew=150, cw2=(fullW-ew)/fr.length;
+      const rows=slots.map(sl=>[{t:colNom(sl.col)+((+sl.col.n||0)>1?' ('+sl.k+')':''),bold:true},...fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
+        const pid=((S.jornada.assign&&S.jornada.assign[f.id])||{})[sl.id]; const ok=pid&&disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
+        return ok?{t:nomLl(profById(pid).nom)}:{t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; })]);
+      let szA=7.5, padA=0;
+      if(nomesQuadre){ szA=slots.length<=20?10:slots.length<=28?8.5:7.5; const disp=R.y-28-20-(szA+9); const per=disp/Math.max(1,rows.length); padA=Math.max(0,Math.min(16,per-(szA+9))); }
+      R.table([{w:ew},...fr.map(()=>({w:cw2}))],[[{t:'Grup / lloc'},...fr.map(f=>({t:f.label}))]],rows,{size:szA,rowPad:padA});
+    }
+  }};
+}
+async function descarregarPdf(nomesQuadre){
+  if(!S.jornada){ toast('Obre una jornada.'); return; }
+  toast('Generant el PDF…');
+  try{
+    const bytes=await buildPdf(jTipus()==='activitat'?pdfAct(nomesQuadre):pdfVaga(nomesQuadre));
+    const nom=(jTipus()==='activitat'?'activitat-'+norm(jTitol(S.jornada)).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-':'vaga-')+(nomesQuadre?'quadre-':'')+jDate()+'.pdf';
+    await saveFile(nom,bytes,'application/pdf');
+  }catch(e){ toast("No s'ha pogut generar el PDF: "+(e&&e.message||e)); }
+}
+
 /* ---------- Modals ---------- */
 function openModal(html,wide){ $('#modal').innerHTML=`<div class="ov" data-a="ov"><div class="modal ${wide?'wide':''}" role="dialog">${html}</div></div>`; }
 function closeModal(){ $('#modal').innerHTML=''; if(needRender){ needRender=false; render(); } }
@@ -1307,7 +1438,8 @@ async function saveFile(name,text,mime){
   if(!window.claude){
     try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:mime||'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); return; }catch(e){}
   }
-  showText(name,text);
+  if(typeof text==='string') showText(name,text);
+  else toast("No s'ha pogut descarregar el fitxer en aquesta vista.");
 }
 
 function horariModal(pid){
@@ -1840,6 +1972,8 @@ const A={
     saveJ(); render(); toast(`Proposta generada: ${tc} de ${tn} sessions cobertes.`); },
   'asg-clear-all':async()=>{ if(!await ask('Buidar totes les assignacions de totes les hores?','Buidar tot')) return; const j=ensureJ(); j.assign={}; saveJ(); render(); },
   'asg-clear':async()=>{ if(!await ask('Buidar totes les assignacions d\'aquesta hora?','Buidar')) return; const j=ensureJ(); delete j.assign[S.ui.franja]; saveJ(); render(); },
+  'dl-pdf':()=>descarregarPdf(false),
+  'dl-pdfq':()=>descarregarPdf(true),
   'copy-resum':()=>copyText(jTipus()==='activitat'?resumTextAct():resumText(),'Resum'),
   'dl-csv':()=>saveFile(jTipus()==='activitat'?`activitat-${jDate()}.csv`:`vaga-${jDate()}.csv`,jTipus()==='activitat'?csvAct():csvQuadre(),'text/csv'),
   'fr-niv':b=>{ const f=franjaById(b.dataset.f); if(!f) return; const set=new Set(f.nivells||[]); const nv=b.dataset.nv; if(set.has(nv)) set.delete(nv); else set.add(nv); f.nivells=nivells().filter(x=>set.has(x)); f.nivAuto=false; saveConfig(); render(); },
