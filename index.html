@@ -238,7 +238,7 @@ table.qg th,table.qg td{padding:6px 7px}
 table.pg{font-size:11.5px;table-layout:fixed;min-width:560px}
 table.pg th:first-child{width:52px}
 table.pg th,table.pg td{padding:3px 6px;border-right:1px solid var(--line2);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
-table.pg td.g{background:var(--ok2)}table.pg td.gu{background:var(--pri2);color:var(--pri)}table.pg td.al{color:var(--mut)}
+table.pg td.g{background:var(--ok2)}table.pg td.gu{background:var(--pri2);color:var(--pri)}table.pg td.al{background:var(--warn2);color:#7a4a00}
 table.pg .pgh{color:var(--mut);font-weight:600}
 .jlist{display:flex;flex-direction:column;gap:8px}
 .jcard{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;cursor:pointer}
@@ -296,6 +296,7 @@ pre.ex{background:#f7f7f9;border:1px solid var(--line);border-radius:8px;padding
 .x{border:0;background:#f1f1f4;width:28px;height:28px;border-radius:7px;font-size:16px;color:var(--ink2)}
 .hgrid select{width:100%;border:1px solid var(--line);border-radius:6px;padding:4px;font-size:12px;background:#fff}
 .hgrid select.g{background:var(--ok2);border-color:#cdeadb}
+.hgrid select.pe{background:var(--warn2);border-color:#f1dfb3}
 .hgrid select.gu{background:var(--pri2);border-color:#d9d8f7}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:10px;z-index:80;font-size:13px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90vw}
 .empty{text-align:center;padding:44px 20px}
@@ -388,7 +389,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.11-e';
+const VERSIO = '2026.11.12-a';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -1314,14 +1315,14 @@ function horariModal(pid){
   const gs=S.grups.slice().sort((a,b)=>natCmp(a.nom,b.nom));
   const cell=(d,f)=>{
     const v=(S.horari[pid]||{})[d+'-'+f.id]||'';
-    const cls=v==='GU'?'gu':(v.startsWith('G:')||v.startsWith('C:'))?'g':'';
-    const extra=v.startsWith('AL:')?`<option value="${esc(v)}" selected>${esc(v.slice(3))}</option>`:v.startsWith('C:')?`<option value="${esc(v)}" selected>Classe · ${esc(v.slice(2))}</option>`:'';
+    const cls=v==='GU'?'gu':(v.startsWith('G:')||v.startsWith('C:'))?'g':v.startsWith('AL:')?'pe':'';
+    const extra=v.startsWith('AL:')?`<option value="${esc(v)}" selected>Permanència · ${esc(v.slice(3))}</option>`:v.startsWith('C:')?`<option value="${esc(v)}" selected>Classe · ${esc(v.slice(2))}</option>`:'';
     return `<select class="${cls}" data-in="h-cell" data-p="${pid}" data-k="${d}-${f.id}"><option value="">—</option><option value="GU" ${v==='GU'?'selected':''}>Guàrdia</option>${extra}<optgroup label="Classe amb…">${gs.map(g=>`<option value="G:${g.id}" ${v==='G:'+g.id?'selected':''}>${esc(g.nom)}</option>`).join('')}</optgroup></select>`;
   };
   openModal(`<div class="modal-h"><h2>Horari · ${esc(nomLl(p.nom))}</h2><button class="x" data-a="close">×</button></div>
     <div class="modal-b hgrid tblw"><table class="t"><thead><tr><th>Franja</th>${[1,2,3,4,5].map(d=>`<th>${DIES[d]}</th>`).join('')}</tr></thead><tbody>
     ${S.config.franges.map(f=>`<tr><td><b>${esc(f.label)}</b></td>${[1,2,3,4,5].map(d=>`<td>${cell(d,f)}</td>`).join('')}</tr>`).join('')}
-    </tbody></table><p class="hint">Verd = classe, blau = guàrdia. Els canvis es desen sols.</p></div>
+    </tbody></table><p class="hint">Verd = classe, blau = guàrdia, groc = permanència al centre (reunions, coordinacions…). Els canvis es desen sols.</p></div>
     <div class="modal-f"><button class="btn pri" data-a="close">Fet</button></div>`,true);
 }
 
@@ -1575,7 +1576,7 @@ function renderPdfRes(){
       <div class="pdfb-h"><label class="check"><input type="checkbox" data-in="pdf-on" data-i="${i}" ${b.on?'checked':''}></label>
         <input type="text" list="profsDL" data-in="pdf-name" data-i="${i}" value="${esc(b.name)}" placeholder="Nom del professor (Cognoms, Nom)">
         <span class="badge ${p?'':'man'}" id="pdfst${i}">${p?'Existent':'Nou professor'}</span></div>
-      <div class="hint" style="margin:4px 0 6px">${esc(b.file)} · pàg. ${b.page} · ${nc} sessions${nAl?` (${nAl} no són grup ni guàrdia)`:''}${b.badRows.length?` · <span style="color:var(--bad)">hores no reconegudes: ${esc(b.badRows.join(', '))}</span>`:''}</div>
+      <div class="hint" style="margin:4px 0 6px">${esc(b.file)} · pàg. ${b.page} · ${nc} sessions${nAl?` (${nAl} de permanència)`:''}${b.badRows.length?` · <span style="color:var(--bad)">hores no reconegudes: ${esc(b.badRows.join(', '))}</span>`:''}</div>
       <div class="tblw">${grid}</div></div>`;
   }).join('');
   $('#pdfFoot').innerHTML=`<button class="btn" data-a="close">Cancel·lar</button><button class="btn acc" data-a="pdf-go" ${n?'':'disabled'}>Importar ${n} horari${n===1?'':'s'}</button>`;
@@ -1922,7 +1923,7 @@ const IN={
   'pdf-name':el=>{ const b=pdfImport[+el.dataset.i]; if(!b) return; b.name=el.value; const st=$('#pdfst'+el.dataset.i); if(st){ const p=findProf(b.name); st.textContent=p?'Existent':'Nou professor'; st.className='badge '+(p?'':'man'); } const n=pdfImport.filter(x=>x.on&&x.name.trim()).length; const go=document.querySelector('[data-a="pdf-go"]'); if(go){ go.disabled=!n; go.textContent=`Importar ${n} horari${n===1?'':'s'}`; } },
   'pdf-on':el=>{ const b=pdfImport[+el.dataset.i]; if(!b) return; b.on=el.checked; renderPdfRes(); },
   'h-cell':el=>{ const pid=el.dataset.p, k=el.dataset.k; S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
-    el.className=el.value==='GU'?'gu':el.value.startsWith('G:')?'g':''; saveHorari(); }
+    el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
 const ONCHANGE=new Set(['coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
 document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
