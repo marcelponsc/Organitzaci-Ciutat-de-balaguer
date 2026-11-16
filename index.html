@@ -389,7 +389,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.16-a';
+const VERSIO = '2026.11.16-d';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -1074,6 +1074,9 @@ function actCoverage(fid){
   const slots=actSlots().filter(s=>slotApplies(s,fid)); return {cov:slots.filter(s=>asg[s.id]&&ids.has(asg[s.id])).length,need:slots.length,av:av.length};
 }
 function slotApplies(sl,f){ if(sl.col.tipus!=='grup') return true; const g=grupById(sl.col.grup); return !g||fApplies(f,g.nivell); }
+function grauGrup(pid,gid){ const vs=Object.values(S.horari[pid]||{}); if(vs.includes('G:'+gid)) return 2; const g=grupById(gid); return g&&vs.includes('C:'+g.nivell)?1:0; }
+const teachesGroup=(pid,gid)=>grauGrup(pid,gid)>0;
+function rolSlot(sl){ if((+sl.col.n||0)<2) return ''; return 'Professor '+sl.k; }
 const teachesAt=(pid,gid,dia,fid)=>{ const a=act(pid,dia,fid); return !!a&&a.t==='G'&&a.grup===gid; };
 
 /* ----- 1. Activitat ----- */
@@ -1109,7 +1112,7 @@ function vActivitat(){
     </div>
   </div>
   <div class="sec-h"><div><h2>Què cal cobrir (${cols.length})</h2><p>${need} professors per hora. Cada professor es queda amb el mateix grup o lloc tota la jornada sempre que el seu horari ho permeti.</p></div>
-    <div class="row-actions"><button class="btn sm" data-a="act-addg">+ Tots els grups</button><button class="btn sm" data-a="act-addl">+ Lloc o tasca</button>${cols.length?'<button class="btn sm danger" data-a="act-delall">Treure-ho tot</button>':''}</div></div>
+    <div class="row-actions">${cols.some(c=>c.tipus==='grup')?`<span class="hint">Professors per grup:</span><div class="chips">${[1,2,3].map(n=>`<button class="chip ${cols.filter(c=>c.tipus==='grup').every(c=>+c.n===n)?'on':''}" data-a="act-ngrup" data-n="${n}">${n}</button>`).join('')}</div>`:''}<button class="btn sm" data-a="act-addg">+ Tots els grups</button><button class="btn sm" data-a="act-addl">+ Lloc o tasca</button>${cols.length?'<button class="btn sm danger" data-a="act-delall">Treure-ho tot</button>':''}</div></div>
   ${tbl}${bal}
   ${need&&fr.length?`<div class="row-actions mt"><button class="btn acc" data-a="tab" data-tab="assignacio">Anar a l'assignació →</button></div>`:''}`;
 }
@@ -1130,13 +1133,15 @@ function autoAssignAct(){
   const res={}; fr.forEach(f=>res[f.id]={});
   const freeHours=pid=>fr.filter(f=>av[f.id].has(pid)&&!used[f.id].has(pid)).length;
   const teachCount=(pid,gid)=>fr.filter(f=>teachesAt(pid,gid,dia,f.id)).length;
+  const dels={}; const delGrup=(pid,gid)=>{ const k=pid+'|'+gid; if(!(k in dels)) dels[k]=grauGrup(pid,gid); return dels[k]; };
   // 1. titular per a cada plaça (prioritat: grups amb tutor, després grups, després llocs)
-  const order=slots.slice().sort((a,b)=>{ const r=s=>s.col.tipus==='grup'?(grupById(s.col.grup)&&grupById(s.col.grup).tutor&&s.k===1?0:1):2; return r(a)-r(b); });
+  // ordre: 1r professor dels grups amb tutor, 1r professor de la resta de grups, 2n/3r professor dels grups, llocs
+  const order=slots.slice().sort((a,b)=>{ const r=s=>s.col.tipus!=='grup'?3:s.k>1?2:(grupById(s.col.grup)&&grupById(s.col.grup).tutor?0:1); return r(a)-r(b); });
   order.forEach(sl=>{
     const gid=sl.col.tipus==='grup'?sl.col.grup:null; const g=gid?grupById(gid):null;
     let best=null,bs=-1; const frS=fr.filter(f=>slotApplies(sl,f));
     S.profs.forEach(p=>{ const fh=frS.filter(f=>av[f.id].has(p.id)&&!used[f.id].has(p.id)).length; if(!fh) return;
-      let sc=fh*10; if(g&&g.tutor===p.id&&sl.k===1) sc+=1000; if(gid) sc+=teachCount(p.id,gid)*6;
+      let sc=fh*10; if(g&&g.tutor===p.id&&sl.k===1) sc+=1000; if(gid) sc+=[0,250,400][delGrup(p.id,gid)]; if(gid) sc+=teachCount(p.id,gid)*6;
       if(sc>bs){ bs=sc; best=p.id; } });
     if(best) fr.forEach(f=>{ if(slotApplies(sl,f)&&av[f.id].has(best)&&!used[f.id].has(best)){ res[f.id][sl.id]=best; used[f.id].add(best); } });
   });
@@ -1147,11 +1152,27 @@ function autoAssignAct(){
       const gaps=fr.filter(f=>slotApplies(sl,f)&&!res[f.id][sl.id]); if(!gaps.length) return;
       let best=null,bs=0;
       S.profs.forEach(p=>{ const c=gaps.filter(f=>av[f.id].has(p.id)&&!used[f.id].has(p.id)).length; if(!c) return;
-        const sc=c*100+(gid?gaps.filter(f=>teachesAt(p.id,gid,dia,f.id)).length*10:0)-freeHours(p.id);
+        const sc=c*100+(gid?[0,100,150][delGrup(p.id,gid)]:0)+(gid?gaps.filter(f=>teachesAt(p.id,gid,dia,f.id)).length*10:0)-freeHours(p.id);
         if(best===null||sc>bs){ bs=sc; best=p.id; } });
       if(best){ gaps.forEach(f=>{ if(av[f.id].has(best)&&!used[f.id].has(best)){ res[f.id][sl.id]=best; used[f.id].add(best); } }); changed=true; }
     });
   }
+  // 3. reequilibri per hores: cap grup sense ningú mentre un altre en tingui dos; i qui hi ha, a la columna de responsable
+  const perGrup={}; slots.filter(s=>s.col.tipus==='grup').forEach(s=>{ (perGrup[s.col.id]=perGrup[s.col.id]||[]).push(s); });
+  Object.values(perGrup).forEach(list=>list.sort((a,b)=>a.k-b.k));
+  fr.forEach(f=>{ const r=res[f.id];
+    const grups=Object.values(perGrup).filter(list=>slotApplies(list[0],f));
+    // a) dins d'un grup, el primer professor present va a la columna de responsable
+    grups.forEach(list=>{ if(r[list[0].id]) return; const alt=list.find(s=>r[s.id]); if(alt){ r[list[0].id]=r[alt.id]; delete r[alt.id]; } });
+    // b) grups buits: hi passa un acompanyant d'un grup que en té dos o més
+    grups.filter(list=>!r[list[0].id]).forEach(list=>{
+      const gid=list[0].col.grup;
+      const donors=[]; grups.forEach(l2=>{ if(l2===list||!r[l2[0].id]) return; l2.slice(1).forEach(s=>{ if(r[s.id]) donors.push(s); }); });
+      if(!donors.length) return;
+      donors.sort((x,y)=>grauGrup(r[y.id],gid)-grauGrup(r[x.id],gid));
+      const d=donors[0]; r[list[0].id]=r[d.id]; delete r[d.id];
+    });
+  });
   j.assign=res;
   const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); const cov=fr.reduce((a,f)=>a+Object.keys(res[f.id]).length,0);
   const per={}; fr.forEach(f=>Object.entries(res[f.id]).forEach(([s,p])=>{ (per[p]=per[p]||new Set()).add(s); }));
@@ -1177,11 +1198,11 @@ function vAssignAct(){
     const cells=slots.map(sl=>{
       if(!slotApplies(sl,f)) return `<td class="na ${sl.k===1?'nvs':''}" title="Aquest grup no té classe en aquesta franja">—</td>`;
       const cur=asg[sl.id], ok=cur&&avIds.has(cur); const gid=sl.col.tipus==='grup'?sl.col.grup:null; const g=gid?grupById(gid):null;
-      const rank=x=>(prevA[sl.id]===x.p.id||nextA[sl.id]===x.p.id)?0:(g&&g.tutor===x.p.id)?1:(gid&&x.a&&x.a.t==='G'&&x.a.grup===gid)?2:isClass(x.a)?3:x.a&&x.a.t==='GU'?4:5;
-      const tag=x=>{ const r=rank(x); return r===0?'continuïtat':r===1?'tutor/a':actShort(x.a); };
+      const rank=x=>(prevA[sl.id]===x.p.id||nextA[sl.id]===x.p.id)?0:(g&&g.tutor===x.p.id)?1:(gid&&teachesGroup(x.p.id,gid))?2:isClass(x.a)?3:x.a&&x.a.t==='GU'?4:5;
+      const tag=x=>{ const r=rank(x); return r===0?'continuïtat':r===1?'tutor/a':r===2?'fa classe al grup':actShort(x.a); };
       const lliures=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
       const ocupats=av.filter(x=>where[x.p.id]&&x.p.id!==cur).sort((x,y)=>profCmp(x.p,y.p));
-      const slLab=s=>{ const sl2=slots.find(z=>z.id===s); return sl2?colNom(sl2.col)+((+sl2.col.n||0)>1?' ('+sl2.k+')':''):'?'; };
+      const slLab=s=>{ const sl2=slots.find(z=>z.id===s); return sl2?colNom(sl2.col)+((+sl2.col.n||0)>1?' · '+rolSlot(sl2).toLowerCase():''):'?'; };
       const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(sl.id)}" aria-label="${esc(colNom(sl.col))} ${esc(f.label)}">
         <option value="">${ok?'— Treure —':'Triar…'}</option>
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(tag(x))}</option>`).join('')}</optgroup>`:''}
@@ -1194,7 +1215,7 @@ function vAssignAct(){
     return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div></td>${cells}</tr>`;
   }).join('');
   const thead=multi?`<tr><th class="hcol" rowspan="2">Hora</th>${cols.map(c=>(+c.n||0)>1?`<th class="nvs" colspan="${c.n}">${esc(colNom(c))}</th>`:`<th class="nvs" rowspan="2">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>
-    <tr>${slots.filter(sl=>(+sl.col.n||0)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">Prof. ${sl.k}</th>`).join('')}</tr>`
+    <tr>${slots.filter(sl=>(+sl.col.n||0)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">${esc(rolSlot(sl))}</th>`).join('')}</tr>`
     :`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
   const table=`<div class="card tblw"><table class="t qg qa"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
   const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+esc(reserves[f.id].join(', ')):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
@@ -1221,7 +1242,7 @@ function vResumAct(){
   const P=S.profs.filter(p=>pEstat(p.id)==='P'), CO=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
   const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); let cov=0; fr.forEach(f=>{ cov+=actCoverage(f.id).cov; });
   const assigned=P.filter(p=>profPlaAct(p.id).some(x=>x.cls===''&&x.txt!=='Reserva'));
-  const grid=slots.length&&fr.length?`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slots.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${(+sl.col.n||0)>1?'<small>prof. '+sl.k+'</small>':''}</th>`).join('')}</tr></thead><tbody>
+  const grid=slots.length&&fr.length?`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slots.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${(+sl.col.n||0)>1?'<small>'+esc(rolSlot(sl).toLowerCase())+'</small>':''}</th>`).join('')}</tr></thead><tbody>
     ${fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const ids=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id));
       return `<tr><td class="hcol">${esc(f.label)}</td>${slots.map(sl=>{ if(!slotApplies(sl,f)) return '<td class="na nvs">—</td>'; const pid=asg[sl.id]; return pid&&ids.has(pid)?`<td class="p nvs" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss nvs">Sense prof.</td>`; }).join('')}</tr>`; }).join('')}
   </tbody></table></div>`:'<p class="hint">Falta definir l\'activitat.</p>';
@@ -1386,7 +1407,7 @@ function pdfAct(nomesQuadre){
     if(slots.length&&fr.length){
       if(!nomesQuadre){ R.newPage(); R.text('Per grup o lloc',{size:13,bold:true}); } else R.y-=4;
       const ew=150, cw2=(fullW-ew)/fr.length;
-      const rows=slots.map(sl=>[{t:colNom(sl.col)+((+sl.col.n||0)>1?' ('+sl.k+')':''),bold:true},...fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
+      const rows=slots.map(sl=>[{t:colNom(sl.col)+((+sl.col.n||0)>1?' · '+rolSlot(sl).toLowerCase():''),bold:true},...fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
         const pid=((S.jornada.assign&&S.jornada.assign[f.id])||{})[sl.id]; const ok=pid&&disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
         return ok?{t:nomLl(profById(pid).nom)}:{t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; })]);
       let szA=7.5, padA=0;
@@ -2012,6 +2033,7 @@ const A={
   'nj-go':()=>crearJornada(),
   'act-addg':()=>{ const j=ensureJ(); j.cols=j.cols||[]; let n=0; S.grups.slice().sort(grupCmp).forEach(g=>{ if(!j.cols.some(c=>c.grup===g.id)){ j.cols.push({id:'g_'+g.id,tipus:'grup',grup:g.id,nom:g.nom,n:1}); n++; } }); saveJ(); render(); toast(n?`${n} grups afegits.`:'Ja hi eren tots.'); },
   'coord-del':b=>{ const j=ensureJ(); delete j.profs[b.dataset.id]; saveJ(); render(); },
+  'act-ngrup':b=>{ const j=ensureJ(); const n=+b.dataset.n; (j.cols||[]).forEach(c=>{ if(c.tipus==='grup') c.n=n; }); saveJ(); render(); toast(n===1?'Un professor per grup.':`${n} professors per grup.`); },
   'act-addl':()=>{ const j=ensureJ(); j.cols=j.cols||[]; j.cols.push({id:'l_'+uid(),tipus:'lloc',nom:'Nou lloc o tasca',n:1}); saveJ(); render(); },
   'act-deln':b=>{ const j=ensureJ(); const c=(j.cols||[]).find(x=>x.id===b.dataset.c); if(!c) return; c.n=Math.max(0,(+c.n||0)+(+b.dataset.d)); if(c.n===0){ j.cols=j.cols.filter(x=>x!==c); } saveJ(); render(); },
   'act-del':b=>{ const j=ensureJ(); j.cols=(j.cols||[]).filter(x=>x.id!==b.dataset.c); saveJ(); render(); },
