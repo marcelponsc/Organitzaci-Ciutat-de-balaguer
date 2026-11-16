@@ -70,6 +70,7 @@ main{max-width:1240px;margin:0 auto;padding:22px 20px 90px}
 .hint{color:var(--mut);font-size:12.5px}
 .banner{border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;border:1px solid transparent}
 .banner.info{background:var(--pri2);color:#2e2b8f;border-color:#dddcf8}
+.banner.ok{background:var(--ok2);color:var(--ok);border-color:#cfe9d9}
 .banner.warn{background:var(--warn2);color:#7a4a00;border-color:#f6e2b9}
 .banner.err{background:var(--bad2);color:#9d1f1a;border-color:#f6d0cd}
 
@@ -319,6 +320,23 @@ pre.ex{background:#f7f7f9;border:1px solid var(--line);border-radius:8px;padding
   .tab .lg{display:none}.tab .sh{display:inline}
 }
 
+.cmpt td.cmp{cursor:pointer;font-size:12.5px;padding:6px 8px;vertical-align:top}
+.cmpt td.cmp.eq{color:var(--ink2)}
+.cmpt td.cmp.eq:hover{background:var(--pri2)}
+.cmpt td.cmp.df{background:var(--warn2)}
+.cmpt td.cmp.df:hover{background:#ffedc7}
+.cmpt .cmp-l{line-height:1.35}.cmpt .cmp-l b{display:inline-block;min-width:26px;font-size:10.5px;color:var(--warn);text-transform:uppercase;letter-spacing:.03em}
+.cmpt .cmp-l.app b{color:var(--blue)}
+.cmpt td.df .nw{font-weight:700;color:var(--ink)}
+.cmpt .unk{color:var(--bad);font-weight:700}
+.cmp-av{margin:0;padding-left:18px;font-size:13px}.cmp-av li{margin:5px 0}.cmp-av li.bad::marker{color:var(--bad)}.cmp-av li.warn::marker{color:var(--warn)}
+.cmp-av select{font-size:13px;padding:3px 6px;margin-left:4px;max-width:240px}
+.cmp-m td.win{background:var(--ok2);color:var(--ok);font-weight:700}
+.cmp-mot{margin:0 0 6px;padding-left:18px}.cmp-mot li{margin:5px 0}
+.cmp-h{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:14px 0 4px}
+.cmp-p{padding:6px 0;border-top:1px solid var(--line2)}.cmp-p .good{color:var(--ok)}.cmp-p .bad{color:var(--bad)}
+.cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
+
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
 #login[hidden]{display:none}
 #login .lcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.06)}
@@ -389,7 +407,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.16-d';
+const VERSIO = '2026.11.16-e';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -1181,10 +1199,11 @@ function autoAssignAct(){
 }
 function vAssignAct(){
   const fr=actFranges(), slots=actSlots(), cols=actCols();
+  if(fr.length&&slots.length&&S.ui.cmp&&S.jornada.manual) return vCompara();
   if(!fr.length||!slots.length) return `<div class="card empty"><h2>Falta definir l'activitat</h2><p>Indica les hores de l'activitat i què cal cobrir (grups o llocs).</p><button class="btn pri" data-a="tab" data-tab="activitat">Anar a Activitat</button></div>`;
   const dia=diaHorari(); const multi=cols.some(c=>(+c.n||0)>1);
   const head=`<div class="sec-h" style="margin-top:0"><div><h2>Assignació · ${esc(jTitol(S.jornada))}</h2><p>Toca una casella per triar el professor. Primer surten els que ja hi són a l'hora anterior o posterior, el tutor/a i qui fa classe a aquell grup.</p></div>
-    <div class="row-actions"><button class="btn acc" data-a="asg-auto-act">Proposta automàtica</button><button class="btn danger" data-a="asg-clear-all">Buidar tot</button></div></div>
+    <div class="row-actions"><button class="btn acc" data-a="asg-auto-act">Proposta automàtica</button><button class="btn" data-a="${S.jornada.manual?'cmp-on':'cmp-open'}">${S.jornada.manual?'Veure la comparació':'Comparar amb la meva proposta'}</button><button class="btn danger" data-a="asg-clear-all">Buidar tot</button></div></div>
     <label class="check" style="margin-bottom:12px"><input type="checkbox" data-in="incfree" ${S.ui.incFree?'checked':''}> Incloure també professors presents que no tenen res a l'horari a aquella hora</label>`;
   const asgAt=fid=>(S.jornada.assign&&S.jornada.assign[fid])||{};
   const reserves={};
@@ -1220,6 +1239,268 @@ function vAssignAct(){
   const table=`<div class="card tblw"><table class="t qg qa"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
   const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+esc(reserves[f.id].join(', ')):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
   return head+table+resv;
+}
+
+
+/* ----- Comparar amb una proposta feta a mà ----- */
+async function inflateRaw(u8){ const s=new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw')); return new Uint8Array(await new Response(s).arrayBuffer()); }
+async function unzipBuf(buf){
+  const u8=new Uint8Array(buf), dv=new DataView(buf); let e=u8.length-22;
+  while(e>=0&&dv.getUint32(e,true)!==0x06054b50) e--; if(e<0) throw new Error('El fitxer no és un Excel (.xlsx) vàlid.');
+  const n=dv.getUint16(e+10,true); let p=dv.getUint32(e+16,true); const out={}; const td=new TextDecoder();
+  for(let i=0;i<n;i++){ const meth=dv.getUint16(p+10,true), csz=dv.getUint32(p+20,true), nl=dv.getUint16(p+28,true), xl=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true), lo=dv.getUint32(p+42,true);
+    const name=td.decode(u8.subarray(p+46,p+46+nl)); const st=lo+30+dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true);
+    out[name]={meth,data:u8.subarray(st,st+csz)}; p+=46+nl+xl+cl; }
+  return async name=>{ const f=out[name]; if(!f) return null; return td.decode(f.meth===0?f.data:await inflateRaw(f.data)); };
+}
+async function readXlsx(buf){
+  const get=await unzipBuf(buf); const P=s=>new DOMParser().parseFromString(s,'application/xml'); const T=(n,t)=>[...n.getElementsByTagNameNS('*',t)];
+  let sheet='xl/worksheets/sheet1.xml';
+  try{ const wb=P(await get('xl/workbook.xml')); const sh=T(wb,'sheet')[0];
+    const rid=sh&&[...sh.attributes].find(a=>/(^|:)id$/.test(a.name)&&a.name!=='sheetId'); const rels=P(await get('xl/_rels/workbook.xml.rels'));
+    const r=rid&&T(rels,'Relationship').find(x=>x.getAttribute('Id')===rid.value);
+    if(r){ const t=r.getAttribute('Target').replace(/^\//,''); sheet=t.startsWith('xl/')?t:'xl/'+t; } }catch(e){}
+  const ssx=await get('xl/sharedStrings.xml'); const ss=ssx?T(P(ssx),'si').map(si=>T(si,'t').map(t=>t.textContent).join('')):[];
+  const sx=await get(sheet); if(!sx) throw new Error('No he trobat cap full dins del fitxer.');
+  const doc=P(sx); const grid=[];
+  const ref=r=>{ const m=String(r).match(/^([A-Z]+)(\d+)$/); if(!m) return null; let c=0; for(const ch of m[1]) c=c*26+ch.charCodeAt(0)-64; return [+m[2]-1,c-1]; };
+  T(doc,'c').forEach(c=>{ const rc=ref(c.getAttribute('r')); if(!rc) return; const t=c.getAttribute('t'); const v=T(c,'v')[0]; let val='';
+    if(t==='s') val=v?(ss[+v.textContent]||''):''; else if(t==='inlineStr') val=T(c,'t').map(x=>x.textContent).join('');
+    else if(v){ val=v.textContent; const num=+val; if(t!=='str'&&t!=='b'&&t!=='e'&&isFinite(num)&&num>0&&num<1){ const m=Math.round(num*1440); val=Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); } }
+    (grid[rc[0]]=grid[rc[0]]||[])[rc[1]]=val; });
+  T(doc,'mergeCell').forEach(mc=>{ const [a,b]=String(mc.getAttribute('ref')).split(':'); const A1=ref(a),B1=ref(b); if(!A1||!B1) return; const v=(grid[A1[0]]||[])[A1[1]]||'';
+    for(let r=A1[0];r<=B1[0];r++) for(let c=A1[1];c<=B1[1];c++) (grid[r]=grid[r]||[])[c]=v; });
+  return Array.from(grid,r=>Array.from(r||[],x=>x==null?'':String(x)));
+}
+function parseTabla(txt){
+  txt=String(txt||'').replace(/\r\n?/g,'\n');
+  const sep=txt.includes('\t')?'\t':(txt.includes(';')?';':',');
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<txt.length;i++){ const ch=txt[i];
+    if(q){ if(ch==='"'){ if(txt[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=ch; continue; }
+    if(ch==='"'&&cell==='') { q=true; continue; }
+    if(ch===sep){ row.push(cell); cell=''; } else if(ch==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; } else cell+=ch; }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+// franja a partir d'un text d'hora (exacta o la més propera, ±20 min)
+function franjaDeText(s){
+  const t=String(s||'').trim(); if(!t) return null;
+  const m=t.match(/(\d{1,2})[:.h](\d{2})/);
+  if(!m){ const f=S.config.franges.find(fr=>norm(fr.label)===norm(t)); return f?f.id:null; }
+  const ex=parseFranja(t); if(ex) return ex;
+  const mins=(+m[1])*60+(+m[2]); let best=null,bd=21;
+  S.config.franges.forEach(fr=>{ const mm=fr.label.match(/(\d{1,2})[:.h](\d{2})/); if(!mm) return; const d=Math.abs((+mm[1])*60+(+mm[2])-mins); if(d<bd){ bd=d; best=fr.id; } });
+  return best;
+}
+const esHora=s=>/^\s*\d{1,2}[:.h]\d{2}/.test(String(s||''));
+function interpretaGraella(rows){
+  rows=rows.map(r=>Array.from(r||[],c=>String(c==null?'':c).trim()));
+  const W=Math.max(0,...rows.map(r=>r.length)); rows=rows.map(r=>{ const x=r.slice(); while(x.length<W) x.push(''); return x; });
+  // hores a la primera columna (o dues) → files; si una fila té 2+ hores, la graella està girada
+  const nRowsT=rows.filter(r=>esHora(r[0])||(!r[0]&&esHora(r[1]))).length;
+  const hRow=rows.findIndex(r=>r.filter(esHora).length>=2);
+  if(hRow>=0 && r2c(rows,hRow)>nRowsT){ rows=rows[0].map((_,c)=>rows.map(r=>r[c])); }
+  function r2c(rs,i){ return rs[i].filter(esHora).length; }
+  const tRows=[]; rows.forEach((r,ri)=>{ const lc=esHora(r[0])?0:(!r[0]&&esHora(r[1]))?1:-1; if(lc>=0) tRows.push({ri,lc,label:r[lc]}); });
+  if(!tRows.length) throw new Error('No he trobat les hores. La primera columna ha de tenir les hores (per exemple 11:50).');
+  const first=tRows[0].ri, lc=Math.max(...tRows.map(t=>t.lc));
+  const heads=rows.slice(0,first).filter(r=>r.some(Boolean)).map(r=>{ const x=r.slice(); for(let c=lc+2;c<W;c++) if(!x[c]&&x[c-1]&&c>lc+1) x[c]=x[c-1]; return x; });
+  const cols=actCols(); const colOf={}; const noCols=[];
+  for(let c=lc+1;c<W;c++){
+    const hasData=tRows.some(t=>rows[t.ri][c]); if(!hasData) continue;
+    const h=heads.map(r=>r[c]).filter(Boolean).join(' ');
+    let col=null; const g=matchGrup(h);
+    if(g) col=cols.find(x=>x.tipus==='grup'&&x.grup===g.id)||null;
+    if(!col){ const hn=norm(h); col=cols.find(x=>x.tipus!=='grup'&&norm(x.nom)&&hn.includes(norm(x.nom)))||null; }
+    if(col) colOf[c]=col.id; else noCols.push(h||('columna '+(c+1)));
+  }
+  if(!Object.keys(colOf).length) throw new Error('No he reconegut cap grup a la capçalera. Cal que a dalt hi hagi el nom dels grups (p. ex. «1r ESO» i a sota «A», o bé «1r ESO A»).');
+  const cells={}, noHores=[];
+  tRows.forEach(t=>{ const fid=franjaDeText(t.label); if(!fid||!(S.jornada.fr||[]).includes(fid)){ noHores.push(t.label); return; }
+    const row=cells[fid]=cells[fid]||{};
+    Object.entries(colOf).forEach(([c,cid])=>{ const v=rows[t.ri][c]; if(v) row[cid]=row[cid]?row[cid]+'\n'+v:v; }); });
+  return {cells,cols:[...new Set(Object.values(colOf))],noCols:[...new Set(noCols)],noHores};
+}
+// noms → professors
+function profIndex(){ return S.profs.map(p=>{ const pp=parts(p.nom); return {p,cogW:norm(pp.cog).split(/[\s-]+/).filter(Boolean),nomW:norm(pp.nom).split(/\s+/).filter(Boolean),full:norm(p.nom),ll:norm(nomLl(p.nom))}; }); }
+const tokKey=s=>norm(s).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+function candProfs(tok,idx){
+  const t=norm(tok).replace(/[().·]/g,' ').replace(/\s+/g,' ').trim(); if(!t) return [];
+  const tw=t.split(' ');
+  const tries=[x=>x.full===t||x.ll===t||x.ll.replace(/,/g,'')===t, x=>tw.every((w,i)=>x.cogW[i]===w), x=>tw.every(w=>x.cogW.includes(w)),
+    x=>tw.every(w=>x.cogW.includes(w)||x.nomW.includes(w)), x=>tw.length===1&&tw[0].length>=4&&x.cogW.some(w=>w.startsWith(tw[0]))];
+  for(const fn of tries){ const c=idx.filter(fn); if(c.length) return c.map(x=>x.p); }
+  return [];
+}
+function splitNoms(txt,idx,map){
+  const clean=String(txt||'').replace(/\([^)]*\)/g,' ').replace(/\s+/g,m=>m.includes('\n')?'\n':' ').trim(); if(!clean) return [];
+  const ok=s=>!!map[tokKey(s)]||candProfs(s,idx).length>0;
+  const out=[];
+  clean.split(/\s*(?:\n|\/|\+|;|&)\s*/).filter(Boolean).forEach(pt=>{
+    if(ok(pt)){ out.push(pt); return; }
+    const sub=pt.split(/\s+(?:i|y|amb)\s+|\s*,\s*|\s+-\s+/i).map(s=>s.trim()).filter(Boolean);
+    out.push(...(sub.length>1?sub:[pt])); });
+  return out;
+}
+function resolManual(){
+  const j=S.jornada, m=j.manual||{}; const map=m.map||{}; const idx=profIndex(); const res={}, toks=[];
+  Object.entries(m.cells||{}).forEach(([fid,row])=>{ res[fid]={};
+    Object.entries(row).forEach(([cid,txt])=>{ const col=(j.cols||[]).find(c=>c.id===cid); const gid=col&&col.tipus==='grup'?col.grup:null;
+      res[fid][cid]=splitNoms(txt,idx,map).map(tk=>{ const k=tokKey(tk);
+        if(map[k]&&profById(map[k])) return {txt:tk,pid:map[k],st:'ok',k};
+        const c=candProfs(tk,idx);
+        if(!c.length){ const o={txt:tk,pid:null,st:'unk',k,cands:[]}; toks.push(o); return o; }
+        if(c.length===1) return {txt:tk,pid:c[0].id,st:'ok',k};
+        const av=new Set(disponibles(fid,true).map(x=>x.p.id));
+        const sorted=c.slice().sort((a,b)=>(av.has(b.id)-av.has(a.id))||((gid?grauGrup(b.id,gid):0)-(gid?grauGrup(a.id,gid):0))||profCmp(a,b));
+        const o={txt:tk,pid:sorted[0].id,st:'amb',k,cands:sorted}; toks.push(o); return o; }); }); });
+  // revisar: un per nom
+  const rev={}; toks.forEach(t=>{ if(!rev[t.k]) rev[t.k]=t; });
+  return {res,rev:Object.values(rev)};
+}
+// estat d'un professor a una hora (null si pot estar en un grup)
+function estatHora(pid,fid){
+  const e=pEstat(pid); if(e==='V') return 'no és present a la jornada'; if(e==='C') return 'és coordinador/a de l\'activitat';
+  if(pAbs(pid).includes(fid)) return 'està marcat absent a aquesta hora';
+  if(!S.ui.incFree&&!act(pid,diaHorari(),fid)) return 'segons el seu horari no és al centre a aquesta hora';
+  return null;
+}
+function cmpModel(){
+  const j=S.jornada, mc=(j.manual&&j.manual.cells)||{}, mcols=j.manual&&j.manual.cols;
+  const fr=actFranges().filter(f=>mc[f.id]), cols=actCols().filter(c=>!mcols||mcols.includes(c.id)), slots=actSlots(); const R=resolManual();
+  const frFora=actFranges().filter(f=>!mc[f.id]), colsFora=actCols().filter(c=>mcols&&!mcols.includes(c.id));
+  const app={}, man={};
+  fr.forEach(f=>{ app[f.id]={}; man[f.id]={}; const asg=(j.assign||{})[f.id]||{};
+    cols.forEach(c=>{ app[f.id][c.id]=slots.filter(s=>s.col.id===c.id).map(s=>asg[s.id]).filter(Boolean);
+      man[f.id][c.id]=[...new Set(((R.res[f.id]||{})[c.id]||[]).filter(t=>t.pid).map(t=>t.pid))]; }); });
+  const applies=(c,f)=>c.tipus!=='grup'||slotApplies({col:c},f);
+  return {fr,cols,app,man,R,applies,frFora,colsFora};
+}
+const locDe=(P,fid,pid)=>{ const o=P[fid]||{}; return Object.keys(o).find(c=>o[c].includes(pid))||null; };
+function mesures(M,P){
+  const {fr,cols,applies}=M; const r={need:0,cov:0,buits:0,curts:0,assig:0,classe:0,tutHores:0,tutTot:0,canvis:0,dobles:0,noDisp:0};
+  const pids=new Set();
+  fr.forEach(f=>{ const cnt={};
+    cols.forEach(c=>{ if(!applies(c,f)) return; const n=+c.n||0; const L=(P[f.id][c.id]||[]); const ok=L.filter(p=>!estatHora(p,f.id));
+      r.need+=n; r.cov+=Math.min(n,ok.length); if(!ok.length) r.buits++; else if(ok.length<n) r.curts++;
+      L.forEach(p=>{ pids.add(p); cnt[p]=(cnt[p]||0)+1; if(estatHora(p,f.id)) r.noDisp++; if(c.tipus==='grup'){ r.assig++; if(grauGrup(p,c.grup)>0) r.classe++; } });
+      if(c.tipus==='grup'){ const g=grupById(c.grup); if(g&&g.tutor&&!estatHora(g.tutor,f.id)){ r.tutTot++; if(L.includes(g.tutor)) r.tutHores++; } } });
+    r.dobles+=Object.values(cnt).filter(x=>x>1).length; });
+  pids.forEach(p=>{ let prev=null; fr.forEach(f=>{ const l=locDe(P,f.id,p); if(l&&prev&&l!==prev) r.canvis++; if(l) prev=l; }); });
+  r.profs=pids.size; return r;
+}
+function vCompara(){
+  const M=cmpModel(); const {fr,cols,app,man,R,applies,frFora,colsFora}=M; const j=S.jornada;
+  const multi=cols.some(c=>(+c.n||0)>1);
+  let eq=0,tot=0;
+  const nm=pid=>{ const p=profById(pid); return p?curt(p.nom):'?'; };
+  const rows=fr.map(f=>`<tr><td class="hcol"><div class="hl">${esc(f.label)}</div></td>${cols.map(c=>{
+      const A=app[f.id][c.id], Mn=man[f.id][c.id]; const unk=((R.res[f.id]||{})[c.id]||[]).filter(t=>!t.pid);
+      if(!applies(c,f)&&!Mn.length&&!A.length) return `<td class="na nvs">—</td>`;
+      tot++; const same=A.length===Mn.length&&A.every(p=>Mn.includes(p))&&!unk.length; if(same) eq++;
+      const lst=(L,other)=>L.map(p=>`<span class="${other.includes(p)?'':'nw'}">${esc(nm(p))}</span>`).join(', ');
+      if(same) return `<td class="cmp eq nvs" data-a="cmp-cell" data-f="${f.id}" data-c="${esc(c.id)}">${A.length?lst(A,A):'<i>Ningú</i>'}</td>`;
+      return `<td class="cmp df nvs" data-a="cmp-cell" data-f="${f.id}" data-c="${esc(c.id)}"><div class="cmp-l"><b>Tu</b> ${Mn.length?lst(Mn,A):'<i>ningú</i>'}${unk.map(t=>`, <span class="unk">${esc(t.txt)}?</span>`).join('')}</div><div class="cmp-l app"><b>App</b> ${A.length?lst(A,Mn):'<i>ningú</i>'}</div></td>`;
+    }).join('')}</tr>`).join('');
+  const thead=`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${(+c.n||0)>1?`<small>${c.n} prof.</small>`:c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
+  // avisos de la proposta manual
+  const av=[];
+  R.rev.forEach(t=>{ av.push(t.st==='unk'?{k:'bad',h:`No reconec «${esc(t.txt)}».`,sel:t}:{k:'warn',h:`«${esc(t.txt)}» pot ser més d'un professor. He triat <b>${esc(nomLl(profById(t.pid).nom))}</b>.`,sel:t}); });
+  fr.forEach(f=>{ const cnt={}; cols.forEach(c=>{ (man[f.id][c.id]||[]).forEach(p=>{ (cnt[p]=cnt[p]||[]).push(colNom(c)); const st=estatHora(p,f.id); if(st) av.push({k:'bad',h:`<b>${esc(nomLl(profById(p).nom))}</b> és a ${esc(colNom(c))} a les ${esc(hIni(f))}, però ${esc(st)}.`}); });
+      if(applies(c,f)&&!(man[f.id][c.id]||[]).length&&!((R.res[f.id]||{})[c.id]||[]).length) av.push({k:'warn',h:`${esc(colNom(c))} no té ningú a les ${esc(hIni(f))}.`}); });
+    Object.entries(cnt).forEach(([p,l])=>{ if(l.length>1) av.push({k:'bad',h:`<b>${esc(nomLl(profById(p).nom))}</b> surt a dos llocs a les ${esc(hIni(f))}: ${esc(l.join(' i '))}.`}); }); });
+  (j.manual.noCols||[]).forEach(h=>av.push({k:'warn',h:`La columna «${esc(h)}» no correspon a cap grup ni lloc de l'activitat i no s'ha tingut en compte.`}));
+  (j.manual.noHores||[]).forEach(h=>av.push({k:'warn',h:`L'hora «${esc(h)}» no és una de les hores de l'activitat i no s'ha tingut en compte.`}));
+  const avHtml=av.length?`<div class="card pad mt"><h2 class="card-t">Coses a revisar de la teva proposta (${av.length})</h2><ul class="cmp-av">${av.map(a=>`<li class="${a.k}">${a.h}${a.sel?` <select data-in="cmp-map" data-k="${esc(a.sel.k)}" aria-label="Qui és ${esc(a.sel.txt)}"><option value="">${a.sel.st==='unk'?'Triar qui és…':'Canviar…'}</option>${a.sel.cands&&a.sel.cands.length?`<optgroup label="Possibles">${a.sel.cands.map(p=>`<option value="${p.id}" ${p.id===a.sel.pid?'selected':''}>${esc(nomLl(p.nom))}</option>`).join('')}</optgroup>`:''}<optgroup label="Tot el professorat">${S.profs.slice().sort(profCmp).map(p=>`<option value="${p.id}">${esc(nomLl(p.nom))}</option>`).join('')}</optgroup></select>`:''}</li>`).join('')}</ul></div>`:`<div class="banner ok mt">La teva proposta no té cap error: tothom és al centre a l'hora que li toca i ningú surt a dos llocs alhora.</div>`;
+  // mesures
+  const a=mesures(M,app), m=mesures(M,man);
+  const pct=(x,y)=>y?Math.round(100*x/y)+'%':'–';
+  const fila=(lab,va,vm,better,fmt)=>{ const w=better==null?'':better(va,vm); return `<tr><td>${lab}</td><td class="c num ${w==='m'?'win':''}">${fmt?fmt(vm,'m'):vm}</td><td class="c num ${w==='a'?'win':''}">${fmt?fmt(va,'a'):va}</td></tr>`; };
+  const hi=(x,y)=>x>y?'a':y>x?'m':'', lo=(x,y)=>x<y?'a':y<x?'m':'';
+  const mes=`<div class="card tblw"><table class="t cmp-m"><thead><tr><th>Criteri</th><th class="c">La teva</th><th class="c">L'app</th></tr></thead><tbody>
+    ${fila('Places cobertes (de '+a.need+')',a.cov,m.cov,hi)}
+    ${fila('Grups-hora sense ningú',a.buits,m.buits,lo)}
+    ${multi?fila('Grups-hora amb menys professors dels previstos',a.curts,m.curts,lo):''}
+    ${fila('Professors en un grup on fan classe',pct(a.classe,a.assig),pct(m.classe,m.assig),(x,y)=>hi(a.assig?a.classe/a.assig:0,m.assig?m.classe/m.assig:0))}
+    ${a.tutTot?fila('Hores del tutor/a amb el seu grup (de '+a.tutTot+')',a.tutHores,m.tutHores,hi):''}
+    ${fila('Canvis de grup d\'un professor entre hores',a.canvis,m.canvis,lo)}
+    ${fila('Professors fent tasques',a.profs,m.profs,null)}
+    ${fila('Professors a dos llocs alhora',a.dobles,m.dobles,lo)}
+    ${fila('Assignats quan no hi són',a.noDisp,m.noDisp,lo)}
+  </tbody></table></div>`;
+  const head=`<div class="sec-h" style="margin-top:0"><div><h2>Comparació · la teva proposta i la de l'app</h2><p>${eq} de ${tot} caselles coincideixen. Les caselles grogues són diferents: toca-les per veure per què.${j.manual.font?` Proposta: ${esc(j.manual.font)}.`:''}${frFora.length||colsFora.length?`<br>Només es compara el que surt a la teva proposta${frFora.length?`; no s'hi inclouen les hores ${esc(frFora.map(hIni).join(', '))}`:''}${colsFora.length?`; ni ${colsFora.length===1?'':'els grups o llocs '}${esc(colsFora.map(colNom).join(', '))}`:''}.`:''}</p></div>
+    <div class="row-actions"><button class="btn" data-a="cmp-off">← Tornar a l'assignació</button><button class="btn" data-a="cmp-open">Carregar una altra proposta</button><button class="btn acc" data-a="cmp-apply">Fer servir la meva proposta</button><button class="btn danger" data-a="cmp-del">Esborrar la comparació</button></div></div>
+    <p class="hint" style="margin:-4px 0 10px">En cada casella: <b>Tu</b> = la teva proposta · <b>App</b> = el que hi ha ara a l'assignació. En negreta, qui només surt en una de les dues.</p>`;
+  return head+`<div class="card tblw"><table class="t qg cmpt"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`+avHtml+`<div class="sec-h"><div><h2>Com queda cada proposta</h2><p>En verd, la que surt millor en cada criteri. Són els mateixos criteris que fa servir l'app per decidir.</p></div></div>`+mes;
+}
+// explicació d'una casella
+function explicaCasella(fid,cid){
+  const M=cmpModel(); const {fr,cols,app,man,R}=M; const f=franjaById(fid); const c=cols.find(x=>x.id===cid); if(!f||!c) return;
+  const A=app[fid][cid], Mn=man[fid][cid]; const g=c.tipus==='grup'?grupById(c.grup):null; const dia=diaHorari();
+  const nomP=p=>esc(nomLl(profById(p).nom));
+  const onEs=(P,p)=>{ const l=locDe(P,fid,p); if(l) return 'és a '+colNom(cols.find(x=>x.id===l)); const st=estatHora(p,fid); return st?st:'queda de reserva'; };
+  const hores=(P,p)=>fr.filter(ff=>locDe(P,ff.id,p)===cid).length;
+  const fets=(p,P)=>{ const o=[]; const st=estatHora(p,fid); if(st) o.push(`<span class="bad">${esc(st)}</span>`);
+    if(g){ if(g.tutor===p) o.push('<span class="good">tutor/a del grup</span>'); const gg=grauGrup(p,g.id); o.push(gg===2?`<span class="good">fa classe a ${esc(g.nom)}</span>`:gg===1?`fa classe a ${esc(g.nivell)} (no consta a ${esc(g.nom)})`:`no fa classe a ${esc(g.nom)}`);
+      if(teachesAt(p,g.id,dia,fid)) o.push('<span class="good">a aquesta hora li tocava classe amb aquest grup</span>'); }
+    if(!st) o.push('a l\'horari, a aquesta hora: '+esc(actLabel(act(p,dia,fid))));
+    o.push(`a la proposta és aquí ${hores(P,p)} de ${fr.length} hores`); return o; };
+  const nomes=Mn.filter(p=>!A.includes(p)), nomesA=A.filter(p=>!Mn.includes(p)), tots=A.filter(p=>Mn.includes(p));
+  const unk=((R.res[fid]||{})[cid]||[]).filter(t=>!t.pid);
+  // motius
+  const mot=[];
+  if((+c.n||0)!==Mn.length&&Mn.length) mot.push(`A la teva proposta hi ha ${Mn.length} professor${Mn.length===1?'':'s'}; a l'activitat està configurat amb ${+c.n||0} per ${c.tipus==='grup'?'grup':'aquest lloc'}${Mn.length>(+c.n||0)?', per això l\'app no n\'hi posa més':''}.`);
+  nomes.forEach(p=>{ const st=estatHora(p,fid); const l=locDe(app,fid,p);
+    if(st) mot.push(`L'app no hi posa ${nomP(p)} perquè ${esc(st)}.`);
+    else if(l){ const c2=cols.find(x=>x.id===l); const g2=c2&&c2.tipus==='grup'?grupById(c2.grup):null; let why='';
+      if(g2&&g2.tutor===p) why=`n'és el tutor/a`; else if(g2&&grauGrup(p,g2.id)===2&&!(g&&grauGrup(p,g.id)===2)) why=`hi fa classe`; else if(hores(app,p)>1||fr.filter(ff=>locDe(app,ff.id,p)===l).length>1) why=`així hi està ${fr.filter(ff=>locDe(app,ff.id,p)===l).length} de les ${fr.length} hores`;
+      mot.push(`L'app té ${nomP(p)} a ${esc(colNom(c2))}${why?' perquè '+why:''}.`); }
+    else mot.push(`L'app ha deixat ${nomP(p)} de reserva: amb els criteris de l'app, ${A.length?esc(A.map(x=>nomLl(profById(x).nom)).join(' i '))+' hi encaixa'+(A.length>1?'n':'')+' millor':'no hi ha trobat lloc'}.`); });
+  nomesA.forEach(p=>{ const l=locDe(man,fid,p); if(l) mot.push(`Tu tens ${nomP(p)} a ${esc(colNom(cols.find(x=>x.id===l)))}.`); else mot.push(`A la teva proposta, ${nomP(p)} no surt enlloc a aquesta hora.`); });
+  // comparació directa de criteris (un de cada)
+  if(nomes.length&&nomesA.length&&g){ const x=nomes[0], y=nomesA[0];
+    const cr=[]; if(g.tutor===y&&g.tutor!==x) cr.push(`${nomP(y)} és el tutor/a del grup, i l'app sempre posa el tutor/a amb el seu grup`);
+    else if(grauGrup(y,g.id)>grauGrup(x,g.id)) cr.push(`${nomP(y)} fa classe a ${esc(g.nom)} i ${nomP(x)} no; l'app hi prefereix professorat que coneix el grup`);
+    if(hores(app,y)>hores(man,x)) cr.push(`a l'app, ${nomP(y)} és amb aquest grup ${hores(app,y)} hores i a la teva, ${nomP(x)} hi és ${hores(man,x)}; l'app intenta que el grup tingui sempre la mateixa persona`);
+    if(grauGrup(x,g.id)>grauGrup(y,g.id)) cr.push(`aquí la teva tria és millor en un criteri: ${nomP(x)} fa classe a ${esc(g.nom)} i ${nomP(y)} no`);
+    if(!cr.length) cr.push('pels criteris de l\'app tots dos encaixen igual: és una tria equivalent');
+    mot.push('<b>En resum:</b> '+cr.join('; ')+'.'); }
+  if(unk.length) mot.push(`No sé qui és ${unk.map(t=>'«'+esc(t.txt)+'»').join(', ')}: tria'l a «Coses a revisar».`);
+  const bloc=(t,L,P)=>L.length?`<h3 class="cmp-h">${t}</h3>${L.map(p=>`<div class="cmp-p"><b>${nomP(p)}</b><div class="hint">${fets(p,P).join(' · ')}</div></div>`).join('')}`:'';
+  openModal(`<div class="modal-h"><h2>${esc(colNom(c))} · ${esc(f.label)}</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b">${mot.length?`<ul class="cmp-mot">${mot.map(x=>`<li>${x}</li>`).join('')}</ul>`:'<p style="margin-top:0">Les dues propostes coincideixen en aquesta casella.</p>'}
+    ${bloc('Només a la teva proposta',nomes,man)}${bloc('Només a la de l\'app',nomesA,app)}${bloc('A totes dues',tots,app)}</div>`);
+}
+function obreComparar(){
+  openModal(`<div class="modal-h"><h2>Comparar amb la meva proposta</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b"><p style="margin-top:0">Puja el fitxer d'Excel o de Google Sheets (.xlsx), o copia el quadre sencer (hores i noms dels grups inclosos) i enganxa'l aquí.</p>
+      <div class="field"><label for="cmpFile">Fitxer (.xlsx o .csv)</label><input id="cmpFile" type="file" accept=".xlsx,.csv,.tsv,.txt"></div>
+      <div class="field"><label for="cmpTxt">O bé enganxa-hi les cel·les</label><textarea id="cmpTxt" rows="7" placeholder="Selecciona el quadre a l'Excel, copia (Ctrl+C) i enganxa'l aquí (Ctrl+V)"></textarea></div>
+      <p class="hint" style="margin:0">Format: la primera columna amb les hores (11:50, 12:50…), a dalt els grups (una fila amb «1r ESO» i una altra amb «A, B, C…», o bé «1r ESO A») i a cada casella el cognom del professor. Si n'hi ha dos, separa'ls amb «i» o amb un salt de línia.</p>
+      <p id="cmpErr" class="cmp-err" hidden></p></div>
+    <div class="modal-f"><button class="btn" data-a="close">Cancel·lar</button><button class="btn acc" id="cmpGo">Comparar</button></div>`,true);
+  $('#cmpGo').onclick=async()=>{ const err=$('#cmpErr'); err.hidden=true;
+    try{ const fl=$('#cmpFile').files[0]; let rows, font;
+      if(fl){ font=fl.name; rows=/\.xlsx$/i.test(fl.name)?await readXlsx(await fl.arrayBuffer()):parseTabla(await fl.text()); }
+      else { const t=$('#cmpTxt').value; if(!t.trim()) throw new Error('Puja un fitxer o enganxa-hi el quadre.'); rows=parseTabla(t); font='enganxada'; }
+      const r=interpretaGraella(rows); const j=ensureJ();
+      if(!(j.assign&&Object.values(j.assign).some(o=>Object.keys(o||{}).length))){ autoAssignAct(); }
+      j.manual={cells:r.cells,cols:r.cols,noCols:r.noCols,noHores:r.noHores,map:(j.manual&&j.manual.map)||{},font,at:Date.now()};
+      saveJ(); S.ui.cmp=true; closeModal(); render(); window.scrollTo(0,0);
+    }catch(e){ err.textContent=e.message||String(e); err.hidden=false; } };
+}
+async function aplicaManual(){
+  const M=cmpModel(); const {fr,cols,man}=M; const j=S.jornada;
+  if(!await ask('La teva proposta substituirà l\'assignació actual en les hores i grups que hi surten. La resta no es toca. Continuar?','Fer servir la meva proposta',false)) return;
+  let grow=0; cols.forEach(c=>{ const mx=Math.max(0,...fr.map(f=>(man[f.id][c.id]||[]).length)); if(mx>(+c.n||0)){ c.n=mx; grow++; } });
+  const slots=actSlots(); const res=JSON.parse(JSON.stringify(j.assign||{})); const cset=new Set(cols.map(c=>c.id));
+  fr.forEach(f=>{ const r=res[f.id]=res[f.id]||{}; const nous=new Set(cols.flatMap(c=>man[f.id][c.id]||[]));
+    Object.keys(r).forEach(sid=>{ if(cset.has(sid.split('#')[0])||nous.has(r[sid])) delete r[sid]; }); const used=new Set();
+    cols.forEach(c=>{ const g=c.tipus==='grup'?grupById(c.grup):null; let L=(man[f.id][c.id]||[]).filter(p=>!used.has(p));
+      if(g&&g.tutor&&L.includes(g.tutor)) L=[g.tutor,...L.filter(p=>p!==g.tutor)];
+      slots.filter(s=>s.col.id===c.id).forEach((s,i)=>{ if(L[i]){ r[s.id]=L[i]; used.add(L[i]); } }); }); });
+  j.assign=res; saveJ(); S.ui.cmp=false; render(); toast('Ara l\'assignació és la teva proposta'+(grow?` (s'han ampliat ${grow} grups/llocs per poder-hi posar tothom)`:'')+'.');
 }
 
 /* ----- 4. Resum (activitat) ----- */
@@ -2041,6 +2322,12 @@ const A={
   'asg-auto-act':async()=>{ const has=S.jornada&&Object.values(S.jornada.assign||{}).some(o=>Object.keys(o||{}).length);
     if(has && !await ask('Això substituirà les assignacions actuals per una proposta nova. Continuar?','Generar proposta',false)) return;
     const r=autoAssignAct(); saveJ(); render(); toast(`Proposta: ${r.cov} de ${r.tot} caselles cobertes · ${r.cont} professors fan tota la jornada al mateix lloc.`); },
+  'cmp-open':()=>obreComparar(),
+  'cmp-on':()=>{ S.ui.cmp=true; render(); },
+  'cmp-off':()=>{ S.ui.cmp=false; render(); },
+  'cmp-del':async()=>{ if(!await ask('Esborrar la proposta que has carregat? L\'assignació de l\'app no canvia.','Esborrar')) return; delete S.jornada.manual; saveJ(); S.ui.cmp=false; render(); },
+  'cmp-apply':()=>aplicaManual(),
+  'cmp-cell':b=>explicaCasella(b.dataset.f,b.dataset.c),
   sortir:async()=>{ if(caps.fb&&await ask('Vols tancar la sessió?','Tancar sessió',false)){ await caps.fb.signOut(); location.reload(); } },
   close:()=>closeModal(),
   ov:(b,e)=>{ if(e.target===b) closeModal(); }
@@ -2060,6 +2347,7 @@ const IN={
   asg:el=>{ const j=ensureJ(), f=el.dataset.f, ag=el.dataset.ag, v=el.value; j.assign[f]=j.assign[f]||{};
     if(v){ Object.keys(j.assign[f]).forEach(k=>{ if(j.assign[f][k]===v) delete j.assign[f][k]; }); j.assign[f][ag]=v; } else delete j.assign[f][ag];
     saveJ(); el.blur(); render(); },
+  'cmp-map':el=>{ const j=ensureJ(); if(!j.manual) return; j.manual.map=j.manual.map||{}; if(el.value) j.manual.map[el.dataset.k]=el.value; else delete j.manual.map[el.dataset.k]; saveJ(); render(); },
   diah:el=>{ const j=ensureJ(); j.diaHorari=el.value?+el.value:null; saveJ(); render(); },
   'cfg-centre':el=>{ S.config.centre=el.value; saveConfig(); renderTop(); },
   'cfg-ratio':el=>{ const v=parseInt(el.value); if(v>0){ S.config.ratio=v; saveConfig(); } },
@@ -2081,7 +2369,7 @@ const IN={
   'h-cell':el=>{ const pid=el.dataset.p, k=el.dataset.k; S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
     el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
-const ONCHANGE=new Set(['coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
+const ONCHANGE=new Set(['cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
 document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
 document.addEventListener('change',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in;
   if(ONCHANGE.has(k)){ IN[k]&&IN[k](el); return; }
