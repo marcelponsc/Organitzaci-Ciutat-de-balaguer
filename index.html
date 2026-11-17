@@ -336,6 +336,7 @@ pre.ex{background:#f7f7f9;border:1px solid var(--line);border-radius:8px;padding
 .cmp-h{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:14px 0 4px}
 .cmp-p{padding:6px 0;border-top:1px solid var(--line2)}.cmp-p .good{color:var(--ok)}.cmp-p .bad{color:var(--bad)}
 .hgrid input.hnew{width:100%;min-width:150px;font-size:14px;padding:7px 8px;border:2px solid var(--pri);border-radius:8px}
+.npo{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border:1px solid var(--line2);border-radius:9px;margin:6px 0;cursor:pointer}.npo.on{border-color:var(--pri);background:var(--pri2)}.npo input{margin-top:3px}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
 
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -408,7 +409,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.17-a';
+const VERSIO = '2026.11.17-b';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -587,9 +588,27 @@ const curt = n => { const p=parts(n); return p.cog? p.nom+' '+p.cog[0]+'.' : p.n
 const isWork = a => !!a && (a.t==='G'||a.t==='C'||a.t==='GU');
 const pEstat = id => { const p=S.jornada&&S.jornada.profs&&S.jornada.profs[id]; if(p&&p.e) return p.e; return S.jornada&&jTipus()==='activitat'?'P':null; };
 const pAbs = id => (S.jornada&&S.jornada.profs&&S.jornada.profs[id]&&S.jornada.profs[id].abs)||[];
+/* Activitat: grups que no hi participen (fan classe normal) */
+function fMins(f){ const m=String(f&&f.label||'').match(/(\d{1,2})[:.h](\d{2})\D+(\d{1,2})[:.h](\d{2})/); return m?[(+m[1])*60+(+m[2]),(+m[3])*60+(+m[4])]:null; }
+function grupsNoPart(){ const j=S.jornada; if(!j||jTipus()!=='activitat') return []; const ins=new Set((j.cols||[]).filter(c=>c.tipus==='grup'&&(+c.n||0)>0).map(c=>c.grup)); return S.grups.filter(g=>!ins.has(g.id)); }
+// retorna {fr:franja de la classe, g:text del grup} si el professor no pot participar a aquesta hora
+function ocupatNoPart(pid,fid){
+  const np=grupsNoPart(); if(!np.length) return null;
+  const ids=new Set(np.map(g=>g.id)); const nivNo=new Set(nivells().filter(nv=>S.grups.filter(g=>(g.nivell||'Sense nivell')===nv).every(g=>ids.has(g.id))));
+  const dia=diaHorari(); const mode=S.jornada.noPart||'hora'; const f0=franjaById(fid); const t0=fMins(f0);
+  for(const f of S.config.franges){ const a=act(pid,dia,f.id); if(!a) continue;
+    let txt=null; if(a.t==='G'&&ids.has(a.grup)){ const g=grupById(a.grup); txt=g?g.nom:'classe'; } else if(a.t==='C'&&nivNo.has(a.txt)) txt=a.txt;
+    if(!txt) continue;
+    if(f.id===fid||mode==='tota') return {f,txt};
+    const t=fMins(f); if(!t||!t0) continue;
+    if(t0[0]<t[1]&&t[0]<t0[1]) return {f,txt};
+    if(mode==='adj'&&((t[0]-t0[1]>=0&&t[0]-t0[1]<=35)||(t0[0]-t[1]>=0&&t0[0]-t[1]<=35))) return {f,txt};
+  }
+  return null;
+}
 function disponibles(fid,incFree){
   const dia=diaHorari();
-  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid))
+  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid) && !ocupatNoPart(p.id,fid))
     .map(p=>({p,a:act(p.id,dia,fid)}))
     .filter(x=>incFree || !!x.a);
 }
@@ -1129,6 +1148,7 @@ function vActivitat(){
       <div class="frchk">${S.config.franges.map(f=>`<label class="check frc ${frIds.has(f.id)?'on':''}"><input type="checkbox" data-in="act-fr" data-f="${f.id}" ${frIds.has(f.id)?'checked':''}> ${esc(f.label)}</label>`).join('')}</div>
       <p class="hint" style="margin:8px 0 0">Marca les franges en què es fa l'activitat i cal professorat.</p>
     </div>
+    ${noPartCard()}
   </div>
   <div class="sec-h"><div><h2>Què cal cobrir (${cols.length})</h2><p>${need} professors per hora. Cada professor es queda amb el mateix grup o lloc tota la jornada sempre que el seu horari ho permeti.</p></div>
     <div class="row-actions">${cols.some(c=>c.tipus==='grup')?`<span class="hint">Professors per grup:</span><div class="chips">${[1,2,3].map(n=>`<button class="chip ${cols.filter(c=>c.tipus==='grup').every(c=>+c.n===n)?'on':''}" data-a="act-ngrup" data-n="${n}">${n}</button>`).join('')}</div>`:''}<button class="btn sm" data-a="act-addg">+ Tots els grups</button><button class="btn sm" data-a="act-addl">+ Lloc o tasca</button>${cols.length?'<button class="btn sm danger" data-a="act-delall">Treure-ho tot</button>':''}</div></div>
@@ -1136,6 +1156,19 @@ function vActivitat(){
   ${need&&fr.length?`<div class="row-actions mt"><button class="btn acc" data-a="tab" data-tab="assignacio">Anar a l'assignació →</button></div>`:''}`;
 }
 
+function noPartCard(){
+  const np=grupsNoPart(); if(!np.length||!(S.jornada.cols||[]).some(c=>c.tipus==='grup')) return '';
+  const mode=S.jornada.noPart||'hora'; const fr=actFranges();
+  const afect=S.profs.filter(p=>pEstat(p.id)==='P'&&fr.some(f=>ocupatNoPart(p.id,f.id)));
+  const nivs=[...new Set(np.map(g=>g.nivell||g.nom))];
+  const op=(v,t,d)=>`<label class="check npo ${mode===v?'on':''}"><input type="radio" name="npm" data-in="act-np" value="${v}" ${mode===v?'checked':''}> <span><b>${t}</b><br><span class="hint">${d}</span></span></label>`;
+  return `<div class="card pad"><h2 class="card-t">Grups que fan classe normal</h2>
+    <p class="hint" style="margin-top:0">${esc(nivs.join(', '))} no participen en l'activitat. El professorat que aquell dia hi té classe:</p>
+    ${op('hora','No participa les hores que hi té classe','La resta d\'hores sí que participa.')}
+    ${op('adj','Tampoc l\'hora d\'abans ni la de després','Té temps per preparar i acabar la classe.')}
+    ${op('tota','No participa en tota la jornada','Si aquell dia té classe amb algun d\'aquests grups.')}
+    <p class="hint" style="margin:8px 0 0">${afect.length?`Afecta ${afect.length} professor${afect.length===1?'':'s'} en alguna hora de l'activitat.`:'Ara no afecta cap professor a les hores de l\'activitat.'}</p></div>`;
+}
 function coordCard(){
   const co=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
   const altres=S.profs.filter(p=>pEstat(p.id)==='P').sort(profCmp);
@@ -1364,6 +1397,7 @@ function resolManual(){
 function estatHora(pid,fid){
   const e=pEstat(pid); if(e==='V') return 'no és present a la jornada'; if(e==='C') return 'és coordinador/a de l\'activitat';
   if(pAbs(pid).includes(fid)) return 'està marcat absent a aquesta hora';
+  const o=ocupatNoPart(pid,fid); if(o) return o.f.id===fid?'a aquesta hora fa classe a '+o.txt+', que no participa':'té classe a '+o.txt+' ('+hIni(o.f)+') i, tal com està configurat, no participa a aquesta hora';
   if(!S.ui.incFree&&!act(pid,diaHorari(),fid)) return 'segons el seu horari no és al centre a aquesta hora';
   return null;
 }
@@ -1511,6 +1545,7 @@ function profPlaAct(pid){
   return fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const av=disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
     if(pAbs(pid).includes(f.id)) return {f,txt:'Absent',cls:'abs'};
     if(coord) return {f,txt:'Coordinació',cls:'co'};
+    if(pEstat(pid)==='P'){ const o=ocupatNoPart(pid,f.id); if(o) return {f,txt:o.f.id===f.id?'Classe · '+o.txt:'No participa ('+o.txt+')',cls:'abs'}; }
     const sl=slots.find(s=>asg[s.id]===pid);
     if(sl&&av) return {f,txt:colNom(sl.col),cls:''};
     if(av) return {f,txt:'Reserva',cls:'res'};
@@ -2365,6 +2400,7 @@ const IN={
   'g-niv':el=>{ const g=grupById(el.dataset.id); if(g){ g.nivell=el.value.trim(); saveGrups(); } },
   'act-nom':el=>{ const j=ensureJ(); j.nom=el.value; saveJ(); renderTop(); },
   'act-data':el=>{ if(!el.value) return; const j=ensureJ(); j.data=el.value; saveJ(); render(); },
+  'act-np':el=>{ const j=ensureJ(); j.noPart=el.value; saveJ(); render(); },
   'act-fr':el=>{ const j=ensureJ(); const set=new Set(j.fr||[]); if(el.checked) set.add(el.dataset.f); else set.delete(el.dataset.f); j.fr=S.config.franges.map(f=>f.id).filter(id=>set.has(id)); saveJ(); render(); },
   'coord-add':el=>{ if(!el.value) return; const j=ensureJ(); j.profs[el.value]={e:'C',abs:[]}; saveJ(); render(); },
   'act-cnom':el=>{ const j=ensureJ(); const c=(j.cols||[]).find(x=>x.id===el.dataset.c); if(c){ c.nom=el.value; saveJ(); } },
@@ -2382,7 +2418,7 @@ const IN={
       inp.addEventListener('blur',()=>fin(true)); el.value=old; return; } S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
     el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
-const ONCHANGE=new Set(['cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
+const ONCHANGE=new Set(['act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
 document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
 document.addEventListener('change',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in;
   if(ONCHANGE.has(k)){ IN[k]&&IN[k](el); return; }
