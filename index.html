@@ -335,6 +335,7 @@ pre.ex{background:#f7f7f9;border:1px solid var(--line);border-radius:8px;padding
 .cmp-mot{margin:0 0 6px;padding-left:18px}.cmp-mot li{margin:5px 0}
 .cmp-h{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:14px 0 4px}
 .cmp-p{padding:6px 0;border-top:1px solid var(--line2)}.cmp-p .good{color:var(--ok)}.cmp-p .bad{color:var(--bad)}
+.hgrid input.hnew{width:100%;min-width:150px;font-size:14px;padding:7px 8px;border:2px solid var(--pri);border-radius:8px}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
 
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -407,7 +408,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.16-e';
+const VERSIO = '2026.11.17-a';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -1747,11 +1748,18 @@ async function saveFile(name,text,mime){
 function horariModal(pid){
   const p=profById(pid); if(!p) return;
   const gs=S.grups.slice().sort((a,b)=>natCmp(a.nom,b.nom));
+  const perms=[...new Set(Object.values(S.horari).flatMap(h=>Object.values(h||{})).filter(v=>typeof v==='string'&&v.startsWith('AL:')).map(v=>v.slice(3).trim()).filter(Boolean).concat(['Reunió','Coordinació','Atenció a famílies','Permanència']))].sort(natCmp);
+  const nivs=nivells();
   const cell=(d,f)=>{
     const v=(S.horari[pid]||{})[d+'-'+f.id]||'';
     const cls=v==='GU'?'gu':(v.startsWith('G:')||v.startsWith('C:'))?'g':v.startsWith('AL:')?'pe':'';
-    const extra=v.startsWith('AL:')?`<option value="${esc(v)}" selected>Permanència · ${esc(v.slice(3))}</option>`:v.startsWith('C:')?`<option value="${esc(v)}" selected>Classe · ${esc(v.slice(2))}</option>`:'';
-    return `<select class="${cls}" data-in="h-cell" data-p="${pid}" data-k="${d}-${f.id}"><option value="">—</option><option value="GU" ${v==='GU'?'selected':''}>Guàrdia</option>${extra}<optgroup label="Classe amb…">${gs.map(g=>`<option value="G:${g.id}" ${v==='G:'+g.id?'selected':''}>${esc(g.nom)}</option>`).join('')}</optgroup></select>`;
+    const pv=v.startsWith('AL:')?v.slice(3).trim():null;
+    const pl=pv&&!perms.includes(pv)?[pv,...perms]:perms;
+    const cv=v.startsWith('C:')?v.slice(2):null; const nl=cv&&!nivs.includes(cv)?[cv,...nivs]:nivs;
+    return `<select class="${cls}" data-in="h-cell" data-p="${pid}" data-k="${d}-${f.id}"><option value="">—</option><option value="GU" ${v==='GU'?'selected':''}>Guàrdia</option>
+      <optgroup label="Classe amb…">${gs.map(g=>`<option value="G:${g.id}" ${v==='G:'+g.id?'selected':''}>${esc(g.nom)}</option>`).join('')}</optgroup>
+      <optgroup label="Classe amb tot un nivell (optatives, desdoblaments…)">${nl.map(n=>`<option value="C:${esc(n)}" ${cv===n?'selected':''}>Classe · ${esc(n)}</option>`).join('')}</optgroup>
+      <optgroup label="Permanència al centre">${pl.map(t=>`<option value="AL:${esc(t)}" ${pv===t?'selected':''}>Permanència · ${esc(t)}</option>`).join('')}<option value="__new">+ Una altra permanència…</option></optgroup></select>`;
   };
   openModal(`<div class="modal-h"><h2>Horari · ${esc(nomLl(p.nom))}</h2><button class="x" data-a="close">×</button></div>
     <div class="modal-b hgrid tblw"><table class="t"><thead><tr><th>Franja</th>${[1,2,3,4,5].map(d=>`<th>${DIES[d]}</th>`).join('')}</tr></thead><tbody>
@@ -2366,7 +2374,12 @@ const IN={
   'p-dept':el=>{ const p=profById(el.dataset.id); if(p){ p.dept=el.value; saveProfs(); } },
   'pdf-name':el=>{ const b=pdfImport[+el.dataset.i]; if(!b) return; b.name=el.value; const st=$('#pdfst'+el.dataset.i); if(st){ const p=findProf(b.name); st.textContent=p?'Existent':'Nou professor'; st.className='badge '+(p?'':'man'); } const n=pdfImport.filter(x=>x.on&&x.name.trim()).length; const go=document.querySelector('[data-a="pdf-go"]'); if(go){ go.disabled=!n; go.textContent=`Importar ${n} horari${n===1?'':'s'}`; } },
   'pdf-on':el=>{ const b=pdfImport[+el.dataset.i]; if(!b) return; b.on=el.checked; renderPdfRes(); },
-  'h-cell':el=>{ const pid=el.dataset.p, k=el.dataset.k; S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
+  'h-cell':el=>{ const pid=el.dataset.p, k=el.dataset.k;
+    if(el.value==='__new'){ const old=(S.horari[pid]||{})[k]||''; const inp=document.createElement('input'); inp.type='text'; inp.placeholder='Reunió de…, coordinació…'; inp.className='hnew';
+      el.style.display='none'; el.after(inp); inp.focus(); let done=false;
+      const fin=ok=>{ if(done) return; done=true; const t=inp.value.trim(); if(ok&&t){ S.horari[pid]=S.horari[pid]||{}; S.horari[pid][k]='AL:'+t; saveHorari(); } const sc=$('.modal-b')?$('.modal-b').scrollTop:0; horariModal(pid); if($('.modal-b')) $('.modal-b').scrollTop=sc; };
+      inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); fin(true); } if(e.key==='Escape'){ e.stopPropagation(); fin(false); } });
+      inp.addEventListener('blur',()=>fin(true)); el.value=old; return; } S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
     el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
 const ONCHANGE=new Set(['cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
