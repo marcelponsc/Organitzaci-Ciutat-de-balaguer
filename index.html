@@ -338,7 +338,7 @@ pre.ex{background:#f7f7f9;border:1px solid var(--line);border-radius:8px;padding
 .hgrid input.hnew{width:100%;min-width:150px;font-size:14px;padding:7px 8px;border:2px solid var(--pri);border-radius:8px}
 .npo{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border:1px solid var(--line2);border-radius:9px;margin:6px 0;cursor:pointer}.npo.on{border-color:var(--pri);background:var(--pri2)}.npo input{margin-top:3px}
 .mini-t{font-size:12.5px;margin:14px 0 6px;color:var(--ink2)}
-.hmodes{display:grid;gap:6px}.hmr{display:flex;align-items:center;gap:8px}.hmr b{min-width:44px;font-size:13px}.hmr select{flex:1;min-width:0;width:100%;font-size:13px;padding:6px 8px}
+.hmodes{display:grid;gap:6px}.hmr{display:flex;align-items:center;gap:8px}.hmr{align-items:flex-start}.hmr b{min-width:44px;font-size:13px;padding-top:7px}.hmr-s{flex:1;min-width:0;display:grid;gap:4px}.hmr select.set{border-color:var(--pri);background:var(--pri2)}.hmr select{flex:1;min-width:0;width:100%;font-size:13px;padding:6px 8px}
 .hchips{flex-wrap:wrap;gap:4px}.hchips .chip{padding:3px 7px;font-size:11.5px}
 .qa .hs.hmode{color:var(--blue);font-weight:600}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
@@ -413,7 +413,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.23-a';
+const VERSIO = '2026.11.23-b';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -893,7 +893,7 @@ function vAssign(){
       return `<td class="cell ${ok?'p':'miss'} ${ag.idx===1?'nvs':''}" title="${ok?esc(profById(cur).nom):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${sel}</td>`;
     }).join('');
     const cls=cov>=nApl?'ok':cov?'warn':'bad';
-    return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${S.jornada.modes&&Object.keys(S.jornada.modes).length?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}</div>`:''}</td>${cells}</tr>`;
+    return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${(S.jornada.modes&&Object.keys(S.jornada.modes).length)||(S.jornada.nh&&S.jornada.nh[f.id]!=null)?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}${S.jornada.nh&&S.jornada.nh[f.id]!=null?' · '+S.jornada.nh[f.id]+' per grup':''}</div>`:''}</td>${cells}</tr>`;
   }).join('');
   const table=`<div class="card tblw"><table class="t qg qa"><thead>
     <tr><th class="hcol" rowspan="2">Hora</th>${st.map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
@@ -1109,20 +1109,22 @@ function crearJornada(){
 const actFranges = () => { const ids=(S.jornada&&S.jornada.fr)||[]; return S.config.franges.filter(f=>ids.includes(f.id)); };
 const actCols = () => ((S.jornada&&S.jornada.cols)||[]).filter(c=>(+c.n||0)>0);
 function colNom(c){ if(c.tipus==='grup'){ const g=grupById(c.grup); return g?g.nom:(c.nom||'Grup'); } return c.nom||'Lloc'; }
-function actSlots(){ const out=[]; actCols().forEach(c=>{ for(let k=1;k<=(+c.n||0);k++) out.push({id:c.id+'#'+k,col:c,k}); }); return out; }
+function nHora(c,fid){ const j=S.jornada; const v=c.tipus==='grup'&&j&&j.nh&&fid?j.nh[fid]:null; return v!=null?+v:(+c.n||0); }
+function nMax(c){ const j=S.jornada; let m=+c.n||0; if(c.tipus==='grup'&&j&&j.nh) (j.fr||[]).forEach(fid=>{ if(j.nh[fid]!=null) m=Math.max(m,+j.nh[fid]); }); return m; }
+function actSlots(){ const out=[]; actCols().forEach(c=>{ for(let k=1;k<=nMax(c);k++) out.push({id:c.id+'#'+k,col:c,k}); }); return out; }
 function actCoverage(fid){
   const asg=(S.jornada&&S.jornada.assign&&S.jornada.assign[fid])||{};
   const av=disponibles(fid,S.ui.incFree), ids=new Set(av.map(x=>x.p.id));
   const slots=actSlots().filter(s=>slotApplies(s,fid)); return {cov:slots.filter(s=>asg[s.id]&&ids.has(asg[s.id])).length,need:slots.length,av:av.length};
 }
-function slotApplies(sl,f){ const fid=typeof f==='string'?f:f&&f.id; if(Array.isArray(sl.col.fr)&&sl.col.fr.length&&!sl.col.fr.includes(fid)) return false; if(sl.col.tipus!=='grup') return true; const g=grupById(sl.col.grup); return !g||fApplies(f,g.nivell); }
+function slotApplies(sl,f){ const fid=typeof f==='string'?f:f&&f.id; if(Array.isArray(sl.col.fr)&&sl.col.fr.length&&!sl.col.fr.includes(fid)) return false; if(sl.k&&sl.k>nHora(sl.col,fid)) return false; if(sl.col.tipus!=='grup') return true; const g=grupById(sl.col.grup); return !g||fApplies(f,g.nivell); }
 const MODES={auto:'Automàtica (mateix grup tot el dia)',tutor:'Tutors amb el seu grup',horari:'Qui té classe amb el grup a aquesta hora',manual:'Manual (ho omplo jo)'};
 const MODES_C={auto:'automàtica',tutor:'tutors',horari:'segons horari',manual:'manual'};
 const modeHora=fid=>{ const j=S.jornada; return (j&&jTipus()==='activitat'&&j.modes&&j.modes[fid])||'auto'; };
 function tutorsHora(fid){ if(modeHora(fid)!=='tutor') return new Set(); return new Set((S.jornada.cols||[]).filter(c=>c.tipus==='grup'&&(+c.n||0)>0).map(c=>(grupById(c.grup)||{}).tutor).filter(Boolean)); }
 function grauGrup(pid,gid){ const vs=Object.values(S.horari[pid]||{}); if(vs.includes('G:'+gid)) return 2; const g=grupById(gid); return g&&vs.includes('C:'+g.nivell)?1:0; }
 const teachesGroup=(pid,gid)=>grauGrup(pid,gid)>0;
-function rolSlot(sl){ if((+sl.col.n||0)<2) return ''; return 'Professor '+sl.k; }
+function rolSlot(sl){ if(nMax(sl.col)<2) return ''; return 'Professor '+sl.k; }
 const teachesAt=(pid,gid,dia,fid)=>{ const a=act(pid,dia,fid); return !!a&&a.t==='G'&&a.grup===gid; };
 
 /* ----- 1. Activitat ----- */
@@ -1156,7 +1158,7 @@ function vActivitat(){
     <div class="card pad"><h2 class="card-t">Hores de l'activitat</h2>
       <div class="frchk">${S.config.franges.map(f=>`<label class="check frc ${frIds.has(f.id)?'on':''}"><input type="checkbox" data-in="act-fr" data-f="${f.id}" ${frIds.has(f.id)?'checked':''}> ${esc(f.label)}</label>`).join('')}</div>
       <p class="hint" style="margin:8px 0 0">Marca les franges en què es fa l'activitat i cal professorat.</p>
-      ${fr.length?`<h3 class="mini-t">Com s'assigna cada hora</h3><div class="hmodes">${fr.map(f=>`<div class="hmr"><b>${esc(hIni(f))}</b><select data-in="act-mode" data-f="${f.id}" aria-label="Criteri de ${esc(f.label)}">${Object.entries(MODES).map(([k,t])=>`<option value="${k}" ${modeHora(f.id)===k?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`).join('')}</div>`:''}
+      ${fr.length?`<h3 class="mini-t">Com s'assigna cada hora</h3><div class="hmodes">${fr.map(f=>{ const nh=(j.nh||{})[f.id]; return `<div class="hmr"><b>${esc(hIni(f))}</b><div class="hmr-s"><select data-in="act-mode" data-f="${f.id}" aria-label="Criteri de ${esc(f.label)}">${Object.entries(MODES).map(([k,t])=>`<option value="${k}" ${modeHora(f.id)===k?'selected':''}>${esc(t)}</option>`).join('')}</select>${cols.some(c=>c.tipus==='grup')?`<select data-in="act-nh" data-f="${f.id}" class="${nh!=null?'set':''}" aria-label="Professors per grup a ${esc(f.label)}"><option value="">Professors per grup: com a sota</option>${[1,2,3,4].map(n=>`<option value="${n}" ${nh!=null&&+nh===n?'selected':''}>${n} professor${n>1?'s':''} per grup</option>`).join('')}</select>`:''}</div></div>`; }).join('')}</div>`:''}
     </div>
     ${noPartCard()}
   </div>
@@ -1269,7 +1271,7 @@ function vAssignAct(){
   const fr=actFranges(), slots=actSlots(), cols=actCols();
   if(fr.length&&slots.length&&S.ui.cmp&&S.jornada.manual) return vCompara();
   if(!fr.length||!slots.length) return `<div class="card empty"><h2>Falta definir l'activitat</h2><p>Indica les hores de l'activitat i què cal cobrir (grups o llocs).</p><button class="btn pri" data-a="tab" data-tab="activitat">Anar a Activitat</button></div>`;
-  const dia=diaHorari(); const multi=cols.some(c=>(+c.n||0)>1);
+  const dia=diaHorari(); const multi=cols.some(c=>nMax(c)>1);
   const head=`<div class="sec-h" style="margin-top:0"><div><h2>Assignació · ${esc(jTitol(S.jornada))}</h2><p>Toca una casella per triar el professor. Primer surten els que ja hi són a l'hora anterior o posterior, el tutor/a i qui fa classe a aquell grup.</p></div>
     <div class="row-actions"><button class="btn acc" data-a="asg-auto-act">Proposta automàtica</button><button class="btn" data-a="${S.jornada.manual?'cmp-on':'cmp-open'}">${S.jornada.manual?'Veure la comparació':'Comparar amb la meva proposta'}</button><button class="btn danger" data-a="asg-clear-all">Buidar tot</button></div></div>
     <label class="check" style="margin-bottom:12px"><input type="checkbox" data-in="incfree" ${S.ui.incFree?'checked':''}> Incloure també professors presents que no tenen res a l'horari a aquella hora</label>`;
@@ -1290,7 +1292,7 @@ function vAssignAct(){
       const tag=x=>{ const r=rank(x); return r===-1?(md==='tutor'?'tutor/a':'té classe amb el grup ara'):r===0?'continuïtat':r===1?'tutor/a':r===2?'fa classe al grup':actShort(x.a); };
       const lliures=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
       const ocupats=av.filter(x=>where[x.p.id]&&x.p.id!==cur).sort((x,y)=>profCmp(x.p,y.p));
-      const slLab=s=>{ const sl2=slots.find(z=>z.id===s); return sl2?colNom(sl2.col)+((+sl2.col.n||0)>1?' · '+rolSlot(sl2).toLowerCase():''):'?'; };
+      const slLab=s=>{ const sl2=slots.find(z=>z.id===s); return sl2?colNom(sl2.col)+(nMax(sl2.col)>1?' · '+rolSlot(sl2).toLowerCase():''):'?'; };
       const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(sl.id)}" aria-label="${esc(colNom(sl.col))} ${esc(f.label)}">
         <option value="">${ok?'— Treure —':'Triar…'}</option>
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(tag(x))}</option>`).join('')}</optgroup>`:''}
@@ -1300,10 +1302,10 @@ function vAssignAct(){
       return `<td class="cell ${ok?'p':'miss'} ${sl.k===1?'nvs':''} ${same?'cont':''}" title="${ok?esc(profById(cur).nom):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${sel}</td>`;
     }).join('');
     const cls=cov>=nApl?'ok':cov?'warn':'bad';
-    return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${S.jornada.modes&&Object.keys(S.jornada.modes).length?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}</div>`:''}</td>${cells}</tr>`;
+    return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${(S.jornada.modes&&Object.keys(S.jornada.modes).length)||(S.jornada.nh&&S.jornada.nh[f.id]!=null)?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}${S.jornada.nh&&S.jornada.nh[f.id]!=null?' · '+S.jornada.nh[f.id]+' per grup':''}</div>`:''}</td>${cells}</tr>`;
   }).join('');
-  const thead=multi?`<tr><th class="hcol" rowspan="2">Hora</th>${cols.map(c=>(+c.n||0)>1?`<th class="nvs" colspan="${c.n}">${esc(colNom(c))}</th>`:`<th class="nvs" rowspan="2">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>
-    <tr>${slots.filter(sl=>(+sl.col.n||0)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">${esc(rolSlot(sl))}</th>`).join('')}</tr>`
+  const thead=multi?`<tr><th class="hcol" rowspan="2">Hora</th>${cols.map(c=>nMax(c)>1?`<th class="nvs" colspan="${nMax(c)}">${esc(colNom(c))}</th>`:`<th class="nvs" rowspan="2">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>
+    <tr>${slots.filter(sl=>nMax(sl.col)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">${esc(rolSlot(sl))}</th>`).join('')}</tr>`
     :`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
   const table=`<div class="card tblw"><table class="t qg qa"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
   const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+esc(reserves[f.id].join(', ')):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
@@ -1452,7 +1454,7 @@ function mesures(M,P){
   const {fr,cols,applies}=M; const r={need:0,cov:0,buits:0,curts:0,assig:0,classe:0,tutHores:0,tutTot:0,canvis:0,dobles:0,noDisp:0};
   const pids=new Set();
   fr.forEach(f=>{ const cnt={};
-    cols.forEach(c=>{ if(!applies(c,f)) return; const n=+c.n||0; const L=(P[f.id][c.id]||[]); const ok=L.filter(p=>!estatHora(p,f.id));
+    cols.forEach(c=>{ if(!applies(c,f)) return; const n=nHora(c,f.id); const L=(P[f.id][c.id]||[]); const ok=L.filter(p=>!estatHora(p,f.id));
       r.need+=n; r.cov+=Math.min(n,ok.length); if(!ok.length) r.buits++; else if(ok.length<n) r.curts++;
       L.forEach(p=>{ pids.add(p); cnt[p]=(cnt[p]||0)+1; if(estatHora(p,f.id)) r.noDisp++; if(c.tipus==='grup'){ r.assig++; if(grauGrup(p,c.grup)>0) r.classe++; } });
       if(c.tipus==='grup'){ const g=grupById(c.grup); if(g&&g.tutor&&!estatHora(g.tutor,f.id)){ r.tutTot++; if(L.includes(g.tutor)) r.tutHores++; } } });
@@ -1462,7 +1464,7 @@ function mesures(M,P){
 }
 function vCompara(){
   const M=cmpModel(); const {fr,cols,app,man,R,applies,frFora,colsFora}=M; const j=S.jornada;
-  const multi=cols.some(c=>(+c.n||0)>1);
+  const multi=cols.some(c=>nMax(c)>1);
   let eq=0,tot=0;
   const nm=pid=>{ const p=profById(pid); return p?curt(p.nom):'?'; };
   const rows=fr.map(f=>`<tr><td class="hcol"><div class="hl">${esc(f.label)}</div></td>${cols.map(c=>{
@@ -1473,7 +1475,7 @@ function vCompara(){
       if(same) return `<td class="cmp eq nvs" data-a="cmp-cell" data-f="${f.id}" data-c="${esc(c.id)}">${A.length?lst(A,A):'<i>Ningú</i>'}</td>`;
       return `<td class="cmp df nvs" data-a="cmp-cell" data-f="${f.id}" data-c="${esc(c.id)}"><div class="cmp-l"><b>Tu</b> ${Mn.length?lst(Mn,A):'<i>ningú</i>'}${unk.map(t=>`, <span class="unk">${esc(t.txt)}?</span>`).join('')}</div><div class="cmp-l app"><b>App</b> ${A.length?lst(A,Mn):'<i>ningú</i>'}</div></td>`;
     }).join('')}</tr>`).join('');
-  const thead=`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${(+c.n||0)>1?`<small>${c.n} prof.</small>`:c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
+  const thead=`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${nMax(c)>1?`<small>fins a ${nMax(c)} prof.</small>`:c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
   // avisos de la proposta manual
   const av=[];
   R.rev.forEach(t=>{ av.push(t.st==='unk'?{k:'bad',h:`No reconec «${esc(t.txt)}».`,sel:t}:{k:'warn',h:`«${esc(t.txt)}» pot ser més d'un professor. He triat <b>${esc(nomLl(profById(t.pid).nom))}</b>.`,sel:t}); });
@@ -1520,7 +1522,7 @@ function explicaCasella(fid,cid){
   const unk=((R.res[fid]||{})[cid]||[]).filter(t=>!t.pid);
   // motius
   const mot=[];
-  if((+c.n||0)!==Mn.length&&Mn.length) mot.push(`A la teva proposta hi ha ${Mn.length} professor${Mn.length===1?'':'s'}; a l'activitat està configurat amb ${+c.n||0} per ${c.tipus==='grup'?'grup':'aquest lloc'}${Mn.length>(+c.n||0)?', per això l\'app no n\'hi posa més':''}.`);
+  if(nHora(c,fid)!==Mn.length&&Mn.length) mot.push(`A la teva proposta hi ha ${Mn.length} professor${Mn.length===1?'':'s'}; a l'activitat, a aquesta hora, està configurat amb ${nHora(c,fid)} per ${c.tipus==='grup'?'grup':'aquest lloc'}${Mn.length>nHora(c,fid)?', per això l\'app no n\'hi posa més':''}.`);
   nomes.forEach(p=>{ const st=estatHora(p,fid); const l=locDe(app,fid,p);
     if(st) mot.push(`L'app no hi posa ${nomP(p)} perquè ${esc(st)}.`);
     else if(l){ const c2=cols.find(x=>x.id===l); const g2=c2&&c2.tipus==='grup'?grupById(c2.grup):null; let why='';
@@ -1594,7 +1596,7 @@ function vResumAct(){
   const P=S.profs.filter(p=>pEstat(p.id)==='P'), CO=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
   const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); let cov=0; fr.forEach(f=>{ cov+=actCoverage(f.id).cov; });
   const assigned=P.filter(p=>profPlaAct(p.id).some(x=>x.cls===''&&x.txt!=='Reserva'));
-  const grid=slots.length&&fr.length?`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slots.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${(+sl.col.n||0)>1?'<small>'+esc(rolSlot(sl).toLowerCase())+'</small>':''}</th>`).join('')}</tr></thead><tbody>
+  const grid=slots.length&&fr.length?`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slots.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${nMax(sl.col)>1?'<small>'+esc(rolSlot(sl).toLowerCase())+'</small>':''}</th>`).join('')}</tr></thead><tbody>
     ${fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const ids=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id));
       return `<tr><td class="hcol">${esc(f.label)}</td>${slots.map(sl=>{ if(!slotApplies(sl,f)) return '<td class="na nvs">—</td>'; const pid=asg[sl.id]; return pid&&ids.has(pid)?`<td class="p nvs" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss nvs">Sense prof.</td>`; }).join('')}</tr>`; }).join('')}
   </tbody></table></div>`:'<p class="hint">Falta definir l\'activitat.</p>';
@@ -1759,7 +1761,7 @@ function pdfAct(nomesQuadre){
     if(slots.length&&fr.length){
       if(!nomesQuadre){ R.newPage(); R.text('Per grup o lloc',{size:13,bold:true}); } else R.y-=4;
       const ew=150, cw2=(fullW-ew)/fr.length;
-      const rows=slots.map(sl=>[{t:colNom(sl.col)+((+sl.col.n||0)>1?' · '+rolSlot(sl).toLowerCase():''),bold:true},...fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
+      const rows=slots.map(sl=>[{t:colNom(sl.col)+(nMax(sl.col)>1?' · '+rolSlot(sl).toLowerCase():''),bold:true},...fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
         const pid=((S.jornada.assign&&S.jornada.assign[f.id])||{})[sl.id]; const ok=pid&&disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
         return ok?{t:nomLl(profById(pid).nom)}:{t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; })]);
       let szA=7.5, padA=0;
@@ -2438,6 +2440,9 @@ const IN={
   'g-niv':el=>{ const g=grupById(el.dataset.id); if(g){ g.nivell=el.value.trim(); saveGrups(); } },
   'act-nom':el=>{ const j=ensureJ(); j.nom=el.value; saveJ(); renderTop(); },
   'act-data':el=>{ if(!el.value) return; const j=ensureJ(); j.data=el.value; saveJ(); render(); },
+  'act-nh':el=>{ const j=ensureJ(); j.nh=j.nh||{}; const fid=el.dataset.f; if(el.value==='') delete j.nh[fid]; else j.nh[fid]=+el.value;
+    const a=(j.assign||{})[fid]; if(a){ const sl=actSlots(); Object.keys(a).forEach(sid=>{ const x=sl.find(z=>z.id===sid); if(x&&!slotApplies(x,fid)) delete a[sid]; }); }
+    saveJ(); render(); },
   'act-mode':el=>{ const j=ensureJ(); j.modes=j.modes||{}; if(el.value==='auto') delete j.modes[el.dataset.f]; else j.modes[el.dataset.f]=el.value; saveJ(); render(); },
   'act-np':el=>{ const j=ensureJ(); j.noPart=el.value; saveJ(); render(); },
   'act-fr':el=>{ const j=ensureJ(); const set=new Set(j.fr||[]); if(el.checked) set.add(el.dataset.f); else set.delete(el.dataset.f); j.fr=S.config.franges.map(f=>f.id).filter(id=>set.has(id)); saveJ(); render(); },
@@ -2457,7 +2462,7 @@ const IN={
       inp.addEventListener('blur',()=>fin(true)); el.value=old; return; } S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
     el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
-const ONCHANGE=new Set(['act-mode','act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
+const ONCHANGE=new Set(['act-nh','act-mode','act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
 document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
 document.addEventListener('change',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in;
   if(ONCHANGE.has(k)){ IN[k]&&IN[k](el); return; }
