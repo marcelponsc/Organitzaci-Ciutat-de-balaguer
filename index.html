@@ -356,6 +356,11 @@ tr.nh-tots td{background:var(--pri2)}tr.nh-tots .nh-in{border-color:var(--pri)}
 .torn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}.torn-c{padding:0;overflow:hidden}.torn-h{display:flex;gap:8px;align-items:center;padding:10px 12px}.torn-h input{flex:1;font-weight:700;font-size:15px}
 .torn-c tr.pati td{background:#fafafb}.torn-c tr.pati input[type=text]{color:var(--mut)}.badge.comuna{background:#eef0fb;color:var(--blue);margin-left:6px;font-size:10.5px}
 .torn-t{font-size:14px;margin:14px 0 8px;color:var(--ink2)}.torn-cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.rep{margin-top:14px;padding:0;overflow:hidden}.rep-h{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:12px 14px;width:100%}.rep-h>span:first-child{font-weight:700}
+.rep-t td.hi b{color:#c25a14}.rep-d{display:inline-flex;gap:2px;vertical-align:middle}.rep-d i{width:16px;height:14px;border-radius:3px;background:#eceef1}
+.rep-d i.own{background:var(--ok)}.rep-d i.cob{background:#ef8a3c}.rep-d i.lli{background:#cfd8e3}.rep-d i.tk{background:#b996e6}.rep-d i.abs{background:repeating-linear-gradient(45deg,#e5e5e9 0 3px,#fff 3px 6px)}.rep-d i.n{background:#f4f4f6}
+.rep-hh{display:inline-block;width:16px;margin-left:2px;font-size:0;}.rep-hh:first-child{margin-left:8px}
+@media print{.rep{display:none!important}}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
 
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -428,7 +433,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.25-j';
+const VERSIO = '2026.11.25-k';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -1060,7 +1065,25 @@ function vAssign(){
     <tr>${t.cols.map(ag=>`<th class="${ag.idx===1?'nvs':''}">${esc(ag.lab||('G'+ag.idx))}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
   </thead><tbody>${rowsFor(t.fr,t.cols)}</tbody></table></div>`).join('');
   const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva / guàrdia) per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`;
-  return head+table+resv;
+  return head+table+resv+repartiment(lf,pre);
+}
+// recompte de la feina de cada professor durant el dia (només a pantalla)
+function repartiment(lf,pre){
+  const dia=diaHorari(); const agsF={}; lf.forEach(f=>{ agsF[f.id]=agsAt(f.id); });
+  const rows=S.profs.filter(p=>pEstat(p.id)==='P').map(p=>{ let cob=0,seu=0,lli=0;
+    const hs=lf.map(f=>{ const {asg,avIds}=pre[f.id]; const ag=agsF[f.id].find(a=>asg[a.id]===p.id&&avIds.has(p.id)); const a=act(p.id,dia,f.id);
+      if(ag){ if(agTeGrup(ag,a)){ seu++; return {c:'own',t:'El seu grup ('+(ag.lab||'')+' '+ag.nv+')'}; } cob++; return {c:'cob',t:'Cobreix '+ag.nv+' '+(ag.lab||'')+' · tenia '+actMini(a)}; }
+      if(pTasca(p.id,f.id)) return {c:'tk',t:'Tasca: '+pTasca(p.id,f.id)};
+      if(avIds.has(p.id)){ lli++; return {c:'lli',t:'Lliure · tenia '+actMini(a)}; }
+      return {c:a?'abs':'n',t:a?'No hi és a aquesta hora':'Res a l\'horari'}; });
+    return {p,cob,seu,lli,hs}; }).filter(r=>r.cob||r.seu||r.lli);
+  if(!rows.length) return '';
+  rows.sort((a,b)=>b.cob-a.cob||a.lli-b.lli||profCmp(a.p,b.p));
+  const obert=!!S.ui.repOpen; const mx=Math.max(...rows.map(r=>r.cob));
+  return `<div class="card rep"><button class="rep-h" data-a="rep-toggle" aria-expanded="${obert}"><span>${obert?'▾':'▸'} Repartiment de la feina</span><span class="hint">Hores que cada professor cobreix un grup que no és el seu. Màxim avui: <b>${mx}</b>. No surt en imprimir.</span></button>
+    ${obert?`<div class="tblw"><table class="t rep-t"><thead><tr><th>Professor</th><th class="c" title="Hores cobrint un grup que no és el seu">Cobreix</th><th class="c" title="Hores amb el seu grup">El seu grup</th><th class="c" title="Hores lliure (reserva)">Lliure</th><th>Dia${lf.map(f=>`<span class="rep-hh">${esc(hIni(f))}</span>`).join('')}</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td>${esc(nomLl(r.p.nom))}</td><td class="c num ${r.cob>=2?'hi':''}"><b>${r.cob}</b></td><td class="c num">${r.seu}</td><td class="c num">${r.lli}</td><td><span class="rep-d">${r.hs.map((h,i)=>`<i class="${h.c}" title="${esc(lf[i].label+': '+h.t)}"></i>`).join('')}</span></td></tr>`).join('')}
+    </tbody></table></div><p class="hint" style="padding:0 14px 12px;margin:0"><span class="rep-d"><i class="cob"></i></span> cobreix un altre grup · <span class="rep-d"><i class="own"></i></span> el seu grup · <span class="rep-d"><i class="lli"></i></span> lliure · <span class="rep-d"><i class="tk"></i></span> tasca · <span class="rep-d"><i class="abs"></i></span> no hi és · <span class="rep-d"><i class="n"></i></span> res a l'horari. La proposta automàtica fa passar primer qui menys n'ha cobert.</p>`:''}</div>`;
 }
 
 /* ----- 4. Resum ----- */
@@ -2536,6 +2559,7 @@ const A={
   'agr-step':b=>{ const j=ensureJ(), nv=b.dataset.nv; const s=nivellStats().find(x=>x.nv===nv); if(!s) return; j.agr[nv]=Math.max(0,s.n+(+b.dataset.d)); saveJ(); updateLive(); },
   'agr-auto':b=>{ const j=ensureJ(); delete j.agr[b.dataset.nv]; saveJ(); updateLive(); },
   pf:b=>{ S.ui.pf=b.dataset.f; render(); },
+  'rep-toggle':()=>{ S.ui.repOpen=!S.ui.repOpen; render(); },
   pord:b=>{ S.ui.pord=b.dataset.o; try{ localStorage.setItem('jornades_pord',b.dataset.o); }catch(e){} render(); },
   'prof-exp':b=>{ const id=b.dataset.id; S.ui.exp[id]=!S.ui.exp[id]; $('#plist').innerHTML=profList(); },
   'prof-set':b=>{ const j=ensureJ(), id=b.dataset.id, e=b.dataset.e; const cur=j.profs[id]||{};
