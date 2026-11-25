@@ -352,6 +352,9 @@ tr.nh-tots td{background:var(--pri2)}tr.nh-tots .nh-in{border-color:var(--pri)}
 .resv-r .rv i.g{background:#eef0fb;color:var(--blue)}.resv-r .rv i.p{background:#fdf5e3;color:#a8791a}.resv-r .rv i.n{background:#f1f1f4;color:var(--mut)}
 .ptask{flex-basis:100%;margin-top:6px;padding:10px;border:1px dashed #c9b3ea;border-radius:10px;background:#faf7fe}.ptask label{display:block;font-size:12px;font-weight:650;color:#7a4bc2;margin-bottom:4px}.ptask input[type=text]{width:100%;max-width:360px}.ptask .chips{margin-top:6px}
 .resv-r .rv i.t{background:#f1eafb;color:#7a4bc2}.rv-t{font-size:11px;color:#7a4bc2;font-weight:650;margin:0 6px 0 8px}
+.torn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}.torn-c{padding:0;overflow:hidden}.torn-h{display:flex;gap:8px;align-items:center;padding:10px 12px}.torn-h input{flex:1;font-weight:700;font-size:15px}
+.torn-c tr.pati td{background:#fafafb}.torn-c tr.pati input[type=text]{color:var(--mut)}.badge.comuna{background:#eef0fb;color:var(--blue);margin-left:6px;font-size:10.5px}
+.torn-t{font-size:14px;margin:14px 0 8px;color:var(--ink2)}.torn-cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
 
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -424,7 +427,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.25-d';
+const VERSIO = '2026.11.25-e';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -650,6 +653,14 @@ function nivellStats(){
   });
 }
 // lletra d'un grup dins del seu nivell ("1r ESO A" → "A")
+// torns: grups de nivells amb franges pròpies (p. ex. 1r-2n ESO i la resta)
+function tornsActius(){ const T=((S.config&&S.config.torns)||[]).filter(t=>t&&Array.isArray(t.nivells)&&t.nivells.length); return T.length>1?T:null; }
+function partTorns(fr,cols,nivOf){ const T=tornsActius(); if(!T) return [{nom:null,fr,cols}];
+  const byT=(a,b)=>{ const ra=rangF(a), rb=rangF(b); return ra&&rb?(ra[0]-rb[0])||(ra[1]-rb[1]):0; };
+  const out=T.map(t=>({nom:t.nom,fr:fr.filter(f=>t.nivells.some(nv=>fApplies(f,nv))).sort(byT),cols:cols.filter(c=>{ const n=nivOf(c); return n&&t.nivells.includes(n); })}));
+  const rest=cols.filter(c=>{ const n=nivOf(c); return !n||!T.some(t=>t.nivells.includes(n)); }); if(rest.length) out.push({nom:'Altres',fr,cols:rest});
+  return out.filter(x=>x.cols.length&&x.fr.length); }
+const tornTitol = t => t.nom?`<h3 class="torn-t">${esc(t.nom)}</h3>`:'';
 function lletraGrup(g){ const nv=String(g.nivell||'').trim(); let t=String(g.nom||'').trim(); if(nv&&norm(t).startsWith(norm(nv))) t=t.slice(nv.length).trim(); return t.replace(/^[-·\s]+/,'')||g.nom; }
 // reparteix els grups (sencers i seguits) en n agrupacions equilibrades
 function partGrups(gs,cnt,n){
@@ -704,8 +715,9 @@ function autoAssign(fid,prevFid){
   // 0. qui tenia classe amb aquest grup a aquesta hora
   ags.forEach(ag=>{ const c=av.find(x=>free(x)&&agTeGrup(ag,x.a)&&!res[ag.id]); if(c) take(ag,c.p.id); });
   // 1. continuïtat amb l'hora anterior
-  if(prevFid && j.assign[prevFid]){
-    ags.forEach(ag=>{ if(res[ag.id]) return; const pid=j.assign[prevFid][ag.id]; if(pid && byId[pid] && !used.has(pid)) take(ag,pid); });
+  { const lfa=lectFranges(); const ix=lfa.findIndex(x=>x.id===fid);
+    const prevDe=ag=>{ for(let i=ix-1;i>=0;i--) if(fApplies(lfa[i],ag.nv)) return lfa[i].id; return null; };
+    ags.forEach(ag=>{ if(res[ag.id]) return; const pf=prevDe(ag); const pid=pf&&j.assign[pf]?j.assign[pf][ag.id]:null; if(pid && byId[pid] && !used.has(pid)) take(ag,pid); });
   }
   // 2. professor que tenia classe amb un grup del mateix nivell
   ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&actNivell(x.a)===ag.nv); if(c) take(ag,c.p.id); });
@@ -926,14 +938,18 @@ function vAssign(){
     <label class="check" style="margin-bottom:12px"><input type="checkbox" data-in="incfree" ${S.ui.incFree?'checked':''}> Incloure també professors presents sense classe ni guàrdia a aquella hora</label>`;
   if(!ags.length) return head+`<div class="card empty"><h2>Encara no hi ha agrupacions</h2><p>Fes primer el recompte d'alumnes: les agrupacions per nivell surten d'aquí.</p><button class="btn pri" data-a="tab" data-tab="alumnes">Anar al recompte</button></div>`;
   const reserves={};
-  const rows=lf.map(f=>{
+  const pre={};
+  lf.forEach(f=>{
     const asg=(S.jornada&&S.jornada.assign&&S.jornada.assign[f.id])||{};
     const av=disponibles(f.id,S.ui.incFree); const avIds=new Set(av.map(x=>x.p.id));
     const where={}; ags.forEach(ag=>{ if(asg[ag.id]&&avIds.has(asg[ag.id])) where[asg[ag.id]]=ag.id; });
-    const cov=Object.keys(where).length;
     reserves[f.id]=av.filter(x=>!where[x.p.id]).sort((x,y)=>(actCls(x.a)>actCls(y.a)?1:actCls(x.a)<actCls(y.a)?-1:0)||profCmp(x.p,y.p)).map(x=>x.p.id);
-    const nApl=ags.filter(ag=>fApplies(f,ag.nv)).length;
-    const cells=ags.map(ag=>{
+    pre[f.id]={asg,av,avIds,where}; });
+  const rowsFor=(lfT,agsT)=>lfT.map(f=>{
+    const {asg,av,avIds,where}=pre[f.id];
+    const cov=agsT.filter(ag=>asg[ag.id]&&avIds.has(asg[ag.id])&&fApplies(f,ag.nv)).length;
+    const nApl=agsT.filter(ag=>fApplies(f,ag.nv)).length;
+    const cells=agsT.map(ag=>{
       if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}" title="Aquest nivell no té classe en aquesta franja">—</td>`;
       const cur=asg[ag.id], ok=cur&&avIds.has(cur);
       const rank=x=>agTeGrup(ag,x.a)?-1:actNivell(x.a)===ag.nv?0:isClass(x.a)?1:x.a&&x.a.t==='GU'?2:3;
@@ -953,10 +969,10 @@ function vAssign(){
     const cls=cov>=nApl?'ok':cov?'warn':'bad';
     return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${S.jornada.modes&&Object.keys(S.jornada.modes).length?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}</div>`:''}</td>${cells}</tr>`;
   }).join('');
-  const table=`<div class="card tblw"><table class="t qg qa"><thead>
-    <tr><th class="hcol" rowspan="2">Hora</th>${st.map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
-    <tr>${ags.map(ag=>`<th class="${ag.idx===1?'nvs':''}">${esc(ag.lab||('G'+ag.idx))}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
-  </thead><tbody>${rows}</tbody></table></div>`;
+  const table=partTorns(lf,ags,a=>a.nv).map(t=>tornTitol(t)+`<div class="card tblw"><table class="t qg qa"><thead>
+    <tr><th class="hcol" rowspan="2">Hora</th>${st.filter(x=>t.cols.some(a=>a.nv===x.nv)).map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
+    <tr>${t.cols.map(ag=>`<th class="${ag.idx===1?'nvs':''}">${esc(ag.lab||('G'+ag.idx))}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
+  </thead><tbody>${rowsFor(t.fr,t.cols)}</tbody></table></div>`).join('');
   const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva / guàrdia) per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`;
   return head+table+resv;
 }
@@ -975,16 +991,17 @@ function vResum(){
   </tbody></table></div>`;
   const stN=st.filter(x=>x.n>0);
   const avCache={}, reserves={}; lf.forEach(f=>{ avCache[f.id]=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id)); });
-  const tGrid=ags.length?`<div class="card tblw"><table class="t qg"><thead>
-    <tr><th class="hcol" rowspan="2">Hora</th>${stN.map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
-    <tr>${ags.map(ag=>`<th class="${ag.idx===1?'nvs':''}">${esc(ag.lab||('G'+ag.idx))}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
+  lf.forEach(f=>{ const a=asg(f.id); const used=new Set(); ags.forEach(ag=>{ const pid=a[ag.id]; if(fApplies(f,ag.nv)&&pid&&avCache[f.id].has(pid)) used.add(pid); });
+    reserves[f.id]=[...avCache[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>p.id); });
+  const tGrid=ags.length?partTorns(lf,ags,a=>a.nv).map(t=>tornTitol(t)+`<div class="card tblw"><table class="t qg"><thead>
+    <tr><th class="hcol" rowspan="2">Hora</th>${stN.filter(x=>t.cols.some(a=>a.nv===x.nv)).map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
+    <tr>${t.cols.map(ag=>`<th class="${ag.idx===1?'nvs':''}">${esc(ag.lab||('G'+ag.idx))}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
   </thead><tbody>
-    ${lf.map(f=>{ const a=asg(f.id); const used=new Set();
-      const cells=ags.map(ag=>{ if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}">—</td>`; const pid=a[ag.id]; const ok=pid&&avCache[f.id].has(pid); if(ok) used.add(pid);
+    ${t.fr.map(f=>{ const a=asg(f.id);
+      const cells=t.cols.map(ag=>{ if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}">—</td>`; const pid=a[ag.id]; const ok=pid&&avCache[f.id].has(pid);
         return ok?`<td class="p ${ag.idx===1?'nvs':''}" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss ${ag.idx===1?'nvs':''}">Sense prof.</td>`; }).join('');
-      reserves[f.id]=[...avCache[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>p.id);
       return `<tr><td class="hcol">${esc(f.label)}</td>${cells}</tr>`; }).join('')}
-  </tbody></table></div>
+  </tbody></table></div>`).join('')+`
   <div class="card resv"><div class="resv-h">Professorat de reserva / guàrdia per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`:`<p class="hint">Encara no hi ha agrupacions (fes el recompte d'alumnes).</p>`;
   const tProf=P.length?`<div class="card tblw"><table class="t"><thead><tr><th>Professor/a</th>${lf.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
     ${P.slice().sort(profCmp).map(p=>`<tr><td><b>${esc(nomLl(p.nom))}</b></td>${lf.map(f=>{
@@ -1064,13 +1081,14 @@ function vConfig(){
     </div>
   </div>
 
-  <div class="sec-h"><div><h2>Franges horàries</h2><p>El número de franja serveix per importar l'horari. Les no lectives (pati) no s'assignen. Si una franja només és per a alguns nivells, marca'ls; si no en marques cap, és per a tots. <b>Patis diferents per nivell:</b> crea un pati per a cada horari (p. ex. 10:20 – 10:50 per a 3r, 4t i Batxillerat i 11:20 – 11:50 per a 1r i 2n), marca'n els nivells i prem «Ajustar les classes als patis».</p></div>
-    <div class="row-actions">${S.grups.length&&Object.keys(S.horari).length?'<button class="btn sm" data-a="fr-detect">Detectar nivells segons els horaris</button>':''}${S.config.franges.some(f=>!f.lect&&(f.nivells||[]).length)?'<button class="btn sm acc" data-a="fr-patis">Ajustar les classes als patis</button>':''}<button class="btn sm" data-a="add-fr">+ Afegir franja</button></div></div>
+  <div class="sec-h"><div><h2>Franges horàries</h2><p>${tornsActius()?'Cada horari té les seves franges i el seu pati. Les assignacions i els resums surten en un quadre per a cada horari.':`El número de franja serveix per importar l'horari. Les no lectives (pati) no s'assignen. Si una franja només és per a alguns nivells, marca'ls; si no en marques cap, és per a tots. <b>Patis diferents per nivell:</b> crea un pati per a cada horari (p. ex. 10:20 – 10:50 per a 3r, 4t i Batxillerat i 11:20 – 11:50 per a 1r i 2n), marca'n els nivells i prem «Ajustar les classes als patis».`}</p></div>
+    <div class="row-actions">${!tornsActius()&&S.grups.length&&Object.keys(S.horari).length?'<button class="btn sm" data-a="fr-detect">Detectar nivells segons els horaris</button>':''}${!tornsActius()&&S.config.franges.some(f=>!f.lect&&(f.nivells||[]).length)?'<button class="btn sm acc" data-a="fr-patis">Ajustar les classes als patis</button>':''}${tornsActius()?'':'<button class="btn sm" data-a="add-fr">+ Afegir franja</button>'}</div></div>
+  ${tornsActius()?franjesTorns():`<div class="card pad torn-cta"><b>Teniu horaris diferents segons el nivell?</b> <span class="hint">(p. ex. 1r i 2n ESO fan el pati a una altra hora)</span> <button class="btn sm acc" data-a="torns-on">Separar en dos horaris</button></div>
   <div class="card tblw"><table class="t"><thead><tr><th style="width:40px">Nº</th><th>Franja</th><th class="c">Lectiva</th><th>Nivells</th><th style="width:140px"></th></tr></thead><tbody>
     ${S.config.franges.map((f,i)=>`<tr><td class="c"><b>${i+1}</b></td><td><input type="text" data-in="fr-label" data-f="${f.id}" value="${esc(f.label)}"></td><td class="c"><input type="checkbox" data-in="fr-lect" data-f="${f.id}" ${f.lect?'checked':''}></td>
       <td>${true?`<div class="nvchips">${nivells().map(nv=>`<button class="nvc ${(f.nivells||[]).includes(nv)?'on':''}" data-a="fr-niv" data-f="${f.id}" data-nv="${esc(nv)}">${esc(nv)}</button>`).join('')}${(f.nivells||[]).length?'':'<span class="hint">Tots</span>'}</div>`:''}</td>
       <td><div class="row-actions"><button class="ghost" data-a="mv-fr" data-f="${f.id}" data-d="-1" ${i?'':'disabled'}>↑</button><button class="ghost" data-a="mv-fr" data-f="${f.id}" data-d="1" ${i<S.config.franges.length-1?'':'disabled'}>↓</button><button class="ghost" data-a="del-fr" data-f="${f.id}">Esborrar</button></div></td></tr>`).join('')}
-  </tbody></table></div>
+  </tbody></table></div>`}
 
   <div class="sec-h"><div><h2>Grups classe (${S.grups.length})</h2><p>El nivell agrupa els grups (p. ex. «2n ESO»). El tutor/a és opcional: a les activitats de centre se li proposa acompanyar el seu grup.</p></div>
     <div class="row-actions"><button class="btn sm" data-a="imp" data-k="grups">Importar CSV / enganxar</button><button class="btn sm" data-a="add-g">+ Afegir grup</button></div></div>
@@ -1094,6 +1112,21 @@ function vConfig(){
   </div><p class="hint" style="margin:10px 0 0">Versió de l'app: <b>${VERSIO}</b></p></div>`;
 }
 
+function franjesTorns(){
+  const T=tornsActius(); const allN=nivells();
+  return `<div class="torn-grid">${T.map((t,ti)=>{
+    const fs=S.config.franges.filter(f=>t.nivells.some(nv=>fApplies(f,nv))).slice().sort((a,b)=>{ const ra=rangF(a), rb=rangF(b); return ra&&rb?(ra[0]-rb[0])||(ra[1]-rb[1]):0; });
+    return `<div class="card torn-c"><div class="torn-h"><input type="text" data-in="torn-nom" data-t="${ti}" value="${esc(t.nom||'')}" aria-label="Nom de l'horari"><button class="ghost" data-a="add-fr-t" data-t="${ti}">+ Franja</button></div>
+      <div class="nvchips" style="padding:0 12px 8px">${allN.map(nv=>`<button class="nvc ${t.nivells.includes(nv)?'on':''}" data-a="torn-nv" data-t="${ti}" data-nv="${esc(nv)}" title="${t.nivells.includes(nv)?'És d\'aquest horari':'Passar-lo a aquest horari'}">${esc(nv)}</button>`).join('')}</div>
+      <table class="t"><thead><tr><th>Franja</th><th class="c">Lectiva</th><th></th></tr></thead><tbody>
+      ${fs.map(f=>{ const comuna=T.some((o,oi)=>oi!==ti&&o.nivells.some(nv=>fApplies(f,nv)));
+        return `<tr class="${f.lect?'':'pati'}"><td><input type="text" data-in="fr-label" data-f="${f.id}" value="${esc(f.label)}">${comuna?'<span class="badge comuna" title="Aquesta franja és igual als dos horaris">comuna</span>':''}</td>
+        <td class="c"><input type="checkbox" data-in="fr-lect" data-f="${f.id}" ${f.lect?'checked':''} aria-label="Lectiva"></td>
+        <td style="width:80px"><button class="ghost" data-a="del-fr-t" data-t="${ti}" data-f="${f.id}">Treure</button></td></tr>`; }).join('')}
+      </tbody></table></div>`; }).join('')}</div>
+  <p class="hint">Les franges <span class="badge comuna">comunes</span> són iguals als dos horaris: si en canvies l'hora, canvia als dos. Si un horari té una franja diferent, treu-la d'aquest horari i afegeix-hi la bona amb «+ Franja». Desmarca «Lectiva» als patis. <button class="linkb" data-a="torns-off">Tornar a un sol horari</button></p>`;
+}
+function ordenaFranges(){ S.config.franges.sort((a,b)=>{ const ra=rangF(a), rb=rangF(b); return ra&&rb?(ra[0]-rb[0])||(ra[1]-rb[1]):0; }); }
 function rangF(f){ const m=String(f.label).match(/(\d{1,2})[:.h](\d{2})\D+(\d{1,2})[:.h](\d{2})/); return m?[(+m[1])*60+(+m[2]),(+m[3])*60+(+m[4])]:null; }
 function solapen(a,b){ const ra=rangF(a), rb=rangF(b); return !!ra&&!!rb&&ra[0]<rb[1]&&rb[0]<ra[1]; }
 function detectNivells(totes){
@@ -1341,14 +1374,17 @@ function vAssignAct(){
     <label class="check" style="margin-bottom:12px"><input type="checkbox" data-in="incfree" ${S.ui.incFree?'checked':''}> Incloure també professors presents que no tenen res a l'horari a aquella hora</label>`;
   const asgAt=fid=>(S.jornada.assign&&S.jornada.assign[fid])||{};
   const reserves={};
-  const rows=fr.map((f,fi)=>{
-    const asg=asgAt(f.id); const av=disponibles(f.id,S.ui.incFree); const avIds=new Set(av.map(x=>x.p.id));
-    const where={}; slots.forEach(sl=>{ if(asg[sl.id]&&avIds.has(asg[sl.id])) where[asg[sl.id]]=sl.id; });
-    const cov=Object.keys(where).length;
+  const pre={};
+  fr.forEach(f=>{ const asg=asgAt(f.id); const av=disponibles(f.id,S.ui.incFree); const avIds=new Set(av.map(x=>x.p.id));
+    const where={}; slots.forEach(sl=>{ if(asg[sl.id]&&avIds.has(asg[sl.id])&&slotApplies(sl,f)) where[asg[sl.id]]=sl.id; });
     reserves[f.id]=av.filter(x=>!where[x.p.id]).sort((x,y)=>(actCls(x.a)>actCls(y.a)?1:actCls(x.a)<actCls(y.a)?-1:0)||profCmp(x.p,y.p)).map(x=>x.p.id);
-    const prevA=fi>0?asgAt(fr[fi-1].id):{}, nextA=fi<fr.length-1?asgAt(fr[fi+1].id):{};
-    const nApl=slots.filter(sl=>slotApplies(sl,f)).length;
-    const cells=slots.map(sl=>{
+    pre[f.id]={asg,av,avIds,where}; });
+  const rowsFor=(frT,slotsT)=>frT.map((f,fi)=>{
+    const {asg,av,avIds,where}=pre[f.id];
+    const cov=slotsT.filter(sl=>slotApplies(sl,f)&&asg[sl.id]&&avIds.has(asg[sl.id])).length;
+    const prevA=fi>0?asgAt(frT[fi-1].id):{}, nextA=fi<frT.length-1?asgAt(frT[fi+1].id):{};
+    const nApl=slotsT.filter(sl=>slotApplies(sl,f)).length;
+    const cells=slotsT.map(sl=>{
       if(!slotApplies(sl,f)) return `<td class="na ${sl.k===1?'nvs':''}" title="Aquest grup no té classe en aquesta franja">—</td>`;
       const cur=asg[sl.id], ok=cur&&avIds.has(cur); const gid=sl.col.tipus==='grup'?sl.col.grup:null; const g=gid?grupById(gid):null;
       const md=modeHora(f.id);
@@ -1369,10 +1405,11 @@ function vAssignAct(){
     const cls=cov>=nApl?'ok':cov?'warn':'bad';
     return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${S.jornada.modes&&Object.keys(S.jornada.modes).length?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}</div>`:''}</td>${cells}</tr>`;
   }).join('');
-  const thead=multi?`<tr><th class="hcol" rowspan="2">Hora</th>${cols.map(c=>nMax(c)>1?`<th class="nvs" colspan="${nMax(c)}">${esc(colNom(c))}</th>`:`<th class="nvs" rowspan="2">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>
-    <tr>${slots.filter(sl=>nMax(sl.col)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">${esc(rolSlot(sl))}</th>`).join('')}</tr>`
-    :`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
-  const table=`<div class="card tblw"><table class="t qg qa"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
+  const theadFor=(colsT,slotsT)=>colsT.some(c=>nMax(c)>1)?`<tr><th class="hcol" rowspan="2">Hora</th>${colsT.map(c=>nMax(c)>1?`<th class="nvs" colspan="${nMax(c)}">${esc(colNom(c))}</th>`:`<th class="nvs" rowspan="2">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>
+    <tr>${slotsT.filter(sl=>nMax(sl.col)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">${esc(rolSlot(sl))}</th>`).join('')}</tr>`
+    :`<tr><th class="hcol">Hora</th>${colsT.map(c=>`<th class="nvs">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
+  const nivCol=c=>{ if(c.tipus!=='grup') return null; const g=grupById(c.grup); return g?g.nivell:null; };
+  const table=partTorns(fr,cols,nivCol).map(t=>{ const slotsT=slots.filter(sl=>t.cols.includes(sl.col)); return tornTitol(t)+`<div class="card tblw"><table class="t qg qa"><thead>${theadFor(t.cols,slotsT)}</thead><tbody>${rowsFor(t.fr,slotsT)}</tbody></table></div>`; }).join('');
   const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`;
   return head+table+resv;
 }
@@ -1663,10 +1700,11 @@ function vResumAct(){
   const P=S.profs.filter(p=>pEstat(p.id)==='P'), CO=S.profs.filter(p=>pEstat(p.id)==='C').sort(profCmp);
   const tot=fr.reduce((a,f)=>a+slots.filter(s=>slotApplies(s,f)).length,0); let cov=0; fr.forEach(f=>{ cov+=actCoverage(f.id).cov; });
   const assigned=P.filter(p=>profPlaAct(p.id).some(x=>x.cls===''&&x.txt!=='Reserva'));
-  const grid=slots.length&&fr.length?`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slots.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${nMax(sl.col)>1?'<small>'+esc(rolSlot(sl).toLowerCase())+'</small>':''}</th>`).join('')}</tr></thead><tbody>
-    ${fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const ids=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id));
-      return `<tr><td class="hcol">${esc(f.label)}</td>${slots.map(sl=>{ if(!slotApplies(sl,f)) return '<td class="na nvs">—</td>'; const pid=asg[sl.id]; return pid&&ids.has(pid)?`<td class="p nvs" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss nvs">Sense prof.</td>`; }).join('')}</tr>`; }).join('')}
-  </tbody></table></div>`:'<p class="hint">Falta definir l\'activitat.</p>';
+  const nivCol=c=>{ if(c.tipus!=='grup') return null; const g=grupById(c.grup); return g?g.nivell:null; };
+  const grid=slots.length&&fr.length?partTorns(fr,cols,nivCol).map(t=>{ const slotsT=slots.filter(sl=>t.cols.includes(sl.col)); return tornTitol(t)+`<div class="card tblw"><table class="t qg"><thead><tr><th class="hcol">Hora</th>${slotsT.map(sl=>`<th class="nvs">${esc(colNom(sl.col))}${nMax(sl.col)>1?'<small>'+esc(rolSlot(sl).toLowerCase())+'</small>':''}</th>`).join('')}</tr></thead><tbody>
+    ${t.fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const ids=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id));
+      return `<tr><td class="hcol">${esc(f.label)}</td>${slotsT.map(sl=>{ if(!slotApplies(sl,f)) return '<td class="na nvs">—</td>'; const pid=asg[sl.id]; return pid&&ids.has(pid)?`<td class="p nvs" title="${esc(profById(pid).nom)}">${esc(curt(profById(pid).nom))}</td>`:`<td class="miss nvs">Sense prof.</td>`; }).join('')}</tr>`; }).join('')}
+  </tbody></table></div>`; }).join(''):'<p class="hint">Falta definir l\'activitat.</p>';
   const tProf=`<div class="card tblw"><table class="t"><thead><tr><th>Professor/a</th>${fr.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
     ${[...CO,...P.slice().sort(profCmp)].map(p=>`<tr><td><b>${esc(nomLl(p.nom))}</b></td>${profPlaAct(p.id).map(x=>`<td class="${x.cls}">${esc(x.txt)}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div>`;
@@ -1782,21 +1820,25 @@ function pdfVaga(nomesQuadre){
        [{t:'Total',bold:true},{t:String(mat),bold:true},{t:String(pres),bold:true},{t:pct(pres,mat),bold:true},{t:String(ags.length),bold:true},{t:''}]],{size:9}); }
     if(ags.length){
       if(!nomesQuadre){ R.ensure(140); R.text("Quadre d'agrupacions per hora",{size:11,bold:true}); } else R.y-=4;
-      const hw=72, cw2=Math.max(30,(fullW-hw)/ags.length); const stN=st.filter(x=>x.n>0);
+      const hw=72; const stN=st.filter(x=>x.n>0);
       const avC={}; lf.forEach(f=>{ avC[f.id]=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id)); });
       const reserves={};
-      const rows=lf.map(f=>{ const a=asg(f.id); const used=new Set();
-        const cells=ags.map(ag=>{ if(!fApplies(f,ag.nv)) return {t:'—',fill:R.C.na,color:R.C.mut}; const pid=a[ag.id]; const ok=pid&&avC[f.id].has(pid); if(ok){ used.add(pid); return {t:curt(profById(pid).nom)}; } return {t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; });
-        reserves[f.id]=[...avC[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>resvTxt(p.id,f.id));
-        return [{t:f.label,bold:true},...cells]; });
-      let szQ=ags.length>18?6.5:7.5, padQ=0;
+      lf.forEach(f=>{ const a=asg(f.id); const used=new Set(); ags.forEach(ag=>{ const pid=a[ag.id]; if(fApplies(f,ag.nv)&&pid&&avC[f.id].has(pid)) used.add(pid); });
+        reserves[f.id]=[...avC[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>resvTxt(p.id,f.id)); });
+      const parts=partTorns(lf,ags,x=>x.nv).map(t=>({t,rows:t.fr.map(f=>{ const a=asg(f.id);
+        return [{t:f.label,bold:true},...t.cols.map(ag=>{ if(!fApplies(f,ag.nv)) return {t:'—',fill:R.C.na,color:R.C.mut}; const pid=a[ag.id]; const ok=pid&&avC[f.id].has(pid); if(ok) return {t:curt(profById(pid).nom)}; return {t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; })]; })}));
+      const maxC=Math.max(...parts.map(x=>x.t.cols.length)); const cw2=Math.max(30,(fullW-hw)/maxC);
+      let szQ=maxC>18?6.5:7.5, padQ=0;
       if(nomesQuadre){
-        const noms=rows.flatMap(r=>r.slice(1).map(c=>c.t));
+        const noms=parts.flatMap(x=>x.rows.flatMap(r=>r.slice(1).map(c=>c.t)));
         szQ=11; while(szQ>6&&Math.max(...noms.map(t=>R.measure(t,szQ,false)))>cw2-7) szQ-=0.5;
-        const disp=R.y-28-20-(szQ+9)*2; padQ=Math.max(0,Math.min(28,disp/Math.max(1,rows.length)-(szQ+9)));
+        const nRows=sum(parts.map(x=>x.rows.length)), extra=parts.length*((szQ+9)*2+(parts[0].t.nom?22:0)+8);
+        const disp=R.y-28-extra; padQ=Math.max(0,Math.min(28,disp/Math.max(1,nRows)-(szQ+9)));
       }
-      R.table([{w:hw},...ags.map(()=>({w:cw2}))],
-        [[{t:'Hora'},...stN.map(x=>({t:x.n>1?`${x.nv} (${x.pres} al.)`:x.nv,span:x.n}))],[{t:''},...ags.map(ag=>({t:`${ag.lab||('G'+ag.idx)} ≈${ag.alumnes}`}))]],rows,{size:szQ,rowPad:padQ});
+      parts.forEach(({t,rows})=>{
+        if(t.nom){ R.ensure(60); R.text(t.nom,{size:10.5,bold:true}); }
+        R.table([{w:hw},...t.cols.map(()=>({w:cw2}))],
+          [[{t:'Hora'},...stN.filter(x=>t.cols.some(c=>c.nv===x.nv)).map(x=>({t:x.n>1?`${x.nv} (${x.pres} al.)`:x.nv,span:x.n}))],[{t:''},...t.cols.map(ag=>({t:`${ag.lab||('G'+ag.idx)} ≈${ag.alumnes}`}))]],rows,{size:szQ,rowPad:padQ}); });
       if(nomesQuadre) return;
       R.text('Professorat de reserva / guàrdia per hora',{size:11,bold:true});
       R.table([{w:110},{w:fullW-110}],[[{t:'Hora'},{t:'Professors lliures'}]],lf.map(f=>[{t:f.label,bold:true},{t:(reserves[f.id].length?`(${reserves[f.id].length}) `+reserves[f.id].join(', '):'Ningú')+(tasquesTxt(f.id).length?' · Tasques: '+tasquesTxt(f.id).join(', '):'')}]),{size:8,wrapCols:[1]});
@@ -1827,13 +1869,17 @@ function pdfAct(nomesQuadre){
       [...CO,...P.slice().sort(profCmp)].map(p=>[{t:nomLl(p.nom),bold:true},...profPlaAct(p.id).map(x=>({t:x.txt,fill:x.cls==='co'?R.C.pri2:x.cls==='res'?R.C.warn:x.cls==='abs'?undefined:R.C.ok,color:x.cls==='abs'?R.C.mut:R.C.ink}))]),{size:7.5}); }
     if(slots.length&&fr.length){
       if(!nomesQuadre){ R.newPage(); R.text('Per grup o lloc',{size:13,bold:true}); } else R.y-=4;
-      const ew=150, cw2=(fullW-ew)/fr.length;
-      const rows=slots.map(sl=>[{t:colNom(sl.col)+(nMax(sl.col)>1?' · '+rolSlot(sl).toLowerCase():''),bold:true},...fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
-        const pid=((S.jornada.assign&&S.jornada.assign[f.id])||{})[sl.id]; const ok=pid&&disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
-        return ok?{t:nomLl(profById(pid).nom)}:{t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; })]);
+      const ew=150; const nivCol=c=>{ if(c.tipus!=='grup') return null; const g=grupById(c.grup); return g?g.nivell:null; };
+      const avP={}; fr.forEach(f=>{ avP[f.id]=new Set(disponibles(f.id,S.ui.incFree).map(x=>x.p.id)); });
+      const parts=partTorns(fr,actCols(),nivCol).map(t=>{ const slotsT=slots.filter(sl=>t.cols.includes(sl.col));
+        return {t,rows:slotsT.map(sl=>[{t:colNom(sl.col)+(nMax(sl.col)>1?' · '+rolSlot(sl).toLowerCase():''),bold:true},...t.fr.map(f=>{ if(!slotApplies(sl,f)) return {t:'—',fill:R.C.na,color:R.C.mut};
+          const pid=((S.jornada.assign&&S.jornada.assign[f.id])||{})[sl.id]; const ok=pid&&avP[f.id].has(pid);
+          return ok?{t:nomLl(profById(pid).nom)}:{t:'Sense prof.',fill:R.C.bad,color:R.C.badT,bold:true}; })])}; });
+      const nR=sum(parts.map(x=>x.rows.length));
       let szA=7.5, padA=0;
-      if(nomesQuadre){ szA=slots.length<=20?10:slots.length<=28?8.5:7.5; const disp=R.y-28-20-(szA+9); const per=disp/Math.max(1,rows.length); padA=Math.max(0,Math.min(16,per-(szA+9))); }
-      R.table([{w:ew},...fr.map(()=>({w:cw2}))],[[{t:'Grup / lloc'},...fr.map(f=>({t:f.label}))]],rows,{size:szA,rowPad:padA});
+      if(nomesQuadre){ szA=nR<=20?10:nR<=28?8.5:7.5; const disp=R.y-28-parts.length*(20+(szA+9)+(parts[0].t.nom?22:0)); const per=disp/Math.max(1,nR); padA=Math.max(0,Math.min(16,per-(szA+9))); }
+      parts.forEach(({t,rows})=>{ if(t.nom){ R.ensure(60); R.text(t.nom,{size:10.5,bold:true}); } const cw2=(fullW-ew)/t.fr.length;
+        R.table([{w:ew},...t.fr.map(()=>({w:cw2}))],[[{t:'Grup / lloc'},...t.fr.map(f=>({t:f.label}))]],rows,{size:szA,rowPad:padA}); });
     }
   }};
 }
@@ -2430,6 +2476,22 @@ const A={
   'copy-resum':()=>copyText(jTipus()==='activitat'?resumTextAct():resumText(),'Resum'),
   'dl-csv':()=>saveFile(jTipus()==='activitat'?`activitat-${jDate()}.csv`:`vaga-${jDate()}.csv`,jTipus()==='activitat'?csvAct():csvQuadre(),'text/csv'),
   'fr-niv':b=>{ const f=franjaById(b.dataset.f); if(!f) return; const set=new Set(f.nivells||[]); const nv=b.dataset.nv; if(set.has(nv)) set.delete(nv); else set.add(nv); f.nivells=nivells().filter(x=>set.has(x)); f.nivAuto=false; saveConfig(); render(); },
+  'torns-on':()=>{ const all=nivells(); let a=all.filter(nv=>/^(1r|2n)\s*ESO/i.test(nv)); if(!a.length||a.length===all.length) a=all.slice(0,Math.ceil(all.length/2)); const b=all.filter(nv=>!a.includes(nv));
+    if(!b.length){ toast('Cal tenir com a mínim dos nivells.'); return; }
+    S.config.torns=[{nom:a.join(', ').replace(/^1r ESO, 2n ESO$/,'1r i 2n ESO'),nivells:a},{nom:b.length>2?'3r, 4t i Batxillerat':b.join(', '),nivells:b}];
+    if(!b.every(nv=>/^(3r|4t)\s*ESO|Batx/i.test(nv))) S.config.torns[1].nom=b.join(', ');
+    saveConfig(); render(); },
+  'torns-off':async()=>{ if(!await ask('Tornar a un sol horari? Les franges es mantenen amb els nivells que tenen marcats.','Un sol horari',false)) return; delete S.config.torns; saveConfig(); render(); },
+  'torn-nv':b=>{ const T=S.config.torns; const ti=+b.dataset.t, nv=b.dataset.nv; if(T[ti].nivells.includes(nv)) return;
+    T.forEach(t=>{ t.nivells=t.nivells.filter(x=>x!==nv); }); T[ti].nivells.push(nv); const ord=nivells(); T.forEach(t=>t.nivells.sort((x,y)=>ord.indexOf(x)-ord.indexOf(y)));
+    S.config.franges.forEach(f=>{ if(Array.isArray(f.nivells)&&f.nivells.length){ const inT=T[ti].nivells.filter(x=>x!==nv).some(x=>f.nivells.includes(x)); f.nivells=f.nivells.filter(x=>x!==nv); if(inT) f.nivells.push(nv); f.nivells.sort((x,y)=>ord.indexOf(x)-ord.indexOf(y)); } });
+    saveConfig(); render(); },
+  'add-fr-t':b=>{ const t=S.config.torns[+b.dataset.t]; S.config.franges.push({id:'f'+uid(),label:'Nova franja',lect:true,nivells:t.nivells.slice()}); saveConfig(); render(); },
+  'del-fr-t':async b=>{ const t=S.config.torns[+b.dataset.t]; const f=franjaById(b.dataset.f); if(!f) return; const all=nivells();
+    const rest=all.filter(nv=>fApplies(f,nv)&&!t.nivells.includes(nv));
+    if(rest.length){ f.nivells=rest; f.nivAuto=false; saveConfig(); render(); toast(`«${f.label}» ja no és de ${t.nom||'aquest horari'}.`); return; }
+    if(!await ask(`Esborrar la franja «${esc(f.label)}»? Les sessions d'horari d'aquesta franja deixaran de comptar.`,'Esborrar')) return;
+    S.config.franges=S.config.franges.filter(x=>x!==f); saveConfig(); render(); },
   'fr-patis':()=>{ const all=nivells(); let n=0;
     S.config.franges.filter(f=>f.lect).forEach(f=>{ const tr=S.config.franges.filter(pt=>!pt.lect&&(pt.nivells||[]).length&&solapen(f,pt)); if(!tr.length) return;
       const fora=new Set(tr.flatMap(pt=>pt.nivells)); const nv=all.filter(x=>!fora.has(x)); if(!nv.length||nv.length===all.length) return;
@@ -2511,7 +2573,7 @@ const IN={
   diah:el=>{ const j=ensureJ(); j.diaHorari=el.value?+el.value:null; saveJ(); render(); },
   'cfg-centre':el=>{ S.config.centre=el.value; saveConfig(); renderTop(); },
   'cfg-ratio':el=>{ const v=parseInt(el.value); if(v>0){ S.config.ratio=v; saveConfig(); } },
-  'fr-label':el=>{ const f=franjaById(el.dataset.f); if(f){ f.label=el.value; saveConfig(); } },
+  'fr-label':el=>{ const f=franjaById(el.dataset.f); if(f){ f.label=el.value; if(tornsActius()){ ordenaFranges(); saveConfig(); render(); } else saveConfig(); } },
   'fr-lect':el=>{ const f=franjaById(el.dataset.f); if(f){ f.lect=el.checked; saveConfig(); } },
   'g-nom':el=>{ const g=grupById(el.dataset.id); if(g){ const autoNiv=!g.nivell||g.nivell===nivellDe(g.nom); g.nom=el.value; if(autoNiv) g.nivell=nivellDe(g.nom); saveGrups(); } },
   'g-niv':el=>{ const g=grupById(el.dataset.id); if(g){ g.nivell=el.value.trim(); saveGrups(); } },
@@ -2522,6 +2584,7 @@ const IN={
     saveJ(); render(); },
   'p-tasca':el=>{ const j=ensureJ(), id=el.dataset.id; const v=el.value.trim(); j.profs[id]=j.profs[id]||{e:'P',abs:[]};
     if(v) j.profs[id].tasca=Object.assign({h:[]},j.profs[id].tasca||{},{txt:v}); else delete j.profs[id].tasca; netejaTasca(id); saveJ(); render(); },
+  'torn-nom':el=>{ const t=S.config.torns&&S.config.torns[+el.dataset.t]; if(t){ t.nom=el.value.trim(); saveConfig(); } },
   'act-cnh':el=>{ const j=ensureJ(); const c=(j.cols||[]).find(x=>x.id===el.dataset.c); if(!c) return; let v=Math.max(0,Math.min(9,parseInt(el.value,10)||0));
     fixaNh(c); c.nh[el.dataset.f]=v; netejaHora(el.dataset.f); saveJ(); render(); },
   'act-allnh':el=>{ const j=ensureJ(); if(el.value==='') return; const v=Math.max(0,Math.min(9,parseInt(el.value,10)||0));
@@ -2545,7 +2608,7 @@ const IN={
       inp.addEventListener('blur',()=>fin(true)); el.value=old; return; } S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
     el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
-const ONCHANGE=new Set(['p-tasca','act-cnh','act-allnh','act-nh','act-mode','act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
+const ONCHANGE=new Set(['fr-label','p-tasca','act-cnh','act-allnh','act-nh','act-mode','act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
 document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
 document.addEventListener('change',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in;
   if(ONCHANGE.has(k)){ IN[k]&&IN[k](el); return; }
