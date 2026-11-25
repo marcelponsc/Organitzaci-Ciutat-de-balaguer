@@ -350,6 +350,8 @@ tr.nh-tots td{background:var(--pri2)}tr.nh-tots .nh-in{border-color:var(--pri)}
 .cell .cs.own{color:var(--ok);font-weight:650}.cell .cs.g{color:var(--blue)}.cell .cs.p{color:#a8791a}
 .resv-r .rv{display:inline-flex;gap:4px;align-items:baseline;margin:2px 10px 2px 0;white-space:nowrap}.resv-r .rv b{font-weight:550}.resv-r .rv i{font-style:normal;font-size:11px;padding:0 5px;border-radius:5px;background:#eef6f0;color:var(--ok)}
 .resv-r .rv i.g{background:#eef0fb;color:var(--blue)}.resv-r .rv i.p{background:#fdf5e3;color:#a8791a}.resv-r .rv i.n{background:#f1f1f4;color:var(--mut)}
+.ptask{flex-basis:100%;margin-top:6px;padding:10px;border:1px dashed #c9b3ea;border-radius:10px;background:#faf7fe}.ptask label{display:block;font-size:12px;font-weight:650;color:#7a4bc2;margin-bottom:4px}.ptask input[type=text]{width:100%;max-width:360px}.ptask .chips{margin-top:6px}
+.resv-r .rv i.t{background:#f1eafb;color:#7a4bc2}.rv-t{font-size:11px;color:#7a4bc2;font-weight:650;margin:0 6px 0 8px}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
 
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -422,7 +424,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.25-c';
+const VERSIO = '2026.11.25-d';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -605,6 +607,11 @@ const curt = n => { const p=parts(n); return p.cog? p.nom+' '+p.cog[0]+'.' : p.n
 const isWork = a => !!a && (a.t==='G'||a.t==='C'||a.t==='GU');
 const pEstat = id => { const p=S.jornada&&S.jornada.profs&&S.jornada.profs[id]; if(p&&p.e) return p.e; return S.jornada&&jTipus()==='activitat'?'P':null; };
 const pAbs = id => (S.jornada&&S.jornada.profs&&S.jornada.profs[id]&&S.jornada.profs[id].abs)||[];
+// tasca sense grup (consergeria, biblioteca…): el professor no s'assigna a cap grup a aquestes hores
+const pTasca = (id,fid) => { const p=S.jornada&&S.jornada.profs&&S.jornada.profs[id]; const t=p&&p.tasca; if(!t||!t.txt||pEstat(id)!=='P') return null; return (!t.h||!t.h.length||!fid||t.h.includes(fid))?t.txt:null; };
+const tascaFr = () => jTipus()==='activitat'?actFranges():lectFranges();
+function tasquesHtml(fid){ const l=S.profs.filter(p=>pTasca(p.id,fid)).sort(profCmp); return l.length?`<span class="rv-t">Tasques:</span>${l.map(p=>`<span class="rv"><b>${esc(curt(p.nom))}</b><i class="t">${esc(pTasca(p.id,fid))}</i></span>`).join('')}`:''; }
+function tasquesTxt(fid){ return S.profs.filter(p=>pTasca(p.id,fid)).sort(profCmp).map(p=>curt(p.nom)+' (tasca: '+pTasca(p.id,fid)+')'); }
 /* Activitat: grups que no hi participen (fan classe normal) */
 function fMins(f){ const m=String(f&&f.label||'').match(/(\d{1,2})[:.h](\d{2})\D+(\d{1,2})[:.h](\d{2})/); return m?[(+m[1])*60+(+m[2]),(+m[3])*60+(+m[4])]:null; }
 function grupsNoPart(){ const j=S.jornada; if(!j||jTipus()!=='activitat') return []; const ins=new Set((j.cols||[]).filter(c=>c.tipus==='grup'&&nMax(c)>0).map(c=>c.grup)); return S.grups.filter(g=>!ins.has(g.id)); }
@@ -625,7 +632,7 @@ function ocupatNoPart(pid,fid){
 }
 function disponibles(fid,incFree){
   const dia=diaHorari(); const tut=tutorsHora(fid);
-  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid) && !ocupatNoPart(p.id,fid))
+  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid) && !pTasca(p.id,fid) && !ocupatNoPart(p.id,fid))
     .map(p=>({p,a:act(p.id,dia,fid)}))
     .filter(x=>incFree || !!x.a || tut.has(x.p.id));
 }
@@ -882,14 +889,17 @@ function profList(){
     const hperm=jTipus()==='vaga'?lectFranges().filter(fr=>isPerm(act(p.id,dia,fr.id))).length:0;
     const exp=S.ui.exp[p.id], abs=pAbs(p.id);
     return `<div class="card pcard ${e==='P'?'is-p':e==='V'?'is-v':e==='C'?'is-c':''}">
-      <div class="prow"><button class="pmain" data-a="prof-exp" data-id="${p.id}"><span class="av">${esc(inicials(p.nom))}</span><span style="min-width:0"><div class="pname">${esc(nomLl(p.nom))}</div><div class="pmeta">${tl(p.id)}${p.dept?esc(p.dept)+' · ':''}${e==='C'?'<b style="color:var(--pri)">Coordinació</b> · ':''}${hrs} h avui${hperm?` + ${hperm} perm.`:''}${abs.length&&e==='P'?` · <b style="color:var(--warn)">${abs.length} h absent</b>`:''} ${exp?'▴':'▾'}</div></span></button>
+      <div class="prow"><button class="pmain" data-a="prof-exp" data-id="${p.id}"><span class="av">${esc(inicials(p.nom))}</span><span style="min-width:0"><div class="pname">${esc(nomLl(p.nom))}</div><div class="pmeta">${tl(p.id)}${p.dept?esc(p.dept)+' · ':''}${e==='C'?'<b style="color:var(--pri)">Coordinació</b> · ':''}${e==='P'&&(S.jornada.profs[p.id]||{}).tasca?`<b style="color:#7a4bc2">Tasca: ${esc(S.jornada.profs[p.id].tasca.txt)}</b> · `:''}${hrs} h avui${hperm?` + ${hperm} perm.`:''}${abs.length&&e==='P'?` · <b style="color:var(--warn)">${abs.length} h absent</b>`:''} ${exp?'▴':'▾'}</div></span></button>
       <div class="seg"><button class="${e==='P'?'on p':''}" data-a="prof-set" data-id="${p.id}" data-e="P">Present</button>${jTipus()==='activitat'?`<button class="${e==='C'?'on c':''}" data-a="prof-set" data-id="${p.id}" data-e="C">Coordina</button>`:''}<button class="${e==='V'?'on v':''}" data-a="prof-set" data-id="${p.id}" data-e="V">${jTipus()==='activitat'?'Absent':'No present'}</button></div></div>
       ${exp?`<div class="pdet">${S.config.franges.map(fr=>{
         const a=act(p.id,dia,fr.id), isAbs=abs.includes(fr.id);
         const cls=isAbs?'abs':(jTipus()==='activitat'?!!a:isWork(a))?'act':isPerm(a)?'perm':'none';
         const can=e==='P';
         return `<button class="fbox ${cls}" ${can?`data-a="prof-abs" data-id="${p.id}" data-f="${fr.id}" title="Marca/desmarca absència en aquesta hora"`:'disabled'}><b>${esc(fr.label)}</b><span>${isAbs?'No hi és':esc(actLabel(a))}</span></button>`;
-      }).join('')}${e==='P'?'':`<span class="hint" style="align-self:center">Marca'l com a present per indicar hores d'absència.</span>`}</div>`:''}
+      }).join('')}${e==='P'?'':`<span class="hint" style="align-self:center">Marca'l com a present per indicar hores d'absència.</span>`}</div>
+      ${e==='P'?(()=>{ const t=(S.jornada.profs[p.id]||{}).tasca||{}; const hs=t.h||[]; const tf=tascaFr();
+        return `<div class="ptask"><label for="tk-${p.id}">Tasca sense grup</label><input id="tk-${p.id}" type="text" data-in="p-tasca" data-id="${p.id}" value="${esc(t.txt||'')}" placeholder="p. ex. Consergeria, Biblioteca, Secretaria…">
+        ${t.txt?`<div class="chips"><button class="chip ${hs.length?'':'on'}" data-a="p-tasca-h" data-id="${p.id}" data-f="*">Tot el dia</button>${tf.map(fr=>`<button class="chip ${hs.includes(fr.id)?'on':''}" data-a="p-tasca-h" data-id="${p.id}" data-f="${fr.id}">${esc(hIni(fr))}</button>`).join('')}</div><p class="hint" style="margin:4px 0 0">A aquestes hores no se li assignarà cap grup.</p>`:''}</div>`; })():''}`:''}
     </div>`;
   };
   if((S.ui.pord||'nom')!=='entrada') return list.map(card).join('');
@@ -947,7 +957,7 @@ function vAssign(){
     <tr><th class="hcol" rowspan="2">Hora</th>${st.map(x=>`<th class="nvs" colspan="${x.n}">${esc(x.nv)}<small>${x.pres} alumnes</small></th>`).join('')}</tr>
     <tr>${ags.map(ag=>`<th class="${ag.idx===1?'nvs':''}">${esc(ag.lab||('G'+ag.idx))}<small>≈ ${ag.alumnes} al.</small></th>`).join('')}</tr>
   </thead><tbody>${rows}</tbody></table></div>`;
-  const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva / guàrdia) per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
+  const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva / guàrdia) per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`;
   return head+table+resv;
 }
 
@@ -975,7 +985,7 @@ function vResum(){
       reserves[f.id]=[...avCache[f.id]].filter(id=>!used.has(id)).map(profById).sort(profCmp).map(p=>p.id);
       return `<tr><td class="hcol">${esc(f.label)}</td>${cells}</tr>`; }).join('')}
   </tbody></table></div>
-  <div class="card resv"><div class="resv-h">Professorat de reserva / guàrdia per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`:`<p class="hint">Encara no hi ha agrupacions (fes el recompte d'alumnes).</p>`;
+  <div class="card resv"><div class="resv-h">Professorat de reserva / guàrdia per hora</div>${lf.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`:`<p class="hint">Encara no hi ha agrupacions (fes el recompte d'alumnes).</p>`;
   const tProf=P.length?`<div class="card tblw"><table class="t"><thead><tr><th>Professor/a</th>${lf.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>
     ${P.slice().sort(profCmp).map(p=>`<tr><td><b>${esc(nomLl(p.nom))}</b></td>${lf.map(f=>{
       const cell=profCell(p.id,f.id);
@@ -1054,11 +1064,11 @@ function vConfig(){
     </div>
   </div>
 
-  <div class="sec-h"><div><h2>Franges horàries</h2><p>El número de franja serveix per importar l'horari. Les no lectives (pati) no s'assignen. Si una franja només és per a alguns nivells (p. ex. patis desplaçats), marca'ls; si no en marques cap, és per a tots.</p></div>
-    <div class="row-actions">${S.grups.length&&Object.keys(S.horari).length?'<button class="btn sm" data-a="fr-detect">Detectar nivells segons els horaris</button>':''}<button class="btn sm" data-a="add-fr">+ Afegir franja</button></div></div>
+  <div class="sec-h"><div><h2>Franges horàries</h2><p>El número de franja serveix per importar l'horari. Les no lectives (pati) no s'assignen. Si una franja només és per a alguns nivells, marca'ls; si no en marques cap, és per a tots. <b>Patis diferents per nivell:</b> crea un pati per a cada horari (p. ex. 10:20 – 10:50 per a 3r, 4t i Batxillerat i 11:20 – 11:50 per a 1r i 2n), marca'n els nivells i prem «Ajustar les classes als patis».</p></div>
+    <div class="row-actions">${S.grups.length&&Object.keys(S.horari).length?'<button class="btn sm" data-a="fr-detect">Detectar nivells segons els horaris</button>':''}${S.config.franges.some(f=>!f.lect&&(f.nivells||[]).length)?'<button class="btn sm acc" data-a="fr-patis">Ajustar les classes als patis</button>':''}<button class="btn sm" data-a="add-fr">+ Afegir franja</button></div></div>
   <div class="card tblw"><table class="t"><thead><tr><th style="width:40px">Nº</th><th>Franja</th><th class="c">Lectiva</th><th>Nivells</th><th style="width:140px"></th></tr></thead><tbody>
     ${S.config.franges.map((f,i)=>`<tr><td class="c"><b>${i+1}</b></td><td><input type="text" data-in="fr-label" data-f="${f.id}" value="${esc(f.label)}"></td><td class="c"><input type="checkbox" data-in="fr-lect" data-f="${f.id}" ${f.lect?'checked':''}></td>
-      <td>${f.lect?`<div class="nvchips">${nivells().map(nv=>`<button class="nvc ${(f.nivells||[]).includes(nv)?'on':''}" data-a="fr-niv" data-f="${f.id}" data-nv="${esc(nv)}">${esc(nv)}</button>`).join('')}${(f.nivells||[]).length?'':'<span class="hint">Tots</span>'}</div>`:''}</td>
+      <td>${true?`<div class="nvchips">${nivells().map(nv=>`<button class="nvc ${(f.nivells||[]).includes(nv)?'on':''}" data-a="fr-niv" data-f="${f.id}" data-nv="${esc(nv)}">${esc(nv)}</button>`).join('')}${(f.nivells||[]).length?'':'<span class="hint">Tots</span>'}</div>`:''}</td>
       <td><div class="row-actions"><button class="ghost" data-a="mv-fr" data-f="${f.id}" data-d="-1" ${i?'':'disabled'}>↑</button><button class="ghost" data-a="mv-fr" data-f="${f.id}" data-d="1" ${i<S.config.franges.length-1?'':'disabled'}>↓</button><button class="ghost" data-a="del-fr" data-f="${f.id}">Esborrar</button></div></td></tr>`).join('')}
   </tbody></table></div>
 
@@ -1162,6 +1172,8 @@ function nHora(c,fid){ const j=S.jornada; if(Array.isArray(c.fr)&&c.fr.length&&!
 function nMax(c){ const j=S.jornada; const fr=(j&&j.fr)||[]; return fr.length?Math.max(0,...fr.map(fid=>nHora(c,fid))):(+c.n||0); }
 // passa la configuració antiga (hores marcades / nombre per hora global) a un nombre per grup i hora
 function fixaNh(c){ const j=S.jornada; const nh={}; (j.fr||[]).forEach(fid=>{ nh[fid]=nHora(c,fid); }); c.nh=nh; delete c.fr; }
+// treu el professor dels grups a les hores en què té una tasca
+function netejaTasca(pid){ const j=S.jornada; Object.entries(j.assign||{}).forEach(([fid,o])=>{ if(!pTasca(pid,fid)) return; Object.keys(o||{}).forEach(k=>{ if(o[k]===pid) delete o[k]; }); }); }
 function netejaHora(fid){ const j=S.jornada; const a=(j.assign||{})[fid]; if(!a) return; const sl=actSlots(); Object.keys(a).forEach(sid=>{ const x=sl.find(z=>z.id===sid); if(!x||!slotApplies(x,fid)) delete a[sid]; }); }
 function actSlots(){ const out=[]; actCols().forEach(c=>{ for(let k=1;k<=nMax(c);k++) out.push({id:c.id+'#'+k,col:c,k}); }); return out; }
 function actCoverage(fid){
@@ -1361,7 +1373,7 @@ function vAssignAct(){
     <tr>${slots.filter(sl=>nMax(sl.col)>1).map(sl=>`<th class="${sl.k===1?'nvs':''}">${esc(rolSlot(sl))}</th>`).join('')}</tr>`
     :`<tr><th class="hcol">Hora</th>${cols.map(c=>`<th class="nvs">${esc(colNom(c))}${c.tipus==='lloc'?'<small>lloc</small>':''}</th>`).join('')}</tr>`;
   const table=`<div class="card tblw"><table class="t qg qa"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
-  const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}</span></div>`).join('')}</div>`;
+  const resv=`<div class="card resv"><div class="resv-h">Professorat lliure (reserva) per hora</div>${fr.map(f=>`<div class="resv-r"><b>${esc(f.label)}</b><span>${reserves[f.id].length?`<em>${reserves[f.id].length}</em> `+reserves[f.id].map(pid=>resvHtml(pid,f.id)).join(''):'<span class="hint">Ningú</span>'}${tasquesHtml(f.id)}</span></div>`).join('')}</div>`;
   return head+table+resv;
 }
 
@@ -1487,6 +1499,7 @@ function resolManual(){
 function estatHora(pid,fid){
   const e=pEstat(pid); if(e==='V') return 'no és present a la jornada'; if(e==='C') return 'és coordinador/a de l\'activitat';
   if(pAbs(pid).includes(fid)) return 'està marcat absent a aquesta hora';
+  if(pTasca(pid,fid)) return 'té la tasca «'+pTasca(pid,fid)+'» a aquesta hora';
   const o=ocupatNoPart(pid,fid); if(o) return o.f.id===fid?'a aquesta hora fa classe a '+o.txt+', que no participa':'té classe a '+o.txt+' ('+hIni(o.f)+') i, tal com està configurat, no participa a aquesta hora';
   if(!S.ui.incFree&&!act(pid,diaHorari(),fid)) return 'segons el seu horari no és al centre a aquesta hora';
   return null;
@@ -1635,6 +1648,7 @@ function profPlaAct(pid){
   return fr.map(f=>{ const asg=(S.jornada.assign&&S.jornada.assign[f.id])||{}; const av=disponibles(f.id,S.ui.incFree).some(x=>x.p.id===pid);
     if(pAbs(pid).includes(f.id)) return {f,txt:'Absent',cls:'abs'};
     if(coord) return {f,txt:'Coordinació',cls:'co'};
+    if(pTasca(pid,f.id)) return {f,txt:pTasca(pid,f.id),cls:'co'};
     if(pEstat(pid)==='P'){ const o=ocupatNoPart(pid,f.id); if(o) return {f,txt:o.f.id===f.id?'Classe · '+o.txt:'No participa ('+o.txt+')',cls:'abs'}; }
     const sl=slots.find(s=>asg[s.id]===pid);
     if(sl&&av) return {f,txt:colNom(sl.col),cls:''};
@@ -1785,7 +1799,7 @@ function pdfVaga(nomesQuadre){
         [[{t:'Hora'},...stN.map(x=>({t:x.n>1?`${x.nv} (${x.pres} al.)`:x.nv,span:x.n}))],[{t:''},...ags.map(ag=>({t:`${ag.lab||('G'+ag.idx)} ≈${ag.alumnes}`}))]],rows,{size:szQ,rowPad:padQ});
       if(nomesQuadre) return;
       R.text('Professorat de reserva / guàrdia per hora',{size:11,bold:true});
-      R.table([{w:110},{w:fullW-110}],[[{t:'Hora'},{t:'Professors lliures'}]],lf.map(f=>[{t:f.label,bold:true},{t:reserves[f.id].length?`(${reserves[f.id].length}) `+reserves[f.id].join(', '):'Ningú'}]),{size:8,wrapCols:[1]});
+      R.table([{w:110},{w:fullW-110}],[[{t:'Hora'},{t:'Professors lliures'}]],lf.map(f=>[{t:f.label,bold:true},{t:(reserves[f.id].length?`(${reserves[f.id].length}) `+reserves[f.id].join(', '):'Ningú')+(tasquesTxt(f.id).length?' · Tasques: '+tasquesTxt(f.id).join(', '):'')}]),{size:8,wrapCols:[1]});
     }
     if(P.length&&!nomesQuadre){
       R.newPage(); R.text('Què fa cada professor/a',{size:13,bold:true});
@@ -2393,10 +2407,13 @@ const A={
   pord:b=>{ S.ui.pord=b.dataset.o; try{ localStorage.setItem('jornades_pord',b.dataset.o); }catch(e){} render(); },
   'prof-exp':b=>{ const id=b.dataset.id; S.ui.exp[id]=!S.ui.exp[id]; $('#plist').innerHTML=profList(); },
   'prof-set':b=>{ const j=ensureJ(), id=b.dataset.id, e=b.dataset.e; const cur=j.profs[id]||{};
-    if(cur.e===e) delete j.profs[id]; else j.profs[id]={e,abs:e==='P'?(cur.abs||[]):[]};
+    if(cur.e===e) delete j.profs[id]; else { j.profs[id]={e,abs:e==='P'?(cur.abs||[]):[]}; if(e==='P'&&cur.tasca) j.profs[id].tasca=cur.tasca; }
     saveJ(); render(); },
   'prof-abs':b=>{ const j=ensureJ(), id=b.dataset.id, f=b.dataset.f; const p=j.profs[id]; if(!p) return; p.abs=p.abs||[];
     p.abs=p.abs.includes(f)?p.abs.filter(x=>x!==f):[...p.abs,f]; saveJ(); render(); },
+  'p-tasca-h':b=>{ const j=ensureJ(), id=b.dataset.id; const p=j.profs[id]; if(!p||!p.tasca) return; const f=b.dataset.f;
+    if(f==='*') p.tasca.h=[]; else { const set=new Set(p.tasca.h||[]); set.has(f)?set.delete(f):set.add(f); p.tasca.h=tascaFr().map(x=>x.id).filter(x=>set.has(x)); }
+    netejaTasca(id); saveJ(); render(); },
   'prof-allP':async()=>{ const pend=S.profs.filter(p=>!pEstat(p.id)); if(!pend.length) return;
     if(!await ask(`Marcar ${pend.length} professors pendents com a presents?`,'Marcar presents',false)) return;
     const j=ensureJ(); pend.forEach(p=>{ j.profs[p.id]={e:'P',abs:[]}; }); saveJ(); render(); },
@@ -2413,6 +2430,12 @@ const A={
   'copy-resum':()=>copyText(jTipus()==='activitat'?resumTextAct():resumText(),'Resum'),
   'dl-csv':()=>saveFile(jTipus()==='activitat'?`activitat-${jDate()}.csv`:`vaga-${jDate()}.csv`,jTipus()==='activitat'?csvAct():csvQuadre(),'text/csv'),
   'fr-niv':b=>{ const f=franjaById(b.dataset.f); if(!f) return; const set=new Set(f.nivells||[]); const nv=b.dataset.nv; if(set.has(nv)) set.delete(nv); else set.add(nv); f.nivells=nivells().filter(x=>set.has(x)); f.nivAuto=false; saveConfig(); render(); },
+  'fr-patis':()=>{ const all=nivells(); let n=0;
+    S.config.franges.filter(f=>f.lect).forEach(f=>{ const tr=S.config.franges.filter(pt=>!pt.lect&&(pt.nivells||[]).length&&solapen(f,pt)); if(!tr.length) return;
+      const fora=new Set(tr.flatMap(pt=>pt.nivells)); const nv=all.filter(x=>!fora.has(x)); if(!nv.length||nv.length===all.length) return;
+      if(JSON.stringify(nv)!==JSON.stringify(f.nivells||[])){ f.nivells=nv; f.nivAuto=false; n++; } });
+    S.config.franges.sort((a,b)=>{ const ra=rangF(a), rb=rangF(b); return ra&&rb?(ra[0]-rb[0])||(ra[1]-rb[1]):0; });
+    saveConfig(); render(); toast(n?`${n} franges de classe ajustades: cada nivell fa classe quan no és al pati.`:'Les franges de classe ja estaven ajustades als patis.'); },
   'fr-detect':()=>{ const n=detectNivells(true); render(); toast(n?`${n} franges ajustades als nivells que hi tenen classe.`:'No cal ajustar cap franja: no n\'hi ha cap que se solapi.'); },
   'add-fr':()=>{ S.config.franges.push({id:'f'+uid(),label:'Nova franja',lect:true}); saveConfig(); render(); },
   'mv-fr':b=>{ const a=S.config.franges, i=a.findIndex(f=>f.id===b.dataset.f), k=i+(+b.dataset.d); if(k<0||k>=a.length) return; [a[i],a[k]]=[a[k],a[i]]; saveConfig(); render(); },
@@ -2497,6 +2520,8 @@ const IN={
   'act-nh':el=>{ const j=ensureJ(); j.nh=j.nh||{}; const fid=el.dataset.f; if(el.value==='') delete j.nh[fid]; else j.nh[fid]=+el.value;
     const a=(j.assign||{})[fid]; if(a){ const sl=actSlots(); Object.keys(a).forEach(sid=>{ const x=sl.find(z=>z.id===sid); if(x&&!slotApplies(x,fid)) delete a[sid]; }); }
     saveJ(); render(); },
+  'p-tasca':el=>{ const j=ensureJ(), id=el.dataset.id; const v=el.value.trim(); j.profs[id]=j.profs[id]||{e:'P',abs:[]};
+    if(v) j.profs[id].tasca=Object.assign({h:[]},j.profs[id].tasca||{},{txt:v}); else delete j.profs[id].tasca; netejaTasca(id); saveJ(); render(); },
   'act-cnh':el=>{ const j=ensureJ(); const c=(j.cols||[]).find(x=>x.id===el.dataset.c); if(!c) return; let v=Math.max(0,Math.min(9,parseInt(el.value,10)||0));
     fixaNh(c); c.nh[el.dataset.f]=v; netejaHora(el.dataset.f); saveJ(); render(); },
   'act-allnh':el=>{ const j=ensureJ(); if(el.value==='') return; const v=Math.max(0,Math.min(9,parseInt(el.value,10)||0));
@@ -2520,7 +2545,7 @@ const IN={
       inp.addEventListener('blur',()=>fin(true)); el.value=old; return; } S.horari[pid]=S.horari[pid]||{}; if(el.value) S.horari[pid][k]=el.value; else delete S.horari[pid][k];
     el.className=el.value==='GU'?'gu':(el.value.startsWith('G:')||el.value.startsWith('C:'))?'g':el.value.startsWith('AL:')?'pe':''; saveHorari(); }
 };
-const ONCHANGE=new Set(['act-cnh','act-allnh','act-nh','act-mode','act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
+const ONCHANGE=new Set(['p-tasca','act-cnh','act-allnh','act-nh','act-mode','act-np','cmp-map','coord-add','g-tut','act-fr','act-data','incfree','asg','diah','fr-lect','h-cell','pdf-on']);
 document.addEventListener('input',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in; if(ONCHANGE.has(k)) return; IN[k]&&IN[k](el); });
 document.addEventListener('change',e=>{ const el=e.target.closest('[data-in]'); if(!el) return; const k=el.dataset.in;
   if(ONCHANGE.has(k)){ IN[k]&&IN[k](el); return; }
