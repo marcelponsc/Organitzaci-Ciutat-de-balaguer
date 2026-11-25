@@ -428,7 +428,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.25-h';
+const VERSIO = '2026.11.25-j';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -611,7 +611,9 @@ const triatAMa = (fid,slot,pid) => !!(S.jornada&&S.jornada.ma&&S.jornada.ma[fid]
 function motiuVaga(ag,fid,pid,prevPid){ const a=act(pid,diaHorari(),fid); const tenia=actMini(a);
   if(triatAMa(fid,ag.id,pid)) return {t:'Triat a mà · '+tenia,c:'m'};
   if(agTeGrup(ag,a)) return {t:'Li tocava aquest grup',c:'own'};
+  if(coneixAg(pid,ag)===2) return {t:'Coneix el grup · tenia '+tenia,c:'own'};
   if(prevPid===pid) return {t:'Ve de l\'hora anterior · '+tenia,c:'cont'};
+  if(coneixAg(pid,ag)===1) return {t:'Fa classe al nivell · tenia '+tenia,c:'c'};
   if(actNivell(a)===ag.nv) return {t:'Mateix nivell · tenia '+tenia,c:'c'};
   if(isClass(a)) return {t:'Queda lliure de '+tenia,c:'c'};
   if(a&&a.t==='GU') return {t:'Tenia guàrdia',c:'g'};
@@ -715,6 +717,9 @@ function agrupacions(){
   });
   return out;
 }
+// 2 = fa classe a algun dels grups de l'agrupació (qualsevol hora), 1 = fa classe al nivell, 0 = no
+function coneixAg(pid,ag){ const vs=Object.values(S.horari[pid]||{}); if(ag.grups&&ag.grups.some(g=>vs.includes('G:'+g))) return 2;
+  if(vs.includes('C:'+ag.nv)||vs.some(v=>String(v).startsWith('G:')&&((grupById(String(v).slice(2))||{}).nivell===ag.nv))) return 1; return 0; }
 const agTeGrup=(ag,a)=>!!(a&&a.t==='G'&&ag.grups&&ag.grups.includes(a.grup));
 function parts(n){ const s=String(n||'').trim().replace(/\s+/g,' '); if(s.includes(',')){ const i=s.indexOf(','); return {nom:s.slice(i+1).trim(),cog:s.slice(0,i).trim()}; } const w=s.split(' '); return {nom:w[0]||'',cog:w.slice(1).join(' ')}; }
 const nomLl = n => { const p=parts(n); return p.cog?p.cog+', '+p.nom:p.nom; };
@@ -741,20 +746,22 @@ function autoAssign(fid,prevFid){
   const free=x=>!used.has(x.p.id);
   // 0. qui tenia classe amb aquest grup a aquesta hora
   ags.forEach(ag=>{ const c=av.find(x=>free(x)&&agTeGrup(ag,x.a)&&!res[ag.id]); if(c) take(ag,c.p.id); });
-  // 1. continuïtat amb l'hora anterior
-  { const lfa=lectFranges(); const ix=lfa.findIndex(x=>x.id===fid);
-    const prevDe=ag=>{ for(let i=ix-1;i>=0;i--) if(fApplies(lfa[i],ag.nv)) return lfa[i].id; return null; };
-    ags.forEach(ag=>{ if(res[ag.id]) return; const pf=prevDe(ag); const pid=pf&&j.assign[pf]?j.assign[pf][ag.id]:null; if(pid && byId[pid] && !used.has(pid)) take(ag,pid); });
-  }
-  // 2. professor que tenia classe amb un grup del mateix nivell
-  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&actNivell(x.a)===ag.nv); if(c) take(ag,c.p.id); });
-  // 3. qualsevol professor amb classe a aquesta hora
-  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&isClass(x.a)); if(c) take(ag,c.p.id); });
-  // 4. professorat de guàrdia
-  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&x.a&&x.a.t==='GU'); if(c) take(ag,c.p.id); });
-  // 5. altres presents (només si s'inclouen)
-  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(x=>free(x)&&isPerm(x.a)); if(c) take(ag,c.p.id); });
-  ags.forEach(ag=>{ if(res[ag.id]) return; const c=av.find(free); if(c) take(ag,c.p.id); });
+  // 1. la resta, per grups: primer qui tenia classe (i ara no té alumnes), després guàrdia, permanència i altres.
+  //    Dins de cada grup de professorat, primer qui ha cobert menys hores avui (es reparteix), després els grups que coneixen i el nivell.
+  const lfa=lectFranges(); const ix=lfa.findIndex(x=>x.id===fid);
+  const prevDe=ag=>{ for(let i=ix-1;i>=0;i--) if(fApplies(lfa[i],ag.nv)) return lfa[i].id; return null; };
+  const prevP={}; ags.forEach(ag=>{ const pf=prevDe(ag); prevP[ag.id]=pf&&j.assign[pf]?j.assign[pf][ag.id]:null; });
+  // càrrega: hores que ja ha cobert avui un grup que no era el seu (per repartir-ho entre tothom)
+  const dia=diaHorari(); const carrega={};
+  lfa.slice(0,Math.max(0,ix)).forEach(fr=>{ const o=j.assign[fr.id]||{}; agsAt(fr.id).forEach(ag=>{ const pid=o[ag.id]; if(pid&&!agTeGrup(ag,act(pid,dia,fr.id))) carrega[pid]=(carrega[pid]||0)+1; }); });
+  const fases=[x=>isClass(x.a), x=>x.a&&x.a.t==='GU', x=>isPerm(x.a), ()=>true];
+  fases.forEach(fase=>{
+    const cands=av.filter(x=>free(x)&&fase(x)); const buits=ags.filter(ag=>!res[ag.id]); if(!cands.length||!buits.length) return;
+    const parells=[]; cands.forEach(x=>buits.forEach(ag=>{ const k=coneixAg(x.p.id,ag);
+      parells.push({x,ag,sc:-(carrega[x.p.id]||0)*1000+k*100+(actNivell(x.a)===ag.nv?15:0)+(prevP[ag.id]===x.p.id?5:0)}); }));
+    parells.sort((a,b)=>b.sc-a.sc||profCmp(a.x.p,b.x.p));
+    parells.forEach(({x,ag})=>{ if(res[ag.id]||used.has(x.p.id)) return; take(ag,x.p.id); });
+  });
   j.assign[fid]=res;
   return {cov:Object.keys(res).length,need:ags.length};
 }
@@ -1031,7 +1038,7 @@ function vAssign(){
     const cells=agsT.map(ag=>{
       if(!fApplies(f,ag.nv)) return `<td class="na ${ag.idx===1?'nvs':''}" title="Aquest nivell no té classe en aquesta franja">—</td>`;
       const cur=asg[ag.id], ok=cur&&avIds.has(cur);
-      const rank=x=>agTeGrup(ag,x.a)?-1:actNivell(x.a)===ag.nv?0:isClass(x.a)?1:x.a&&x.a.t==='GU'?2:3;
+      const rank=x=>agTeGrup(ag,x.a)?-2:(isClass(x.a)&&coneixAg(x.p.id,ag)===2)?-1:actNivell(x.a)===ag.nv?0:isClass(x.a)?1:x.a&&x.a.t==='GU'?(coneixAg(x.p.id,ag)===2?1.5:2):3;
       const lliuresT=av.filter(x=>!where[x.p.id]||x.p.id===cur).sort((x,y)=>rank(x)-rank(y)||profCmp(x.p,y.p));
       const lliures=lliuresT.filter(x=>isWork(x.a)), perm=lliuresT.filter(x=>!isWork(x.a));
       const ocupats=av.filter(x=>where[x.p.id]&&x.p.id!==cur).sort((x,y)=>profCmp(x.p,y.p));
