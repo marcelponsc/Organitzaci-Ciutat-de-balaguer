@@ -445,7 +445,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.26-f';
+const VERSIO = '2026.11.26-g';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -850,17 +850,31 @@ function arreglaFranges(){
     for(let i=0;i+1<ls.length;i++){ let a=rangF(ls[i])[1]; const b=rangF(ls[i+1])[0]; if(b-a<45) continue;
       const pt=fs.find(f=>!f.lect&&rangF(f)[0]===a); if(pt) a=rangF(pt)[1];
       if(a+dur<=b){ F.push({id:fid,label:`${hm(a)} – ${hm(a+dur)}`,lect:true,nivells:t.nivells.slice()}); n++; break; } } });
+  // dues classes del mateix horari no es poden solapar: la comuna deixa de ser d'aquest horari
+  T.forEach(t=>{ const ls=F.filter(f=>f.lect&&rangF(f)&&t.nivells.some(nv=>fApplies(f,nv)));
+    ls.forEach(a=>ls.forEach(b=>{ if(a===b||a._del||b._del||!solapen(a,b)) return; const comA=!(a.nivells||[]).length, comB=!(b.nivells||[]).length; if(comA===comB) return;
+      const v=comA?a:b; v.nivells=all.filter(nv=>fApplies(v,nv)&&!t.nivells.includes(nv)); v.nivAuto=false; n++; })); });
   // un pati no pot trepitjar una classe del mateix horari
   T.forEach(t=>{ F.filter(f=>!f.lect&&rangF(f)&&t.nivells.some(nv=>fApplies(f,nv))).forEach(pt=>{
     if(!F.some(c=>c.lect&&rangF(c)&&t.nivells.some(nv=>fApplies(c,nv))&&solapen(c,pt))) return;
     const rest=all.filter(nv=>fApplies(pt,nv)&&!t.nivells.includes(nv)); pt.nivells=rest; if(!rest.length) pt._del=true; n++; }); });
   // patis repetits
   const vist={}; F.forEach(f=>{ if(f._del||f.lect) return; const k=norm(f.label)+'|'+all.filter(nv=>fApplies(f,nv)).join(','); if(vist[k]){ f._del=true; n++; } else vist[k]=1; });
-  S.config.franges=F.filter(f=>!f._del); ordenaFranges();
+  S.config.franges=F.filter(f=>!f._del);
+  // a cada horari, si entre dues classes hi ha un forat de 15–35 min sense pati, el crea
+  const G=S.config.franges; const hm2=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
+  T.forEach(t=>{ const ls=G.filter(f=>f.lect&&rangF(f)&&t.nivells.some(nv=>fApplies(f,nv))).sort((x,y)=>rangF(x)[0]-rangF(y)[0]);
+    for(let i=0;i+1<ls.length;i++){ const e=rangF(ls[i])[1], st=rangF(ls[i+1])[0]; if(st-e<15||st-e>35) continue;
+      if(G.some(f=>!f.lect&&rangF(f)&&rangF(f)[0]<st&&rangF(f)[1]>e&&t.nivells.some(nv=>fApplies(f,nv)))) continue;
+      const same=G.find(f=>!f.lect&&rangF(f)&&rangF(f)[0]===e&&rangF(f)[1]===st);
+      if(same){ const cur=all.filter(nv=>fApplies(same,nv)); same.nivells=[...new Set(cur.concat(t.nivells))]; if(same.nivells.length===all.length) same.nivells=[]; }
+      else G.push({id:'f'+uid(),label:`${hm2(e)} – ${hm2(st)} · Pati`,lect:false,nivells:t.nivells.slice()});
+      n++; } });
+  ordenaFranges();
   return n;
 }
 function render(){
-  try{ ensureTorns(); if(dadesCarregades()&&tornsActius()&&(S.config.fixFr||0)<1&&S.grups.length){ const n=arreglaFranges(); S.config.fixFr=1; saveConfig(); if(n) setTimeout(()=>toast('He arreglat les franges dels dos horaris. Revisa-les a Configuració.'),300); } }catch(e){ console.warn(e); }
+  try{ ensureTorns(); if(dadesCarregades()&&tornsActius()&&(S.config.fixFr||0)<2&&S.grups.length){ const n=arreglaFranges(); S.config.fixFr=2; saveConfig(); if(n) setTimeout(()=>toast('He arreglat les franges dels dos horaris. Revisa-les a Configuració.'),300); } }catch(e){ console.warn(e); }
   renderTop();
   const act=jTipus()==='activitat';
   if(!S.jornada&&!['inici','configuracio'].includes(S.ui.tab)) S.ui.tab='inici';
@@ -2683,7 +2697,7 @@ const A={
     if(!b.every(nv=>/^(3r|4t)\s*ESO|Batx/i.test(nv))) S.config.torns[1].nom=b.join(', ');
     saveConfig(); render(); },
   'torns-reset':async()=>{ if(!await ask('Tornar a fer els dos horaris automàticament? Les classes que se solapen (10:20 i 10:50) i els patis es reparteixen sols entre els dos horaris.','Fer-ho',false)) return;
-    delete S.config.torns; ensureTorns(); arreglaFranges(); S.config.fixFr=1; saveConfig(); render(); toast('Fet. Revisa les franges de cada horari.'); },
+    delete S.config.torns; ensureTorns(); arreglaFranges(); S.config.fixFr=2; saveConfig(); render(); toast('Fet. Revisa les franges de cada horari.'); },
   'torns-off':async()=>{ if(!await ask('Tornar a un sol horari? Les franges es mantenen amb els nivells que tenen marcats.','Un sol horari',false)) return; delete S.config.torns; saveConfig(); render(); },
   'torn-nv':b=>{ const T=S.config.torns; const ti=+b.dataset.t, nv=b.dataset.nv; if(T[ti].nivells.includes(nv)) return;
     T.forEach(t=>{ t.nivells=t.nivells.filter(x=>x!==nv); }); T[ti].nivells.push(nv); const ord=nivells(); T.forEach(t=>t.nivells.sort((x,y)=>ord.indexOf(x)-ord.indexOf(y)));
