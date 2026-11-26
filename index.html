@@ -452,7 +452,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.26-p';
+const VERSIO = '2026.11.26-q';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -663,7 +663,7 @@ function motiuVaga(ag,fid,pid,prevPid){ const a=act(pid,diaHorari(),fid); const 
   if(a) return {t:'Permanència · '+tenia,c:'p'};
   return {t:'Sense res a l\'horari',c:'n'}; }
 function motiuAct(sl,fid,pid,prevPid,nextPid){ const dia=diaHorari(); const a=act(pid,dia,fid); const g=sl.col.tipus==='grup'?grupById(sl.col.grup):null; const md=modeHora(fid);
-  if(triatAMa(fid,sl.id,pid)) return {t:a?'Bloquejat · '+actMini(a):'Posat a mà · fa un favor',c:'m'};
+  if(triatAMa(fid,sl.id,pid)){ const o=ocupatNoPart(pid,fid); return {t:o?'Posat a mà · deixa '+o.txt:a?'Bloquejat · '+actMini(a):'Posat a mà · fa un favor',c:'m'}; }
   if(g&&md==='tutor'&&g.tutor===pid) return {t:'Hora de tutors',c:'own'};
   if(g&&teachesAt(pid,g.id,dia,fid)) return {t:'Li tocava aquest grup',c:'own'};
   if(g&&g.tutor===pid) return {t:'Tutor/a del grup',c:'own'};
@@ -711,13 +711,16 @@ function disponibles(fid,incFree){
   const dia=diaHorari(); const tut=tutorsHora(fid);
   // els que has posat tu a mà en aquesta hora compten com a disponibles encara que no hi tinguin res (ens fan un favor)
   const manu=new Set(Object.values((S.jornada&&S.jornada.ma&&S.jornada.ma[fid])||{}));
-  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid) && !pTasca(p.id,fid) && !ocupatNoPart(p.id,fid))
+  return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid) && !pTasca(p.id,fid) && (manu.has(p.id) || !ocupatNoPart(p.id,fid)))
     .map(p=>({p,a:act(p.id,dia,fid)}))
     .filter(x=>incFree || !!x.a || tut.has(x.p.id) || manu.has(x.p.id));
 }
 // professors presents que a aquesta hora no hi tenen res (per posar-los a mà, com a favor)
 function favorsHora(fid,avIds){ const dia=diaHorari(); return S.profs.filter(p=>!avIds.has(p.id)&&pEstat(p.id)==='P'&&!pAbs(p.id).includes(fid)&&!pTasca(p.id,fid)&&!ocupatNoPart(p.id,fid)&&!act(p.id,dia,fid)).sort(profCmp); }
-const favorsOpt=(fid,avIds)=>{ const l=favorsHora(fid,avIds); return l.length?`<optgroup label="Sense res a l'horari · només a mà, com a favor (${l.length})">${l.map(p=>`<option value="${p.id}">${esc(nomLl(p.nom))} · no treballa a aquesta hora</option>`).join('')}</optgroup>`:''; };
+function noPartHora(fid,avIds){ return S.profs.filter(p=>!avIds.has(p.id)&&pEstat(p.id)==='P'&&!pAbs(p.id).includes(fid)&&!pTasca(p.id,fid)&&ocupatNoPart(p.id,fid)).sort(profCmp); }
+const favorsOpt=(fid,avIds)=>{ const l=favorsHora(fid,avIds), np=noPartHora(fid,avIds);
+  return (l.length?`<optgroup label="Sense res a l'horari · només a mà, com a favor (${l.length})">${l.map(p=>`<option value="${p.id}">${esc(nomLl(p.nom))} · no treballa a aquesta hora</option>`).join('')}</optgroup>`:'')
+   +(np.length?`<optgroup label="Tenen classe amb grups que no participen · només a mà (${np.length})">${np.map(p=>{ const o=ocupatNoPart(p.id,fid); return `<option value="${p.id}">${esc(nomLl(p.nom))} · ${o.f.id===fid?'té '+esc(o.txt):'té '+esc(o.txt)+' a les '+esc(hIni(o.f))}</option>`; }).join('')}</optgroup>`:''); };
 function nivellStats(){
   const al=(S.jornada&&S.jornada.alumnes)||{}, agr=(S.jornada&&S.jornada.agr)||{};
   return nivells().map(nv=>{
