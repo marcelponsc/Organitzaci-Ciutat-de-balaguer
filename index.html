@@ -357,7 +357,7 @@ tr.nh-tots td{background:var(--pri2)}tr.nh-tots .nh-in{border-color:var(--pri)}
 .torn-c tr.pati td{background:#fafafb}.torn-c tr.pati input[type=text]{color:var(--mut)}.badge.comuna{background:#eef0fb;color:var(--blue);margin-left:6px;font-size:10.5px}
 .torn-t{font-size:14px;margin:14px 0 8px;color:var(--ink2)}.torn-cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .rep{margin-top:14px;padding:0;overflow:hidden}.rep-h{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:12px 14px;width:100%}.rep-h>span:first-child{font-weight:700}
-.rep-t td.hi b{color:#c25a14}.rep-d{display:inline-flex;gap:2px;vertical-align:middle}.rep-d i{width:16px;height:14px;border-radius:3px;background:#eceef1}
+.rep-t td.hi,.rep-t td.hi b{color:#c25a14;font-weight:700}.rep-d{display:inline-flex;gap:2px;vertical-align:middle}.rep-d i{width:16px;height:14px;border-radius:3px;background:#eceef1}
 .rep-d i.own{background:var(--ok)}.rep-d i.cob{background:#ef8a3c}.rep-d i.lli{background:#cfd8e3}.rep-d i.tk{background:#b996e6}.rep-d i.abs{background:repeating-linear-gradient(45deg,#e5e5e9 0 3px,#fff 3px 6px)}.rep-d i.n{background:#f4f4f6}
 .rep-hh{display:inline-block;width:16px;margin-left:2px;font-size:0;}.rep-hh:first-child{margin-left:8px}
 @media print{.rep{display:none!important}}
@@ -373,6 +373,10 @@ tr.nh-tots td{background:var(--pri2)}tr.nh-tots .nh-in{border-color:var(--pri)}
 .qa td.cell .dosx{position:absolute;bottom:3px;right:3px;z-index:2;border:0;background:transparent;color:var(--mut);font-size:14px;line-height:1;width:18px;height:18px;border-radius:5px;cursor:pointer}
 .qa td.cell .dosx:hover{background:#fbdcda;color:var(--bad)}
 @media print{.dosb,.dosx{display:none!important}}
+.qa td.cell .whyb{position:absolute;bottom:3px;left:3px;z-index:2;border:0;background:transparent;color:var(--mut);font-size:11px;font-weight:700;line-height:1;width:17px;height:17px;border-radius:50%;cursor:pointer;opacity:.4}
+.qa td.cell .whyb:hover{opacity:1;background:var(--pri2);color:var(--pri)}
+.why-t td{vertical-align:top;font-size:13px}.why-t tr.occ td{color:var(--ink2)}.why-t tr.lli td:first-child{border-left:3px solid var(--ok)}
+@media print{.whyb{display:none!important}}
 .cmp-err{color:var(--bad);font-weight:600;margin:10px 0 0}
 
 #login{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -445,7 +449,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.26-g';
+const VERSIO = '2026.11.26-k';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -753,9 +757,11 @@ function agrupacions(){
   return out;
 }
 // 2 = fa classe a algun dels grups de l'agrupació (qualsevol hora), 1 = fa classe al nivell, 0 = no
-function coneixAg(pid,ag){ const vs=Object.values(S.horari[pid]||{}); if(ag.grups&&ag.grups.some(g=>vs.includes('G:'+g))) return 2;
+// l'agrupació inclou totes les lletres del nivell (p. ex. 3r ESO A+B+C+D+E)
+const agTotNivell=ag=>{ const gs=S.grups.filter(g=>(g.nivell||'Sense nivell')===ag.nv); return !!(ag.grups&&gs.length&&gs.every(g=>ag.grups.includes(g.id))); };
+function coneixAg(pid,ag){ const vs=Object.values(S.horari[pid]||{}); if(ag.grups&&ag.grups.some(g=>vs.includes('G:'+g))) return 2; if(agTotNivell(ag)&&vs.includes('C:'+ag.nv)) return 2;
   if(vs.includes('C:'+ag.nv)||vs.some(v=>String(v).startsWith('G:')&&((grupById(String(v).slice(2))||{}).nivell===ag.nv))) return 1; return 0; }
-const agTeGrup=(ag,a)=>!!(a&&a.t==='G'&&ag.grups&&ag.grups.includes(a.grup));
+const agTeGrup=(ag,a)=>!!(a&&((a.t==='G'&&ag.grups&&ag.grups.includes(a.grup))||(a.t==='C'&&a.txt===ag.nv&&agTotNivell(ag))));
 function parts(n){ const s=String(n||'').trim().replace(/\s+/g,' '); if(s.includes(',')){ const i=s.indexOf(','); return {nom:s.slice(i+1).trim(),cog:s.slice(0,i).trim()}; } const w=s.split(' '); return {nom:w[0]||'',cog:w.slice(1).join(' ')}; }
 const nomLl = n => { const p=parts(n); return p.cog?p.cog+', '+p.nom:p.nom; };
 const profCmp = (a,b) => { const x=parts(a.nom), y=parts(b.nom); return natCmp(x.cog,y.cog)||natCmp(x.nom,y.nom); };
@@ -775,6 +781,59 @@ function coverage(fid){
 }
 
 /* ---------- Assignació automàtica ---------- */
+// hores lliures de cada professor abans d'aquesta hora (era disponible però no estava assignat)
+function lliuresAbans(fid){ const j=S.jornada; const lfa=lectFranges(); const ix=lfa.findIndex(x=>x.id===fid); const lliure={};
+  lfa.slice(0,Math.max(0,ix)).forEach(fr=>{ const o=(j.assign||{})[fr.id]||{}; const asg=new Set(agsAt(fr.id).concat(segonsAt(fr.id)).map(ag=>o[ag.id]).filter(Boolean));
+    disponibles(fr.id,S.ui.incFree).forEach(x=>{ if(!asg.has(x.p.id)) lliure[x.p.id]=(lliure[x.p.id]||0)+1; }); }); return lliure; }
+const BK=a=>isClass(a)?0:a&&a.t==='GU'?1:isPerm(a)?2:3;
+const BKN=['tenia classe i s\'ha quedat sense alumnes','tenia guàrdia','tenia permanència','no tenia res a l\'horari'];
+const hl=n=>n+(n===1?' hora lliure':' hores lliures');
+function explicaVaga(fid,slot){
+  const j=S.jornada; const f=franjaById(fid); const ag=agById(slot); if(!f||!ag) return;
+  const dia=diaHorari(); const asg=(j.assign||{})[fid]||{}; const av=disponibles(fid,S.ui.incFree); const avIds=new Set(av.map(x=>x.p.id));
+  const lliure=lliuresAbans(fid); const cur=asg[slot]&&avIds.has(asg[slot])?asg[slot]:null; const C=cur?av.find(x=>x.p.id===cur):null;
+  const slotsH=agsAt(fid).concat(segonsAt(fid)); const on={}; slotsH.forEach(a=>{ const p=asg[a.id]; if(p&&avIds.has(p)) on[p]=a; });
+  const N=p=>esc(nomLl(profById(p).nom)); const L=p=>lliure[p]||0;
+  const lab=a=>esc(agLabel(a))+(a.k===2?' (2n prof.)':'');
+  const motiu=[];
+  if(C){
+    if(triatAMa(fid,slot,cur)) motiu.push('Està <b>bloquejat 🔒</b>: l\'has posat tu o l\'has bloquejat, i la proposta automàtica no el canvia.');
+    else if(agTeGrup(ag,C.a)){ motiu.push(`<b>Pas 1 · Li tocava aquest grup</b>: a aquesta hora tenia ${esc(actMini(C.a))}.`);
+      const altres=av.filter(x=>x.p.id!==cur&&agTeGrup(ag,x.a));
+      if(altres.length){ const fora=altres.filter(x=>on[x.p.id]); 
+        motiu.push(fora.length?`També hi feien classe ${altres.map(x=>N(x.p.id)).join(', ')}. Com que calia cobrir altres grups, es queda aquí qui portava menys hores lliures (${hl(L(cur))}) i els altres, que havien descansat més, cobreixen altres grups.`
+          :altres.every(x=>L(x.p.id)===L(cur))?`També hi feien classe ${altres.map(x=>N(x.p.id)).join(', ')}. No calia cobrir res més i tots portaven ${hl(L(cur))}: s'ha triat per ordre, i els altres queden lliures.`
+          :`També hi feien classe ${altres.map(x=>N(x.p.id)+' ('+hl(L(x.p.id))+')').join(', ')}. Com que no calia cobrir res més, treballa qui més havia descansat (${hl(L(cur))}).`); } }
+    else { const b=BK(C.a); const k=coneixAg(cur,ag);
+      motiu.push(`<b>Pas 2 · ${['Professors que tenien classe','Professors de guàrdia','Professors de permanència','Altres professors'][b]}</b>: ${BKN[b]} (${esc(actMini(C.a))}).`);
+      motiu.push(`Portava <b>${hl(L(cur))}</b> abans d'aquesta hora. Dins de cada bloc passa primer qui ha descansat més.`);
+      motiu.push(k===2?'Coneix el grup: hi fa classe algun dia.':k===1?'Fa classe al mateix nivell.':'No fa classe ni al grup ni al nivell.'); }
+  } else motiu.push('<b>Ningú</b>: no queda cap professor disponible a aquesta hora que no estigui ja en un altre grup.');
+  // altres professors
+  const rows=[];
+  av.filter(x=>x.p.id!==cur).forEach(x=>{ const p=x.p.id; const w=on[p]; let per='';
+    if(w){ const mo=motiuVaga(w,fid,p,null); per=`És a <b>${lab(w)}</b> · ${esc(mo.t)}`; }
+    else if(!C) per='Lliure: la proposta no l\'hi ha posat (torna a fer «Proposta automàtica»).';
+    else if(triatAMa(fid,slot,cur)) per='Lliure. La casella està bloquejada amb un altre professor.';
+    else if(agTeGrup(ag,C.a)&&!agTeGrup(ag,x.a)) per='Lliure. El primer pas és per al professor a qui tocava el grup.';
+    else if(agTeGrup(ag,x.a)) per=`Lliure. També li tocava el grup; ${hl(L(p))} contra ${hl(L(cur))} del triat.`;
+    else { const bx=BK(x.a), bc=BK(C.a);
+      if(bx>bc) per=`Lliure. ${BKN[bx].charAt(0).toUpperCase()+BKN[bx].slice(1)}; abans van els que ${BKN[bc]}.`;
+      else if(bx<bc) per='Lliure. Pels criteris hauria passat davant: segurament s\'ha canviat a mà o han canviat les dades després. Torna a fer «Proposta automàtica».';
+      else if(L(p)<L(cur)) per=`Lliure. Portava ${hl(L(p))} i el triat ${hl(L(cur))}: passa primer qui ha descansat més.`;
+      else if(L(p)>L(cur)) per=`Lliure, però havia descansat més (${hl(L(p))}). Segurament s'ha canviat a mà; torna a fer «Proposta automàtica».`;
+      else { const kx=coneixAg(p,ag), kc=coneixAg(cur,ag);
+        per=kx<kc?`Lliure. Mateixes hores lliures, però ${kc===2?'el triat coneix el grup':'el triat fa classe al nivell'} i ell ${kx===1?'només el nivell':'no'}.`:kx>kc?'Lliure. Coneixia més el grup: segurament s\'ha canviat a mà.':'Lliure. Empat en tot; s\'ha triat per ordre.'; } }
+    rows.push({p,x,w,per}); });
+  rows.sort((a,b)=>(!!a.w-!!b.w)||((agTeGrup(ag,b.x.a)?1:0)-(agTeGrup(ag,a.x.a)?1:0))||BK(a.x.a)-BK(b.x.a)||L(b.p)-L(a.p)||profCmp(a.x.p,b.x.p));
+  // no disponibles que hi feien classe
+  const nod=S.profs.filter(p=>!avIds.has(p.id)&&agTeGrup(ag,act(p.id,dia,fid))).map(p=>{ const e=pEstat(p.id); return `${N(p.id)}: ${e==='V'?'no és present':pAbs(p.id).includes(fid)?'marcat absent a aquesta hora':pTasca(p.id,fid)?'té la tasca «'+esc(pTasca(p.id,fid))+'»':'no disponible'}`; });
+  openModal(`<div class="modal-h"><h2>Per què? · ${lab(ag)} · ${esc(f.label)}</h2><button class="x" data-a="close">×</button></div>
+    <div class="modal-b">${C?`<p style="margin-top:0;font-size:16px"><b>${N(cur)}</b></p>`:''}<ul class="cmp-mot">${motiu.map(m=>`<li>${m}</li>`).join('')}</ul>
+    ${nod.length?`<p class="hint"><b>Professors a qui tocava aquest grup i no hi són:</b> ${nod.join(' · ')}</p>`:''}
+    <h3 class="cmp-h">Altres professors disponibles a aquesta hora (${rows.length})</h3>
+    ${rows.length?`<table class="t why-t"><tbody>${rows.map(r=>`<tr class="${r.w?'occ':'lli'}"><td><b>${N(r.p)}</b><div class="hint">tenia ${esc(actMini(r.x.a))} · ${hl(L(r.p))}</div></td><td>${r.per}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Cap.</p>'}</div>`,true);
+}
 function autoAssign(fid,prevFid){
   const j=ensureJ(); const ags=agsAt(fid);
   const av=disponibles(fid,S.ui.incFree);
@@ -784,26 +843,32 @@ function autoAssign(fid,prevFid){
   const free=x=>!used.has(x.p.id);
   // 🔒 primer, les caselles bloquejades (posades a mà)
   const LK=(j.ma||{})[fid]||{}; ags.forEach(ag=>{ const pid=LK[ag.id]; if(!pid) return; if(byId[pid]&&!used.has(pid)) take(ag,pid); else delete LK[ag.id]; });
-  // 0. qui tenia classe amb aquest grup a aquesta hora
-  ags.forEach(ag=>{ const c=av.find(x=>free(x)&&agTeGrup(ag,x.a)&&!res[ag.id]); if(c) take(ag,c.p.id); });
-  // 1. la resta, per grups: primer qui tenia classe (i ara no té alumnes), després guàrdia, permanència i altres.
-  //    Dins de cada grup de professorat, primer qui ha cobert menys hores avui (es reparteix), després els grups que coneixen i el nivell.
-  const lfa=lectFranges(); const ix=lfa.findIndex(x=>x.id===fid);
+  const lfa=lectFranges(); const ix=lfa.findIndex(x=>x.id===fid); const dia=diaHorari();
+  // hores lliures fins ara: hores d'avui en què era al centre i disponible però no estava assignat a cap grup
+  const lliure={};
+  lfa.slice(0,Math.max(0,ix)).forEach(fr=>{ const o=j.assign[fr.id]||{}; const asg=new Set(agsAt(fr.id).concat(segonsAt(fr.id)).map(ag=>o[ag.id]).filter(Boolean));
+    disponibles(fr.id,S.ui.incFree).forEach(x=>{ if(!asg.has(x.p.id)) lliure[x.p.id]=(lliure[x.p.id]||0)+1; }); });
+  // 0. qui tenia classe amb aquest grup a aquesta hora (si n'hi ha diversos, es queda qui ha estat menys hores lliure)
+  const multi={};
+  ags.forEach(ag=>{ if(res[ag.id]) return; const cs=av.filter(x=>free(x)&&agTeGrup(ag,x.a)).sort((x,y)=>(lliure[x.p.id]||0)-(lliure[y.p.id]||0)||profCmp(x.p,y.p)); if(cs[0]) take(ag,cs[0].p.id); if(cs.length>1) multi[ag.id]=cs.map(x=>x.p.id); });
+  // 1. la resta, per blocs: primer qui tenia classe (i ara no té alumnes), després guàrdia, permanència i altres.
+  //    Dins de cada bloc, primer qui ha estat més hores lliure avui (es reparteix la feina), després qui coneix el grup i el nivell.
   const prevDe=ag=>{ for(let i=ix-1;i>=0;i--) if(fApplies(lfa[i],ag.nv)) return lfa[i].id; return null; };
   const prevP={}; ags.forEach(ag=>{ const pf=prevDe(ag); prevP[ag.id]=pf&&j.assign[pf]?j.assign[pf][ag.id]:null; });
-  // càrrega: hores que ja ha cobert avui un grup que no era el seu (per repartir-ho entre tothom)
-  const dia=diaHorari(); const carrega={};
-  lfa.slice(0,Math.max(0,ix)).forEach(fr=>{ const o=j.assign[fr.id]||{}; agsAt(fr.id).concat(segonsAt(fr.id)).forEach(ag=>{ const pid=o[ag.id]; if(pid&&!agTeGrup(ag,act(pid,dia,fr.id))) carrega[pid]=(carrega[pid]||0)+1; }); });
   const fases=[x=>isClass(x.a), x=>x.a&&x.a.t==='GU', x=>isPerm(x.a), ()=>true];
   // segons professors (primer s'omplen tots els grups i després els segons)
   const seg=segonsAt(fid); seg.forEach(ag=>{ const pid=LK[ag.id]; if(!pid) return; if(byId[pid]&&!used.has(pid)) take(ag,pid); else delete LK[ag.id]; });
   [ags,seg].forEach(llista=>fases.forEach(fase=>{
     const cands=av.filter(x=>free(x)&&fase(x)); const buits=llista.filter(ag=>!res[ag.id]); if(!cands.length||!buits.length) return;
     const parells=[]; cands.forEach(x=>buits.forEach(ag=>{ const k=coneixAg(x.p.id,ag);
-      parells.push({x,ag,sc:-(carrega[x.p.id]||0)*1000+k*100+(actNivell(x.a)===ag.nv?15:0)+(prevP[ag.id]===x.p.id?5:0)}); }));
+      parells.push({x,ag,sc:(lliure[x.p.id]||0)*1000+k*100+(actNivell(x.a)===ag.nv?15:0)+(prevP[ag.id]===x.p.id?5:0)}); }));
     parells.sort((a,b)=>b.sc-a.sc||profCmp(a.x.p,b.x.p));
     parells.forEach(({x,ag})=>{ if(res[ag.id]||used.has(x.p.id)) return; take(ag,x.p.id); });
   }));
+  // si els altres candidats del pas 1 no han calgut enlloc, treballa qui més ha descansat
+  Object.entries(multi).forEach(([agid,cs])=>{ const cur=res[agid]; if(!cur) return; const altres=cs.filter(p=>p!==cur);
+    if(altres.some(p=>used.has(p))) return;
+    const best=cs.slice().sort((a,b)=>(lliure[b]||0)-(lliure[a]||0))[0]; if(best&&best!==cur&&(lliure[best]||0)>(lliure[cur]||0)){ res[agid]=best; used.delete(cur); used.add(best); } });
   j.assign[fid]=res;
   return {cov:Object.keys(res).length,need:ags.length};
 }
@@ -1108,7 +1173,7 @@ function vAssign(){
         ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>{ const w=agById(where[x.p.id]); return `<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(w?agLabel(w)+(w.k===2?' (2n prof.)':''):'?')}</option>`; }).join('')}</optgroup>`:''}
       </select>`;
       const mo=ok?motiuVaga(ag,f.id,cur,ag.k===2?null:prevAsgV(f,ag)):null;
-      return {ok,html:`<span class="cv">${ok?esc(curt(profById(cur).nom)):(ag.k===2?'+ 2n professor…':'Triar…')}</span>${ok?`<span class="cs ${mo.c}">${esc(mo.t)}</span>`:''}${sel}${ok?lockBtn(f.id,ag.id,cur):''}`,tit:ok?profById(cur).nom+' · '+mo.t:''};
+      return {ok,html:`<span class="cv">${ok?esc(curt(profById(cur).nom)):(ag.k===2?'+ 2n professor…':'Triar…')}</span>${ok?`<span class="cs ${mo.c}">${esc(mo.t)}</span>`:''}${sel}${ok?lockBtn(f.id,ag.id,cur):''}<button class="whyb" data-a="why" data-f="${f.id}" data-ag="${esc(ag.id)}" title="Per què?" aria-label="Per què?">?</button>`,tit:ok?profById(cur).nom+' · '+mo.t:''};
       };
       const b1=bloc(ag0);
       if(!dos) return `<td class="cell ${b1.ok?'p':'miss'} ${ag0.idx===1?'nvs':''}" title="${esc(b1.tit)}">${b1.html}<button class="dosb" data-a="dos-on" data-f="${f.id}" data-ag="${esc(ag0.id)}" title="Afegir un 2n professor a aquest grup a aquesta hora" aria-label="Afegir un segon professor">+</button></td>`;
@@ -1134,14 +1199,14 @@ function repartiment(lf,pre){
       if(pTasca(p.id,f.id)) return {c:'tk',t:'Tasca: '+pTasca(p.id,f.id)};
       if(avIds.has(p.id)){ lli++; return {c:'lli',t:'Lliure · tenia '+actMini(a)}; }
       return {c:a?'abs':'n',t:a?'No hi és a aquesta hora':'Res a l\'horari'}; });
-    return {p,cob,seu,lli,hs}; }).filter(r=>r.cob||r.seu||r.lli);
+    return {p,cob,seu,lli,tot:cob+seu,hs}; }).filter(r=>r.cob||r.seu||r.lli);
   if(!rows.length) return '';
-  rows.sort((a,b)=>b.cob-a.cob||a.lli-b.lli||profCmp(a.p,b.p));
-  const obert=!!S.ui.repOpen; const mx=Math.max(...rows.map(r=>r.cob));
-  return `<div class="card rep"><button class="rep-h" data-a="rep-toggle" aria-expanded="${obert}"><span>${obert?'▾':'▸'} Repartiment de la feina</span><span class="hint">Hores que cada professor cobreix un grup que no és el seu. Màxim avui: <b>${mx}</b>. No surt en imprimir.</span></button>
-    ${obert?`<div class="tblw"><table class="t rep-t"><thead><tr><th>Professor</th><th class="c" title="Hores cobrint un grup que no és el seu">Cobreix</th><th class="c" title="Hores amb el seu grup">El seu grup</th><th class="c" title="Hores lliure (reserva)">Lliure</th><th>Dia${lf.map(f=>`<span class="rep-hh">${esc(hIni(f))}</span>`).join('')}</th></tr></thead><tbody>
-      ${rows.map(r=>`<tr><td>${esc(nomLl(r.p.nom))}</td><td class="c num ${r.cob>=2?'hi':''}"><b>${r.cob}</b></td><td class="c num">${r.seu}</td><td class="c num">${r.lli}</td><td><span class="rep-d">${r.hs.map((h,i)=>`<i class="${h.c}" title="${esc(lf[i].label+': '+h.t)}"></i>`).join('')}</span></td></tr>`).join('')}
-    </tbody></table></div><p class="hint" style="padding:0 14px 12px;margin:0"><span class="rep-d"><i class="cob"></i></span> cobreix un altre grup · <span class="rep-d"><i class="own"></i></span> el seu grup · <span class="rep-d"><i class="lli"></i></span> lliure · <span class="rep-d"><i class="tk"></i></span> tasca · <span class="rep-d"><i class="abs"></i></span> no hi és · <span class="rep-d"><i class="n"></i></span> res a l'horari. La proposta automàtica fa passar primer qui menys n'ha cobert.</p>`:''}</div>`;
+  rows.sort((a,b)=>b.tot-a.tot||a.lli-b.lli||profCmp(a.p,b.p));
+  const obert=!!S.ui.repOpen; const mx=Math.max(...rows.map(r=>r.tot)); const mxL=Math.max(...rows.map(r=>r.lli));
+  return `<div class="card rep"><button class="rep-h" data-a="rep-toggle" aria-expanded="${obert}"><span>${obert?'▾':'▸'} Repartiment de la feina</span><span class="hint">Hores que treballa cada professor (amb el seu grup o cobrint-ne un altre) i hores que és lliure. Màxim treballant: <b>${mx}</b> · màxim lliure: <b>${mxL}</b>. No surt en imprimir.</span></button>
+    ${obert?`<div class="tblw"><table class="t rep-t"><thead><tr><th>Professor</th><th class="c" title="Hores assignades a un grup (el seu o un altre)">Treballa</th><th class="c" title="Hores amb el seu grup">El seu grup</th><th class="c" title="Hores cobrint un grup que no és el seu">Cobreix altres</th><th class="c" title="Hores al centre sense grup assignat">Lliure</th><th>Dia${lf.map(f=>`<span class="rep-hh">${esc(hIni(f))}</span>`).join('')}</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td>${esc(nomLl(r.p.nom))}</td><td class="c num"><b>${r.tot}</b></td><td class="c num">${r.seu}</td><td class="c num ${r.cob>=2?'hi':''}">${r.cob}</td><td class="c num ${r.lli>=3?'hi':''}">${r.lli}</td><td><span class="rep-d">${r.hs.map((h,i)=>`<i class="${h.c}" title="${esc(lf[i].label+': '+h.t)}"></i>`).join('')}</span></td></tr>`).join('')}
+    </tbody></table></div><p class="hint" style="padding:0 14px 12px;margin:0"><span class="rep-d"><i class="cob"></i></span> cobreix un altre grup · <span class="rep-d"><i class="own"></i></span> el seu grup · <span class="rep-d"><i class="lli"></i></span> lliure · <span class="rep-d"><i class="tk"></i></span> tasca · <span class="rep-d"><i class="abs"></i></span> no hi és · <span class="rep-d"><i class="n"></i></span> res a l'horari. La proposta automàtica fa passar primer qui ha estat més hores lliure.</p>`:''}</div>`;
 }
 
 /* ----- 4. Resum ----- */
@@ -2653,6 +2718,7 @@ const A={
   'agr-auto':b=>{ const j=ensureJ(); delete j.agr[b.dataset.nv]; saveJ(); updateLive(); },
   pf:b=>{ S.ui.pf=b.dataset.f; render(); },
   hist:()=>obreHistorial(),
+  why:b=>explicaVaga(b.dataset.f,b.dataset.ag),
   'dos-on':b=>{ const j=ensureJ(); j.dos=j.dos||{}; j.dos[b.dataset.f]=j.dos[b.dataset.f]||{}; j.dos[b.dataset.f][b.dataset.ag]=true; saveJ(); render(); },
   'dos-off':b=>{ const j=ensureJ(); const f=b.dataset.f, ag=b.dataset.ag; if(j.dos&&j.dos[f]) delete j.dos[f][ag]; if(j.assign&&j.assign[f]) delete j.assign[f][ag+'#2']; if(j.ma&&j.ma[f]) delete j.ma[f][ag+'#2']; saveJ(); render(); },
   lock:b=>{ const j=ensureJ(); const f=b.dataset.f, sl=b.dataset.s; const pid=((j.assign||{})[f]||{})[sl]; if(!pid) return; j.ma=j.ma||{}; j.ma[f]=j.ma[f]||{};
