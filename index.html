@@ -452,7 +452,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.26-o';
+const VERSIO = '2026.11.26-p';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -652,7 +652,7 @@ const nLocks=()=>{ const j=S.jornada; return j&&j.ma?Object.entries(j.ma).reduce
 const triatAMa = (fid,slot,pid) => !!(S.jornada&&S.jornada.ma&&S.jornada.ma[fid]&&S.jornada.ma[fid][slot]===pid);
 // motiu pel qual un professor és en una casella (només per a pantalla)
 function motiuVaga(ag,fid,pid,prevPid){ const a=act(pid,diaHorari(),fid); const tenia=actMini(a);
-  if(triatAMa(fid,ag.id,pid)) return {t:'Bloquejat · '+tenia,c:'m'};
+  if(triatAMa(fid,ag.id,pid)) return {t:a?'Bloquejat · '+tenia:'Posat a mà · fa un favor',c:'m'};
   if(agTeGrup(ag,a)) return {t:'Li tocava aquest grup',c:'own'};
   if(coneixAg(pid,ag)===2) return {t:'Coneix el grup · tenia '+tenia,c:'own'};
   if(prevPid===pid) return {t:'Ve de l\'hora anterior · '+tenia,c:'cont'};
@@ -663,7 +663,7 @@ function motiuVaga(ag,fid,pid,prevPid){ const a=act(pid,diaHorari(),fid); const 
   if(a) return {t:'Permanència · '+tenia,c:'p'};
   return {t:'Sense res a l\'horari',c:'n'}; }
 function motiuAct(sl,fid,pid,prevPid,nextPid){ const dia=diaHorari(); const a=act(pid,dia,fid); const g=sl.col.tipus==='grup'?grupById(sl.col.grup):null; const md=modeHora(fid);
-  if(triatAMa(fid,sl.id,pid)) return {t:'Bloquejat · '+actMini(a),c:'m'};
+  if(triatAMa(fid,sl.id,pid)) return {t:a?'Bloquejat · '+actMini(a):'Posat a mà · fa un favor',c:'m'};
   if(g&&md==='tutor'&&g.tutor===pid) return {t:'Hora de tutors',c:'own'};
   if(g&&teachesAt(pid,g.id,dia,fid)) return {t:'Li tocava aquest grup',c:'own'};
   if(g&&g.tutor===pid) return {t:'Tutor/a del grup',c:'own'};
@@ -709,10 +709,15 @@ function ocupatNoPart(pid,fid){
 }
 function disponibles(fid,incFree){
   const dia=diaHorari(); const tut=tutorsHora(fid);
+  // els que has posat tu a mà en aquesta hora compten com a disponibles encara que no hi tinguin res (ens fan un favor)
+  const manu=new Set(Object.values((S.jornada&&S.jornada.ma&&S.jornada.ma[fid])||{}));
   return S.profs.filter(p=>pEstat(p.id)==='P' && !pAbs(p.id).includes(fid) && !pTasca(p.id,fid) && !ocupatNoPart(p.id,fid))
     .map(p=>({p,a:act(p.id,dia,fid)}))
-    .filter(x=>incFree || !!x.a || tut.has(x.p.id));
+    .filter(x=>incFree || !!x.a || tut.has(x.p.id) || manu.has(x.p.id));
 }
+// professors presents que a aquesta hora no hi tenen res (per posar-los a mà, com a favor)
+function favorsHora(fid,avIds){ const dia=diaHorari(); return S.profs.filter(p=>!avIds.has(p.id)&&pEstat(p.id)==='P'&&!pAbs(p.id).includes(fid)&&!pTasca(p.id,fid)&&!ocupatNoPart(p.id,fid)&&!act(p.id,dia,fid)).sort(profCmp); }
+const favorsOpt=(fid,avIds)=>{ const l=favorsHora(fid,avIds); return l.length?`<optgroup label="Sense res a l'horari · només a mà, com a favor (${l.length})">${l.map(p=>`<option value="${p.id}">${esc(nomLl(p.nom))} · no treballa a aquesta hora</option>`).join('')}</optgroup>`:''; };
 function nivellStats(){
   const al=(S.jornada&&S.jornada.alumnes)||{}, agr=(S.jornada&&S.jornada.agr)||{};
   return nivells().map(nv=>{
@@ -1220,6 +1225,7 @@ function vAssign(){
         <option value="">${ok?'— Treure —':'Triar…'}</option>
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(opt).join('')}</optgroup>`:''}
         ${perm.length?`<optgroup label="Permanència al centre · només si cal (${perm.length})">${perm.map(opt).join('')}</optgroup>`:''}
+        ${favorsOpt(f.id,avIds)}
         ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>{ const w=agById(where[x.p.id]); return `<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(w?agLabel(w)+(w.k===2?' (2n prof.)':''):'?')}</option>`; }).join('')}</optgroup>`:''}
       </select>`;
       const mo=ok?motiuVaga(ag,f.id,cur,ag.k===2?null:prevAsgV(f,ag)):null;
@@ -1704,6 +1710,7 @@ function vAssignAct(){
       const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(sl.id)}" aria-label="${esc(colNom(sl.col))} ${esc(f.label)}">
         <option value="">${ok?'— Treure —':'Triar…'}</option>
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(tag(x))}</option>`).join('')}</optgroup>`:''}
+        ${favorsOpt(f.id,avIds)}
         ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>`<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(slLab(where[x.p.id]))}</option>`).join('')}</optgroup>`:''}
       </select>`;
       const same=ok&&prevA[sl.id]===cur;
@@ -2788,7 +2795,7 @@ const A={
     actFranges().forEach(f=>{ const o=(j.assign||{})[f.id]||{}; actSlots().filter(sl=>sl.col.id===c.id).forEach(sl=>{ const p=o[sl.id]; if(!p) return; j.ma[f.id]=j.ma[f.id]||{}; if(unlock) delete j.ma[f.id][sl.id]; else j.ma[f.id][sl.id]=p; }); });
     saveJ(); render(); toast(unlock?`${colNom(c)}: desbloquejat.`:`${colNom(c)}: bloquejat a totes les hores. La proposta automàtica no hi tocarà.`); },
   lock:b=>{ const j=ensureJ(); const f=b.dataset.f, sl=b.dataset.s; const pid=((j.assign||{})[f]||{})[sl]; if(!pid) return; j.ma=j.ma||{}; j.ma[f]=j.ma[f]||{};
-    if(j.ma[f][sl]===pid) delete j.ma[f][sl]; else j.ma[f][sl]=pid; saveJ(); render(); },
+    if(j.ma[f][sl]===pid){ if(!act(pid,diaHorari(),f)&&!S.ui.incFree) toast('Aquest professor no té res a l\'horari a aquesta hora: si el desbloqueges, deixarà d\'estar assignat.'); delete j.ma[f][sl]; } else j.ma[f][sl]=pid; saveJ(); render(); },
   'unlock-all':async()=>{ const j=ensureJ(); const n=Object.values(j.ma||{}).reduce((a,o)=>a+Object.keys(o||{}).length,0); if(!n) return;
     if(!await ask(`Desbloquejar les ${n} caselles bloquejades? La propera proposta automàtica les podrà canviar.`,'Desbloquejar',false)) return; j.ma={}; saveJ(); render(); },
   'hist-rec':async b=>{ const h=(S._hist||[]).find(x=>x.id===b.dataset.id); if(!h) return; const nom={'app/config':'la configuració','app/grups':'els grups','app/professors':'el professorat','app/horari':'els horaris'}[h.p]||h.p;
