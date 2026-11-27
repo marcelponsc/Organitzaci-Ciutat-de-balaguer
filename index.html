@@ -348,6 +348,7 @@ tr.nh-tots td{background:var(--pri2)}tr.nh-tots .nh-in{border-color:var(--pri)}
 .pgrp{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:8px;align-items:start;margin:0 0 6px}.pgrp h3{grid-column:1/-1}.pgrp h3{font-size:13px;margin:16px 0 8px;display:flex;gap:10px;align-items:baseline;position:sticky;top:100px;background:var(--bg);padding:8px 0;z-index:2;box-shadow:0 6px 6px -6px rgba(0,0,0,.08)}.pgrp h3 span{font-weight:400;color:var(--mut);font-size:12px}.pgrp h3 b{color:var(--warn)}
 .qa td.cell .cv:has(+ .cs){padding-bottom:1px}.cell .cs{display:block;font-size:10.5px;line-height:1.2;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px 8px}
 .cell .cs.own{color:var(--ok);font-weight:650}@media print{.cell .cs{display:none!important}}
+.cell .cs.rec{color:#a8791a;font-weight:600}
 .cell .cs.cont{color:#2f7d6d}.cell .cs.m{color:#7a4bc2;font-weight:600}.cell .cs{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.cell .cs.g{color:var(--blue)}.cell .cs.p{color:#a8791a}
 .resv-r .rv{display:inline-flex;gap:4px;align-items:baseline;margin:2px 10px 2px 0;white-space:nowrap}.resv-r .rv b{font-weight:550}.resv-r .rv i{font-style:normal;font-size:11px;padding:0 5px;border-radius:5px;background:#eef6f0;color:var(--ok)}
 .resv-r .rv i.g{background:#eef0fb;color:var(--blue)}.resv-r .rv i.p{background:#fdf5e3;color:#a8791a}.resv-r .rv i.n{background:#f1f1f4;color:var(--mut)}
@@ -452,7 +453,7 @@ const pad = n => String(n).padStart(2,'0');
 const natCmp = (a,b) => String(a).localeCompare(String(b),'ca',{numeric:true,sensitivity:'base'});
 const pct = (a,b) => b ? Math.round(a*100/b)+'%' : '–';
 const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-const VERSIO = '2026.11.26-q';
+const VERSIO = '2026.11.27-a';
 const DIES = ['Diumenge','Dilluns','Dimarts','Dimecres','Dijous','Divendres','Dissabte'];
 const DIES_C = ['Dg','Dl','Dt','Dc','Dj','Dv','Ds'];
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -892,6 +893,11 @@ function explicaAct(fid,sid){
     <h3 class="cmp-h">Altres professors disponibles a aquesta hora (${rows.length})</h3>
     ${rows.length?`<table class="t why-t"><tbody>${rows.map(r=>`<tr class="${r.w?'occ':'lli'}"><td><b>${N(r.p)}</b><div class="hint">tenia ${esc(actMini(r.x.a))}${g?' · '+esc(rel(r.p)):''}</div></td><td>${r.per}</td></tr>`).join('')}</tbody></table>`:'<p class="hint">Cap.</p>'}</div>`,true);
 }
+// recomanació de l'app sense desar res: simula la proposta automàtica i ho deixa tot com estava
+function simula(fn){ const j=S.jornada; if(!j) return {}; const a0=j.assign?clone(j.assign):undefined, m0=j.ma?clone(j.ma):undefined; let r={};
+  try{ fn(); r=clone(j.assign||{}); }catch(e){ console.warn('simula',e); }
+  if(a0===undefined) delete j.assign; else j.assign=a0; if(m0===undefined) delete j.ma; else j.ma=m0; return r; }
+const recOpt=(pid,txt)=>pid&&profById(pid)?`<optgroup label="★ Recomanat per l'app"><option value="${pid}">★ ${esc(nomLl(profById(pid).nom))} · ${esc(txt)}</option></optgroup>`:'';
 function autoAssign(fid,prevFid){
   const j=ensureJ(); const ags=agsAt(fid);
   const av=disponibles(fid,S.ui.incFree);
@@ -1191,6 +1197,7 @@ function vAssign(){
   if(!S.grups.length||!S.profs.length) return emptyView('Falten dades','Per assignar professorat cal tenir grups, professorat i horari a Configuració.');
   const lf=lectFranges();
   if(!lf.length) return emptyView('No hi ha franges lectives','Defineix les franges horàries a Configuració.');
+  const REC={}; if(S.jornada) lf.forEach(f=>{ REC[f.id]=simula(()=>autoAssign(f.id))[f.id]||{}; });
   const ags=agrupacions(), st=nivellStats().filter(x=>x.n>0);
   const dia=diaHorari();
   const head=`<div class="sec-h" style="margin-top:0"><div><h2>Assignació per hores</h2><p>Toca una casella per triar el professor. Els que tries a mà queden bloquejats 🔒 i la proposta automàtica no els canvia (toca el candau per bloquejar o desbloquejar). ${S.ui.incFree?'Disponible = present al centre.':'Disponible = present i amb classe o guàrdia aquella hora.'}</p></div>
@@ -1226,13 +1233,15 @@ function vAssign(){
       const opt=x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(actShort(x.a))}</option>`;
       const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(ag.id)}" aria-label="${esc(agLabel(ag))} ${esc(f.label)}">
         <option value="">${ok?'— Treure —':'Triar…'}</option>
+        ${(()=>{ const rp=REC[f.id]&&REC[f.id][ag.id]; return rp&&rp!==cur?recOpt(rp,motiuVaga(ag,f.id,rp,ag.k===2?null:prevAsgV(f,ag)).t):''; })()}
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(opt).join('')}</optgroup>`:''}
         ${perm.length?`<optgroup label="Permanència al centre · només si cal (${perm.length})">${perm.map(opt).join('')}</optgroup>`:''}
         ${favorsOpt(f.id,avIds)}
         ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>{ const w=agById(where[x.p.id]); return `<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(w?agLabel(w)+(w.k===2?' (2n prof.)':''):'?')}</option>`; }).join('')}</optgroup>`:''}
       </select>`;
       const mo=ok?motiuVaga(ag,f.id,cur,ag.k===2?null:prevAsgV(f,ag)):null;
-      return {ok,html:`<span class="cv">${ok?esc(curt(profById(cur).nom)):(ag.k===2?'+ 2n professor…':'Triar…')}</span>${ok?`<span class="cs ${mo.c}">${esc(mo.t)}</span>`:''}${sel}${ok?lockBtn(f.id,ag.id,cur):''}<button class="whyb" data-a="why" data-f="${f.id}" data-ag="${esc(ag.id)}" title="Per què?" aria-label="Per què?">?</button>`,tit:ok?profById(cur).nom+' · '+mo.t:''};
+      const rp=!ok&&REC[f.id]?REC[f.id][ag.id]:null;
+      return {ok,html:`<span class="cv">${ok?esc(curt(profById(cur).nom)):(ag.k===2?'+ 2n professor…':'Triar…')}</span>${ok?`<span class="cs ${mo.c}">${esc(mo.t)}</span>`:rp&&profById(rp)?`<span class="cs rec">★ Recomanat: ${esc(curt(profById(rp).nom))}</span>`:''}${sel}${ok?lockBtn(f.id,ag.id,cur):''}<button class="whyb" data-a="why" data-f="${f.id}" data-ag="${esc(ag.id)}" title="Per què?" aria-label="Per què?">?</button>`,tit:ok?profById(cur).nom+' · '+mo.t:''};
       };
       const b1=bloc(ag0);
       if(!dos) return `<td class="cell ${b1.ok?'p':'miss'} ${ag0.idx===1?'nvs':''}" title="${esc(b1.tit)}">${b1.html}<button class="dosb" data-a="dos-on" data-f="${f.id}" data-ag="${esc(ag0.id)}" title="Afegir un 2n professor a aquest grup a aquesta hora" aria-label="Afegir un segon professor">+</button></td>`;
@@ -1684,6 +1693,7 @@ function omplirHora(f,md){
 function vAssignAct(){
   const fr=actFranges(), slots=actSlots(), cols=actCols();
   if(fr.length&&slots.length&&S.ui.cmp&&S.jornada.manual) return vCompara();
+  const REC=fr.length&&slots.length?simula(()=>autoAssignAct()):{};
   if(!fr.length||!slots.length) return `<div class="card empty"><h2>Falta definir l'activitat</h2><p>Indica les hores de l'activitat i què cal cobrir (grups o llocs).</p><button class="btn pri" data-a="tab" data-tab="activitat">Anar a Activitat</button></div>`;
   const dia=diaHorari(); const multi=cols.some(c=>nMax(c)>1);
   const head=`<div class="sec-h" style="margin-top:0"><div><h2>Assignació · ${esc(jTitol(S.jornada))}</h2><p>Toca una casella per triar el professor. Els que tries a mà queden bloquejats 🔒 i la proposta automàtica no els canvia (toca el candau per bloquejar o desbloquejar). Primer surten els que ja hi són a l'hora anterior o posterior, el tutor/a i qui fa classe a aquell grup.</p></div>
@@ -1712,13 +1722,14 @@ function vAssignAct(){
       const slLab=s=>{ const sl2=slots.find(z=>z.id===s); return sl2?colNom(sl2.col)+(nMax(sl2.col)>1?' · '+rolSlot(sl2).toLowerCase():''):'?'; };
       const sel=`<select class="cellsel" data-in="asg" data-f="${f.id}" data-ag="${esc(sl.id)}" aria-label="${esc(colNom(sl.col))} ${esc(f.label)}">
         <option value="">${ok?'— Treure —':'Triar…'}</option>
+        ${(()=>{ const rp=REC[f.id]&&REC[f.id][sl.id]; return rp&&rp!==cur?recOpt(rp,motiuAct(sl,f.id,rp,null,null).t):''; })()}
         ${lliures.length?`<optgroup label="Lliures (${lliures.length})">${lliures.map(x=>`<option value="${x.p.id}" ${x.p.id===cur?'selected':''}>${esc(nomLl(x.p.nom))} · ${esc(tag(x))}</option>`).join('')}</optgroup>`:''}
         ${favorsOpt(f.id,avIds)}
         ${ocupats.length?`<optgroup label="Ja assignats (es mouran aquí)">${ocupats.map(x=>`<option value="${x.p.id}">${esc(nomLl(x.p.nom))} · ara a ${esc(slLab(where[x.p.id]))}</option>`).join('')}</optgroup>`:''}
       </select>`;
       const same=ok&&prevA[sl.id]===cur;
-      const mo=ok?motiuAct(sl,f.id,cur,prevA[sl.id],nextA[sl.id]):null;
-      return `<td class="cell ${ok?'p':'miss'} ${sl.k===1?'nvs':''} ${same?'cont':''}" title="${ok?esc(profById(cur).nom+' · '+mo.t):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${ok?`<span class="cs ${mo.c}">${esc(mo.t)}</span>`:''}${sel}${ok?lockBtn(f.id,sl.id,cur):''}<button class="whyb" data-a="why-act" data-f="${f.id}" data-s="${esc(sl.id)}" title="Per què?" aria-label="Per què?">?</button></td>`;
+      const mo=ok?motiuAct(sl,f.id,cur,prevA[sl.id],nextA[sl.id]):null; const rp=!ok&&REC[f.id]?REC[f.id][sl.id]:null;
+      return `<td class="cell ${ok?'p':'miss'} ${sl.k===1?'nvs':''} ${same?'cont':''}" title="${ok?esc(profById(cur).nom+' · '+mo.t):''}"><span class="cv">${ok?esc(curt(profById(cur).nom)):'Triar…'}</span>${ok?`<span class="cs ${mo.c}">${esc(mo.t)}</span>`:rp&&profById(rp)?`<span class="cs rec">★ Recomanat: ${esc(curt(profById(rp).nom))}</span>`:''}${sel}${ok?lockBtn(f.id,sl.id,cur):''}<button class="whyb" data-a="why-act" data-f="${f.id}" data-s="${esc(sl.id)}" title="Per què?" aria-label="Per què?">?</button></td>`;
     }).join('');
     const cls=cov>=nApl?'ok':cov?'warn':'bad';
     return `<tr><td class="hcol"><div class="hl">${esc(f.label)}</div><div class="hs"><i class="dot ${cls}"></i>${cov}/${nApl} · ${av.length} disp.</div>${S.jornada.modes&&Object.keys(S.jornada.modes).length?`<div class="hs hmode">${esc(MODES_C[modeHora(f.id)])}</div>`:''}</td>${cells}</tr>`;
